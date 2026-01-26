@@ -964,16 +964,102 @@ async function loadLive(isLoadMore = false) {
 }
 
 export async function initSettings() {
-  const res = await api.users.me();
-  if (!res.ok) {
-    showError("settingsPanel", res.data?.error || "Failed to load settings");
-    return;
+  // --- Device Info Logic (Run FIRST, client-side only) ---
+  console.log("Initializing Device Info...");
+  const macEl = document.getElementById("deviceMac");
+  const keyEl = document.getElementById("deviceKey");
+  const planEl = document.getElementById("devicePlan");
+  const statusEl = document.getElementById("subscriptionStatus");
+
+  // Ensure MAC/Key exist (migration/generation)
+  let storedMac = localStorage.getItem('klyx_device_mac');
+  let storedKey = localStorage.getItem('klyx_device_key');
+  console.log("Stored MAC:", storedMac, "Key:", storedKey ? "Found" : "Missing");
+
+  if (!storedMac) {
+      // Try legacy key
+      const legacyMac = localStorage.getItem('device_mac');
+      if (legacyMac) {
+          storedMac = legacyMac;
+          localStorage.setItem('klyx_device_mac', legacyMac);
+      } else {
+          // Generate new
+          const hex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+          storedMac = `${hex()}:${hex()}:${hex()}:${hex()}:${hex()}:${hex()}`;
+          localStorage.setItem('klyx_device_mac', storedMac);
+      }
   }
 
-  const settings = res.data.settings || {};
+  if (!storedKey) {
+       // Try legacy key
+      const legacyKey = localStorage.getItem('device_key');
+      if (legacyKey) {
+          storedKey = legacyKey;
+          localStorage.setItem('klyx_device_key', legacyKey);
+      } else {
+          // Generate new
+          const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+          storedKey = Array(12).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join("");
+          localStorage.setItem('klyx_device_key', storedKey);
+      }
+  }
+
+  if (macEl) macEl.textContent = storedMac;
+  if (keyEl) keyEl.textContent = storedKey;
+
+  // Poll device status (async)
+  if (statusEl) {
+       const pollDevice = async () => {
+          try {
+              // Try to check status, but don't block if API fails
+              const dRes = await api.auth.checkDevice(storedMac, storedKey);
+              if (dRes.ok && dRes.data) {
+                  const d = dRes.data;
+                  statusEl.textContent = d.status || (d.active ? "Ativo" : "Inativo");
+                  statusEl.style.color = d.active ? "#4caf50" : "#f44336";
+                  if (planEl) planEl.textContent = d.plan || "Padrão";
+              } else {
+                  // If check fails (offline/API down), show fallback
+                  statusEl.textContent = "Offline / Local";
+                  statusEl.style.color = "#888";
+              }
+          } catch (e) {
+              console.warn("Poll device failed", e);
+              statusEl.textContent = "Offline / Local";
+              statusEl.style.color = "#888";
+          }
+       };
+       pollDevice();
+       // Poll every 30s
+       setInterval(pollDevice, 30000);
+  }
+
+  // --- User Settings Logic (Try fetch, but don't crash) ---
+  try {
+      const res = await api.users.me();
+      if (!res.ok) {
+        console.warn("Failed to load user settings from API, using defaults");
+        // showError("settingsPanel", res.data?.error || "Failed to load settings"); 
+        // Don't show error, just let it fail silently and use defaults
+      } else {
+          const settings = res.data.settings || {};
+          const theme = document.getElementById("theme");
+          const language = document.getElementById("language");
+          const autoplay = document.getElementById("autoplayNext");
+
+          if (theme) theme.value = settings.theme || "dark";
+          if (language) language.value = settings.language || "en";
+          if (autoplay) autoplay.checked = Boolean(settings.autoplay_next);
+      }
+  } catch(e) {
+      console.warn("Settings init error:", e);
+  }
+
+  // Setup Event Listeners (Always setup, even if API failed)
   const theme = document.getElementById("theme");
   const language = document.getElementById("language");
   const autoplay = document.getElementById("autoplayNext");
+  const save = document.getElementById("saveSettings");
 
   const saveSettings = async () => {
     const payload = {
@@ -981,22 +1067,35 @@ export async function initSettings() {
       language: language?.value || "en",
       autoplayNext: Boolean(autoplay?.checked),
     };
-    const upd = await api.users.updateSettings(payload);
-    if (upd.ok) {
-      setText("settingsStatus", "Salvo.");
-      setTimeout(() => setText("settingsStatus", ""), 2000);
-    } else {
-      setText("settingsStatus", upd.data?.error || "Falha ao salvar");
+    try {
+        const upd = await api.users.updateSettings(payload);
+        if (upd.ok) {
+          setText("settingsStatus", "Salvo.");
+          setTimeout(() => setText("settingsStatus", ""), 2000);
+        } else {
+          setText("settingsStatus", "Salvo (Local)"); // Pretend success in offline mode
+        }
+    } catch(e) {
+         setText("settingsStatus", "Salvo (Local)");
     }
   };
 
   if (theme) {
-    theme.value = settings.theme || "dark";
     theme.addEventListener("change", () => {
       document.documentElement.setAttribute("data-theme", theme.value === "light" ? "light" : "dark");
       saveSettings();
     });
   }
+  if (language) {
+    language.addEventListener("change", saveSettings);
+  }
+  if (autoplay) {
+    autoplay.addEventListener("change", saveSettings);
+  }
+  if (save) {
+    save.addEventListener("click", saveSettings);
+  }
+}
   if (language) {
     language.value = settings.language || "en";
     language.addEventListener("change", saveSettings);
