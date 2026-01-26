@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
-const DATA_DIR = path.resolve(__dirname, "assets/data");
+const DATA_DIR = path.resolve(__dirname, "../assets/data");
 
 async function uploadFile(filename, firebasePath) {
     const filePath = path.join(DATA_DIR, filename);
