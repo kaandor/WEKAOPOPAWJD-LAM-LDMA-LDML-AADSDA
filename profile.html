@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Profile</title>
-    <link rel="stylesheet" href="/css/global.css" />
-    <link rel="stylesheet" href="/css/netflix-ui.css" />
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -51,8 +51,8 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "/js/router.js";
-      import { initProfile } from "/js/ui.js";
+      import { mountAppShell } from "./js/router.js";
+      import { initProfile } from "./js/ui.js";
       await mountAppShell({ currentPath: "/profile" });
       await initProfile();
     </script>
