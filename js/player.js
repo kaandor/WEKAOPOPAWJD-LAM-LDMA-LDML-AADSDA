@@ -1113,19 +1113,47 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       
       const currentSrc = video.src;
       
+      // MIXED CONTENT CHECK (HTTPS page, HTTP stream)
+      if (window.location.protocol === 'https:' && currentSrc.startsWith('http:')) {
+           const msg = "Erro: Navegador bloqueou conteúdo misto (HTTPS carregando HTTP). Use a versão local ou streams HTTPS.";
+           console.error(msg);
+           if (log) log.innerHTML += `<div style="color:red; font-weight:bold">${msg}</div>`;
+           // Show user friendly error
+           const loader = document.getElementById("loading-overlay");
+           if (loader) {
+               loader.innerHTML = `<div style="color:white; text-align:center; padding:20px; font-family:sans-serif">
+                   <h3 style="color:#e50914">Erro de Reprodução (GitHub/HTTPS)</h3>
+                   <p>O navegador bloqueou este canal porque ele usa <b>HTTP</b> (inseguro) em um site <b>HTTPS</b>.</p>
+                   <p>Isso é uma restrição de segurança do navegador, não um erro do app.</p>
+                   <p style="margin-top:10px; color:#aaa">Solução: Use a versão instalada no PC (Local) ou canais HTTPS.</p>
+               </div>`;
+               // Ensure it's visible
+               loader.style.display = "flex";
+           }
+           return;
+      }
+      
+      // Helper to detect if we are running in a static environment (GitHub Pages, etc) where proxy is unavailable
+      const isStaticHost = window.location.hostname.includes("github.io") || 
+                           window.location.hostname.includes("vercel.app") || 
+                           window.location.hostname.includes("netlify.app") ||
+                           window.location.protocol === "file:";
+
       // If native playback failed and we haven't tried proxy yet, TRY PROXY FIRST
-      if (currentSrc.startsWith("http") && !currentSrc.includes("/stream-proxy") && !hls) {
+      if (!isStaticHost && currentSrc.startsWith("http") && !currentSrc.includes("/stream-proxy") && !hls) {
           console.warn("Native playback failed. Retrying with proxy...");
           if (log) log.innerHTML += "<div>Native Fail -> Retrying with Proxy...</div>";
           const proxyUrl = `/stream-proxy?url=${encodeURIComponent(currentSrc)}`;
           loadStream(proxyUrl, startTime);
           return;
+      } else if (isStaticHost && !hls) {
+          if (log) log.innerHTML += "<div>Static Host: Cannot use local proxy. Trying HLS fallback directly...</div>";
       }
 
       // If already proxied (or proxy failed), then try HLS fallback
       // Only if we haven't already tried HLS
       if (!hls) {
-           console.warn("Native playback failed (proxied). Trying HLS fallback...");
+           console.warn("Native playback failed. Trying HLS fallback...");
            initHlsFallback();
       }
   };
