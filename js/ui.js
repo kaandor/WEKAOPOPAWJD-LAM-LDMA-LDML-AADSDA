@@ -1067,6 +1067,30 @@ export async function initSettings() {
   // Poll device status (async)
   if (statusEl) {
        const pollDevice = async () => {
+          // Reset labels to default (MAC/Key) in case they were changed
+          if (macEl) {
+              try {
+                  let label = macEl.previousElementSibling;
+                  if (!label && macEl.parentElement) {
+                      label = macEl.parentElement.querySelector('label') || macEl.parentElement.querySelector('.subtext');
+                  }
+                  if (label) label.textContent = "Endereço de Mac";
+              } catch(e) {}
+              // Ensure content is MAC
+              macEl.textContent = storedMac;
+          }
+          if (keyEl) {
+              try {
+                  let label = keyEl.previousElementSibling;
+                  if (!label && keyEl.parentElement) {
+                      label = keyEl.parentElement.querySelector('label') || keyEl.parentElement.querySelector('.subtext');
+                  }
+                  if (label) label.textContent = "Chave do dispositivo";
+              } catch(e) {}
+              // Ensure content is Key
+              keyEl.textContent = storedKey;
+          }
+
           // 1. Check User Session First (Email/Pass)
           if (api.users.sync) {
               const u = await api.users.sync();
