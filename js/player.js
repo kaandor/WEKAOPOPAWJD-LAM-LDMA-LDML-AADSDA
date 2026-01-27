@@ -774,7 +774,6 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
           
           const parts = finalUrl.split('/');
           // Example parts: ["http:", "", "camelo.vip:80", "movie", "Jonas1854", "Q57Bmz", "363191.mp4"]
-          // We want to replace Jonas1854 and Q57Bmz
           
           if (finalUrl.includes("/movie/")) {
               if (parts.length >= 6) {
@@ -783,13 +782,23 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                   finalUrl = parts.join('/');
                   logToOverlay(`Credential Replaced (Movie): ${finalUrl}`);
               }
+          } else if (finalUrl.includes("/series/")) {
+               // http://host/series/user/pass/id.mp4
+               if (parts.length >= 6) {
+                  parts[4] = mac;
+                  parts[5] = key;
+                  finalUrl = parts.join('/');
+                  logToOverlay(`Credential Replaced (Series): ${finalUrl}`);
+               }
           } else if (parts.length >= 5) {
-              // Live or Series without /movie/
-              // parts: ["http:", "", "camelo.vip:80", "Jonas1854", "Q57Bmz", "90647.ts"]
-              parts[3] = mac;
-              parts[4] = key;
-              finalUrl = parts.join('/');
-              logToOverlay(`Credential Replaced (Live/Series): ${finalUrl}`);
+              // Live or other without /movie/ or /series/
+              // Ensure we don't accidentally break URLs with other prefixes
+              if (parts[3] !== 'movie' && parts[3] !== 'series') {
+                  parts[3] = mac;
+                  parts[4] = key;
+                  finalUrl = parts.join('/');
+                  logToOverlay(`Credential Replaced (Live): ${finalUrl}`);
+              }
           }
       } else {
           logToOverlay(`No credential replacement. MAC/Key present? ${!!mac}/${!!key}`);

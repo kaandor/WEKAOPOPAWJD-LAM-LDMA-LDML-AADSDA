@@ -1027,10 +1027,10 @@ async function showSeriesDetails(seriesId) {
                   id: ep.id,
                   seriesId: seriesId,
                   title: ep.title || `Episode ${ep.episode_number || ""}`,
-                  poster: s.poster_url || "",
+                  poster: series.poster_url || "",
                   stream: ep.stream_url || "",
                   streamSub: ep.stream_url_sub || "",
-                  category: s.category || "",
+                  category: series.category || "",
                   season: ep.season_number || "",
                   episode: ep.episode_number || ""
               });
