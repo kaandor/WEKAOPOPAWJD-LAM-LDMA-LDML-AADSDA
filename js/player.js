@@ -909,7 +909,22 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                   if (err && err.code === 4 && !hls) {
                       console.warn("Media Format Error (4). Assuming IPTV Stream. Trying HLS.js...");
                       if (log) log.innerHTML += "<div>ERR 4: TRYING HLS.JS...</div>";
-                      if (errMsgEl) errMsgEl.textContent = "Formato não suportado nativamente. Tentando modo compatibilidade (HLS)...";
+                      if (errMsgEl) {
+                          errMsgEl.innerHTML = "Formato não suportado nativamente. Tentando modo compatibilidade (HLS)...<br>";
+                          
+                          // Add Direct Play button here too, in case HLS hangs or fails silently
+                          const btnId = "direct-play-btn-native";
+                          let btn = document.getElementById(btnId);
+                          if (!btn) {
+                              btn = document.createElement("a");
+                              btn.id = btnId;
+                              btn.target = "_blank";
+                              btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;";
+                              btn.innerText = "▶ Abrir Externamente (Caso não carregue)";
+                              errMsgEl.appendChild(btn);
+                          }
+                          btn.href = url;
+                      }
                       
                       // Check if HLS lib is loaded, if not load it
                       if (!window.Hls) {

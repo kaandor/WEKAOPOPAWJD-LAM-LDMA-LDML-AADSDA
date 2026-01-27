@@ -1,5 +1,77 @@
 import { api } from "./api.js";
 
+// --- SUBSCRIPTION CHECKER ---
+let subStatusCache = null;
+let subStatusTime = 0;
+
+async function checkSubscription() {
+    const now = Date.now();
+    // Cache valid for 30 seconds to avoid spamming API on rapid clicks
+    if (subStatusCache !== null && (now - subStatusTime < 30000)) { 
+        return subStatusCache;
+    }
+
+    const mac = localStorage.getItem('klyx_device_mac');
+    const key = localStorage.getItem('klyx_device_key');
+    if (!mac || !key) return false;
+
+    try {
+        const res = await api.auth.checkDevice(mac, key);
+        // api.auth.checkDevice handles expiry logic and returns active=false if expired
+        if (res.ok && res.data && res.data.active) {
+            subStatusCache = true;
+        } else {
+            subStatusCache = false;
+        }
+    } catch (e) {
+        console.warn("Sub check failed", e);
+        // On error, we default to BLOCK to be safe, or ALLOW if we want offline support?
+        // User requested BLOCKING behavior for expired accounts.
+        // API fallback logic usually returns active:true for network errors (offline mode),
+        // so if we are here it's likely a real error or logic failure.
+        // We trust api.js fallback.
+        subStatusCache = false; 
+    }
+    
+    subStatusTime = now;
+    return subStatusCache;
+}
+
+function showSubscriptionBlocker() {
+    let modal = document.getElementById('sub-block-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sub-block-modal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        `;
+        modal.innerHTML = `
+            <div style="background: #141414; padding: 40px; border-radius: 8px; text-align: center; max-width: 500px; border: 1px solid #333;">
+                <h2 style="color: #e50914; margin-bottom: 20px;">Assinatura Necessária</h2>
+                <p style="color: #fff; margin-bottom: 30px; line-height: 1.5;">
+                    Sua conta não possui uma assinatura ativa ou expirou. <br>
+                    Para continuar assistindo, por favor renove seu plano.
+                </p>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="btn-sub-close" style="padding: 10px 20px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">Fechar</button>
+                    <button id="btn-sub-contact" style="padding: 10px 20px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Verificar Status</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        document.getElementById('btn-sub-close').onclick = () => modal.style.display = 'none';
+        document.getElementById('btn-sub-contact').onclick = () => {
+             modal.style.display = 'none';
+             window.location.href = './settings.html';
+        };
+    }
+    modal.style.display = 'flex';
+}
+// ----------------------------
+
 const PAGE_LIMIT = 200;
 let movieOffset = 0;
 let seriesOffset = 0;
@@ -355,7 +427,10 @@ export async function initDashboard() {
       items: rails.topMovies,
       itemType: "movie",
       imageKey: "poster_url",
-      onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
+      onSelect: async (item) => {
+          if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+          window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`;
+      },
     }),
   );
 
@@ -366,8 +441,11 @@ export async function initDashboard() {
         items: rails.recentMovies,
         itemType: "movie",
         imageKey: "poster_url",
-        onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
-      }),
+      onSelect: async (item) => {
+          if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+          window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`;
+      },
+    }),
     );
   }
 
@@ -698,18 +776,19 @@ async function loadMovies(isLoadMore = false) {
         posterUrl: m.poster_url,
         metaLeft: "", 
         metaRight: `★ ${formatRating(m.rating)}`,
-        onClick: () => {
-            const params = new URLSearchParams({
-                type: 'movie',
-                id: m.id,
-                title: m.title || "",
-                poster: m.poster_url || "",
-                stream: m.stream_url || "",
-                streamSub: m.stream_url_sub || "",
-                category: m.category || ""
-            });
-            window.location.href = `./player.html?${params.toString()}`;
-        },
+        onClick: async () => {
+             if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+             const params = new URLSearchParams({
+                 type: 'movie',
+                 id: m.id,
+                 title: m.title || "",
+                 poster: m.poster_url || "",
+                 stream: m.stream_url || "",
+                 streamSub: m.stream_url_sub || "",
+                 category: m.category || ""
+             });
+             window.location.href = `./player.html?${params.toString()}`;
+         },
         progress: (m.position_seconds && m.duration_seconds) ? (m.position_seconds / m.duration_seconds) * 100 : 0,
         type: 'movie'
       });
@@ -862,7 +941,10 @@ async function loadSeries(isLoadMore = false) {
         posterUrl: s.poster_url,
         metaLeft: formatReleaseDate(s.release_date, s.year),
         metaRight: `★ ${formatRating(s.rating)}`,
-        onClick: () => (window.location.href = `./series.html?seriesId=${encodeURIComponent(s.id)}`),
+        onClick: async () => {
+             if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+             window.location.href = `./series.html?seriesId=${encodeURIComponent(s.id)}`;
+        },
         progress: (s.position_seconds && s.duration_seconds) ? (s.position_seconds / s.duration_seconds) * 100 : 0,
         type: 'series'
       });
@@ -996,7 +1078,8 @@ async function loadLive(isLoadMore = false) {
           posterUrl: c.thumbnail_url || c.logo_url || c.poster_url,
           metaLeft: "",
           metaRight: "",
-          onClick: () => {
+          onClick: async () => {
+              if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
               const params = new URLSearchParams({
                   type: 'live',
                   id: c.id,
