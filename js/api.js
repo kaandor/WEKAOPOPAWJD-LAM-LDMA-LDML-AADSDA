@@ -792,8 +792,7 @@ export const api = {
                  const device = await res.json();
                  
                  if (!device) {
-                     // Fallback for unregistered devices -> Treat as Free Plan
-                     return { ok: true, status: 200, data: { status: 'active', active: true } };
+                    return { ok: true, status: 200, data: { status: 'inactive', active: false, plan: 'free' } };
                  }
 
                  // Check key if provided (optional)

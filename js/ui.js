@@ -16,69 +16,16 @@ async function checkSubscription() {
 
     try {
         const res = await api.auth.checkDevice(mac, key);
-        // api.auth.checkDevice handles expiry logic and returns active=false if expired
-        // Relaxed check: accept string "true" or "1" or boolean true
-        // Also check if status is explicitly 'active' even if boolean is missing
         if (res.ok && res.data) {
              const d = res.data;
              const isActive = (d.active === true || d.active === "true" || d.active === "1" || d.status === 'active');
-             
-             // DEBUG: Log for troubleshooting
              console.log(`[SubCheck] MAC:${mac} Active:${isActive} Status:${d.status} Expires:${d.expires_at}`);
-             
-             if (isActive) {
-                 subStatusCache = true;
-             } else {
-                 // Fallback: Check user session directly if device is not linked/active
-                 // User reported that DB might not have MAC/Key linked properly.
-                console.log("[SubCheck] Device check failed/inactive. Trying User Session fallback...");
-                 try {
-                     const userRes = await api.auth.me();
-                    if (userRes.ok && userRes.data) {
-                        const user = userRes.data.user || userRes.data;
-                        const uStatus = String(user.status || "").toLowerCase();
-                        const isUserActive = (uStatus === "active" || user.active === true || user.active === "true" || user.active === "1");
-                        if (isUserActive) {
-                            console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
-                            subStatusCache = true;
-                        } else {
-                            console.log("[SubCheck] User Session also inactive/failed.");
-                            subStatusCache = false;
-                        }
-                    } else {
-                        subStatusCache = false;
-                    }
-                 } catch (userErr) {
-                     console.warn("[SubCheck] Session fallback error", userErr);
-                     subStatusCache = false;
-                 }
-             }
+             subStatusCache = Boolean(isActive);
         } else {
-            console.log("[SubCheck] Device check error. Trying User Session fallback...");
-             try {
-                 const userRes = await api.auth.me();
-                 if (userRes.ok && userRes.data) {
-                     const user = userRes.data.user || userRes.data;
-                     const uStatus = String(user.status || "").toLowerCase();
-                     const isUserActive = (uStatus === "active" || user.active === true || user.active === "true" || user.active === "1");
-                     if (isUserActive) {
-                         console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
-                         subStatusCache = true;
-                     } else {
-                         subStatusCache = false;
-                     }
-                 } else {
-                     subStatusCache = false;
-                 }
-             } catch (userErr) {
-                 subStatusCache = false;
-             }
+             subStatusCache = false;
         }
     } catch (e) {
         console.warn("Sub check failed", e);
-        // On error, default to ALLOW if likely a network glitch, but here we default to FALSE
-        // However, if user insists they are active, maybe we should be more lenient on network error?
-        // For now, keep secure.
         subStatusCache = false; 
     }
     
@@ -1249,19 +1196,6 @@ export async function initSettings() {
               keyEl.textContent = storedKey;
           }
 
-          // 1. Check User Session First (Email/Pass)
-          if (api.users.sync) {
-              const u = await api.users.sync();
-              if (u && u.email) {
-                   const expires = u.expires_at;
-                   const dateStr = expires ? ` (Vence: ${new Date(expires).toLocaleDateString()})` : "";
-                   statusEl.textContent = (u.status || "Ativo").toUpperCase() + dateStr;
-                   statusEl.style.color = (u.status === 'active') ? "#4caf50" : "#f44336";
-                   if (planEl) planEl.textContent = (u.plan || "Individual").toUpperCase() + " - " + u.email;
-                   return; 
-              }
-          }
-
           try {
               // Try to check status, but don't block if API fails
               const dRes = await api.auth.checkDevice(storedMac, storedKey);
@@ -1269,10 +1203,18 @@ export async function initSettings() {
                   const d = dRes.data;
                   const expires = d.expires_at || d.subscription_expires_at;
                   const dateStr = expires ? ` (Vence: ${new Date(expires).toLocaleDateString()})` : "";
-                  
-                  statusEl.textContent = (d.status || (d.active ? "Ativo" : "Inativo")) + dateStr;
-                  statusEl.style.color = (d.active || d.status === 'active') ? "#4caf50" : "#f44336";
-                  if (planEl) planEl.textContent = (d.plan || "Padrão").toUpperCase();
+                  const isActive = d.active === true || d.status === "active";
+                  statusEl.textContent = isActive ? "CONTA ATIVA" + dateStr : "CONTA BLOQUEADA" + dateStr;
+                  statusEl.style.color = isActive ? "#4caf50" : "#f44336";
+                  if (planEl) {
+                      let planLabel = "PLANO DESCONHECIDO";
+                      const maxIps = d.max_ips || d.max_telas || 1;
+                      if (maxIps === 1) planLabel = "1 TELA (INDIVIDUAL)";
+                      else if (maxIps === 2) planLabel = "2 TELAS (DUO)";
+                      else if (maxIps === 3) planLabel = "3 TELAS (FAMÍLIA)";
+                      else if (maxIps >= 4) planLabel = `${maxIps} TELAS (PREMIUM)`;
+                      planEl.textContent = planLabel;
+                  }
               } else {
                   // If check fails (offline/API down), show fallback
                   statusEl.textContent = "Offline / Local";
