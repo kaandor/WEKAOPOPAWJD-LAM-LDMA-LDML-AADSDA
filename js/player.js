@@ -706,8 +706,14 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
           const errMsgEl = document.getElementById("errorMsg");
           const errOverlay = document.getElementById("errorOverlay");
           if (errMsgEl && errOverlay) {
-              errMsgEl.innerHTML = "Erro de Segurança (Mixed Content).<br>Não é possível reproduzir canais HTTP (inseguros) no GitHub Pages (HTTPS).<br>Use a versão Desktop ou um servidor local.";
+              errMsgEl.innerHTML = "Erro de Segurança (Mixed Content).<br>O navegador bloqueou a conexão HTTP (insegura) no site HTTPS.<br>Esta fonte não pode ser reproduzida no GitHub Pages.";
               errOverlay.style.display = "flex";
+              // On static host, we stop here because it won't work anyway and just causes confusion
+              if (isStaticHost) {
+                   const loader = document.getElementById("loading-overlay");
+                   if (loader) loader.style.display = "none";
+                   return;
+              }
           }
           // We continue anyway, but it will likely fail
       }
@@ -812,7 +818,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                }
                                
                                // NATIVE FALLBACK: If HLS fails (e.g. Manifest Error on TS), try native
-              if (!url.includes("/stream-proxy") && url.startsWith("http")) {
+              if (!isStaticHost && !url.includes("/stream-proxy") && url.startsWith("http")) {
                   console.warn("HLS Fatal Error. Retrying with proxy...");
                   const proxyUrl = `/stream-proxy?url=${encodeURIComponent(url)}`;
                   loadStream(proxyUrl, startTime); // Recursively call loadStream with proxy and SAME startTime
@@ -825,7 +831,14 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                       video.currentTime = startTime;
                   }
                   const p = video.play();
-                  if (p) p.catch(e => { if (e.name !== 'AbortError') console.error("Native fallback play error:", e); });
+                  if (p) p.catch(e => { 
+                      if (e.name !== 'AbortError') console.error("Native fallback play error:", e);
+                      // If native fallback also fails on static host, show error
+                      if (isStaticHost) {
+                          const errMsgEl = document.getElementById("errorMsg");
+                          if (errMsgEl) errMsgEl.innerHTML = "Falha na reprodução (Compatibilidade).<br>Este formato não é suportado pelo navegador.";
+                      }
+                  });
               }
 
                                break;
@@ -1078,13 +1091,21 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
               } // Hide spinner on fatal error
 
               // Proxy Fallback Logic for HLS
-              if (!url.includes("/stream-proxy") && url.startsWith("http")) {
+              if (!isStaticHost && !url.includes("/stream-proxy") && url.startsWith("http")) {
                   if (log) log.innerHTML += "<div>HLS FATAL: RETRYING WITH PROXY...</div>";
                   const proxyUrl = `/stream-proxy?url=${encodeURIComponent(url)}`;
                   hls.destroy();
                   hls = null;
                   setTimeout(() => loadStream(proxyUrl, startTime), 500);
                   return;
+              }
+
+              // On Static Host, show detailed error if it's a network error (likely CORS/Mixed Content)
+              if (isStaticHost && data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                   const errMsgEl = document.getElementById("errorMsg");
+                   if (errMsgEl) {
+                       errMsgEl.innerHTML = "Erro de Conexão (CORS/Mixed Content).<br>O navegador bloqueou este conteúdo no GitHub Pages.<br>Tente usar a versão Desktop.";
+                   }
               }
 
               switch (data.type) {
