@@ -727,8 +727,40 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
   const loadStream = (url, startTime = 0) => {
       const log = null;
-      // Save original URL for external fallback (to avoid forcing HTTPS on servers that don't support it)
+      // Save original URL for external fallback
       const originalUrl = url; 
+
+      // IF USER HAS SESSION CREDENTIALS, REPLACE THEM IN URL
+      let finalUrl = url;
+      const mac = localStorage.getItem('klyx_device_mac');
+      const key = localStorage.getItem('klyx_device_key');
+      
+      if (mac && key && finalUrl.includes("camelo.vip")) {
+          // Detect URL pattern: http://camelo.vip:80/movie/USER/PASS/ID.mp4
+          // Or: http://camelo.vip:80/USER/PASS/ID.ts
+          
+          const parts = finalUrl.split('/');
+          // Example parts: ["http:", "", "camelo.vip:80", "movie", "Jonas1854", "Q57Bmz", "363191.mp4"]
+          // We want to replace Jonas1854 and Q57Bmz
+          
+          if (finalUrl.includes("/movie/")) {
+              if (parts.length >= 6) {
+                  parts[4] = mac;
+                  parts[5] = key;
+                  finalUrl = parts.join('/');
+                  console.log("[Player] Replacing movie credentials with User MAC/Key:", finalUrl);
+              }
+          } else if (parts.length >= 5) {
+              // Live or Series without /movie/
+              // parts: ["http:", "", "camelo.vip:80", "Jonas1854", "Q57Bmz", "90647.ts"]
+              parts[3] = mac;
+              parts[4] = key;
+              finalUrl = parts.join('/');
+              console.log("[Player] Replacing live/series credentials with User MAC/Key:", finalUrl);
+          }
+      }
+
+      url = finalUrl; // Use updated URL with user credentials
 
       if (log) log.innerHTML += `<div>Attempting load: ${url} (Start: ${startTime}s)</div>`;
 
