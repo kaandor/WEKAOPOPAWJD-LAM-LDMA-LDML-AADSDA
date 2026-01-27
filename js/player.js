@@ -725,10 +725,38 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
   let currentProxyIndex = 0;
   let hasTriedAllProxies = false;
 
+  // --- DEBUG OVERLAY ---
+  let debugEl = document.getElementById("debug-overlay");
+  if (!debugEl) {
+      debugEl = document.createElement("div");
+      debugEl.id = "debug-overlay";
+      debugEl.style.cssText = "position:fixed; top:0; left:0; width:100%; height:auto; max-height:200px; overflow-y:auto; background:rgba(0,0,0,0.7); color:#0f0; font-family:monospace; font-size:12px; z-index:99999; padding:10px; pointer-events:none; display:none;"; // Hidden by default, toggle with key
+      document.body.appendChild(debugEl);
+      
+      // Toggle with 'D' key
+      document.addEventListener("keydown", (e) => {
+          if (e.key === "d" || e.key === "D") {
+              debugEl.style.display = debugEl.style.display === "none" ? "block" : "none";
+          }
+      });
+  }
+
+  const logToOverlay = (msg) => {
+      console.log("[PlayerDebug]", msg);
+      if (debugEl) {
+          const line = document.createElement("div");
+          line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+          debugEl.appendChild(line);
+          debugEl.scrollTop = debugEl.scrollHeight;
+      }
+  };
+
   const loadStream = (url, startTime = 0) => {
       const log = null;
       // Save original URL for external fallback
       const originalUrl = url; 
+
+      logToOverlay(`LoadStream called: ${url}`);
 
       // IF USER HAS SESSION CREDENTIALS, REPLACE THEM IN URL
       let finalUrl = url;
@@ -748,7 +776,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                   parts[4] = mac;
                   parts[5] = key;
                   finalUrl = parts.join('/');
-                  console.log("[Player] Replacing movie credentials with User MAC/Key:", finalUrl);
+                  logToOverlay(`Credential Replaced (Movie): ${finalUrl}`);
               }
           } else if (parts.length >= 5) {
               // Live or Series without /movie/
@@ -756,8 +784,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
               parts[3] = mac;
               parts[4] = key;
               finalUrl = parts.join('/');
-              console.log("[Player] Replacing live/series credentials with User MAC/Key:", finalUrl);
+              logToOverlay(`Credential Replaced (Live/Series): ${finalUrl}`);
           }
+      } else {
+          logToOverlay(`No credential replacement. MAC/Key present? ${!!mac}/${!!key}`);
       }
 
       url = finalUrl; // Use updated URL with user credentials
@@ -767,12 +797,14 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       // MIXED CONTENT CHECK & AUTO-FIX
       // GitHub Pages (HTTPS) cannot play HTTP streams directly.
       if (window.location.protocol === 'https:' && url.startsWith('http:') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+          logToOverlay("Mixed Content detected (HTTP on HTTPS).");
           console.warn("Mixed Content detected (HTTP on HTTPS).");
           
           // Check if already proxied by one of our known proxies
           const isProxied = url.includes("corsproxy.io") || url.includes("api.allorigins.win") || url.includes("thingproxy");
 
           if (!isProxied) {
+               logToOverlay(`Forcing Proxy (Attempt ${currentProxyIndex + 1})...`);
                console.warn(`Forcing Proxy (Attempt ${currentProxyIndex + 1})...`);
                
                // Use the current proxy in the rotation
@@ -783,6 +815,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                    // Should not happen if index is managed correctly, but fallback to first
                    url = PROXY_LIST[0](url);
                }
+               logToOverlay(`Proxied URL: ${url}`);
           }
       }
 
