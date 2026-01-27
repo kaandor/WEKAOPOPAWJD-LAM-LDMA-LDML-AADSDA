@@ -841,27 +841,49 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                               const errMsgEl = document.getElementById("errorMsg");
                               if (errMsgEl) {
                                   // Keep error message minimal if we are auto-retrying or just failed proxy
-                                  errMsgEl.innerHTML = "Tentando conectar via Proxy Seguro...";
-                                  
-                                  // Only show button if we really failed
-                                  setTimeout(() => {
-                                      if (video.paused || video.error) {
-                                           errMsgEl.innerHTML = "Erro de Conexão Segura (HTTPS).<br>O vídeo não suporta reprodução direta no navegador.";
-                                           
-                                           // Create Action Button
-                                           const btnId = "direct-play-btn";
-                                           let btn = document.getElementById(btnId);
-                                           if (!btn) {
-                                               btn = document.createElement("a");
-                                               btn.id = btnId;
-                                               btn.target = "_blank";
-                                               btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
-                                               btn.innerText = "▶ Abrir Vídeo em Nova Aba";
-                                               errMsgEl.parentNode.appendChild(btn);
-                                           }
-                                           btn.href = originalUrl;
-                                      }
-                                  }, 3000);
+                                   errMsgEl.innerHTML = "Tentando conectar via Proxy Seguro...";
+                                   
+                                   // If proxy fails or takes too long, switch to Fullscreen Iframe "Emulation"
+                                   setTimeout(() => {
+                                       if (video.paused || video.error) {
+                                            console.warn("Proxy/Direct play failed. Switching to Iframe Emulation Mode.");
+                                            errMsgEl.style.display = 'none'; // Hide error text
+                                            
+                                            // Create Fullscreen Iframe to emulate "new page" inside the player
+                                            const iframeId = "klyx-embed-frame";
+                                            let ifr = document.getElementById(iframeId);
+                                            if (!ifr) {
+                                                ifr = document.createElement("iframe");
+                                                ifr.id = iframeId;
+                                                ifr.allowFullscreen = true;
+                                                ifr.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999; background: #000;";
+                                                document.body.appendChild(ifr);
+                                                
+                                                // Add a Close/Back button for the iframe
+                                                const closeBtn = document.createElement("button");
+                                                closeBtn.innerText = "✖ Fechar Player";
+                                                closeBtn.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; background: rgba(0,0,0,0.7); color: white; border: 1px solid #fff; padding: 5px 10px; cursor: pointer; border-radius: 4px;";
+                                                closeBtn.onclick = () => {
+                                                    ifr.remove();
+                                                    closeBtn.remove();
+                                                    // Reload page to reset player state or go back
+                                                    window.location.reload(); 
+                                                };
+                                                document.body.appendChild(closeBtn);
+                                            }
+                                            
+                                            // Try to use proxy for iframe content too if HTTP
+                                            let embedUrl = originalUrl;
+                                            if (originalUrl.startsWith("http:") && !originalUrl.includes("corsproxy.io")) {
+                                                 // Some sites block embedding via proxy, but for direct streams it helps
+                                                 // For generic web pages, direct URL is better if browser allows mixed content (it won't on Github Pages)
+                                                 // So we prefer proxy.
+                                                 embedUrl = `https://corsproxy.io/?url=${encodeURIComponent(originalUrl)}`;
+                                            }
+                                            
+                                            ifr.src = embedUrl;
+                                       }
+                                   }, 2500);
                               }
                           }
               });

@@ -30,10 +30,37 @@ async function checkSubscription() {
              if (isActive) {
                  subStatusCache = true;
              } else {
-                 subStatusCache = false;
+                 // Fallback: Check user session directly if device is not linked/active
+                 // User reported that DB might not have MAC/Key linked properly.
+                 console.log("[SubCheck] Device check failed/inactive. Trying User Session fallback...");
+                 try {
+                     const userRes = await api.auth.me();
+                     if (userRes.ok && userRes.data && (userRes.data.active === true || userRes.data.active === "true" || userRes.data.active === "1" || userRes.data.status === 'active')) {
+                         console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
+                         subStatusCache = true;
+                     } else {
+                         console.log("[SubCheck] User Session also inactive/failed.");
+                         subStatusCache = false;
+                     }
+                 } catch (userErr) {
+                     console.warn("[SubCheck] Session fallback error", userErr);
+                     subStatusCache = false;
+                 }
              }
         } else {
-            subStatusCache = false;
+            // If device check failed completely (e.g. 404), try session fallback too
+            console.log("[SubCheck] Device check error. Trying User Session fallback...");
+             try {
+                 const userRes = await api.auth.me();
+                 if (userRes.ok && userRes.data && (userRes.data.active === true || userRes.data.active === "true" || userRes.data.active === "1" || userRes.data.status === 'active')) {
+                     console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
+                     subStatusCache = true;
+                 } else {
+                     subStatusCache = false;
+                 }
+             } catch (userErr) {
+                 subStatusCache = false;
+             }
         }
     } catch (e) {
         console.warn("Sub check failed", e);
