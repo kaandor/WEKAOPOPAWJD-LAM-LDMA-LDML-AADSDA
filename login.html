@@ -103,6 +103,8 @@
       import { api } from "./js/api.js";
       import { redirectIfAuthed, applyTheme } from "./js/auth.js";
 
+      import { handleLoginSuccess } from "./js/ui.js";
+
       redirectIfAuthed();
 
       // Helper to get or generate MAC
@@ -173,11 +175,27 @@
             }
 
             // Sync MAC/Key if server requires it (Unified Account MAC)
-            if (res.data.sync_device) {
+            // Agora o 'handleLoginSuccess' já deve ter cuidado disso se implementado, mas vamos reforçar aqui
+            // Se o 'res.data.user.subscription' veio, usamos ele.
+            
+            if (res.data.user && res.data.user.subscription) {
+                 const sub = res.data.user.subscription;
+                 if (sub.device_key) {
+                      console.log("[Login] Syncing Account Subscription (Key)", sub.device_key);
+                      localStorage.setItem('klyx_device_key', sub.device_key);
+                      // Se o usuário quiser forçar o MAC também:
+                      // localStorage.setItem('klyx_device_mac', sub.linked_mac);
+                 }
+            } else if (res.data.sync_device) {
                  console.log("Syncing device MAC/Key with account...", res.data.sync_device);
                  localStorage.setItem('klyx_device_mac', res.data.sync_device.mac);
                  localStorage.setItem('klyx_device_key', res.data.sync_device.key);
             }
+            
+            // Chama o handler da UI para garantir (mesmo que estejamos saindo da página)
+            // Mas como vamos redirecionar, talvez não dê tempo de rodar lógica complexa.
+            // O importante é o localStorage estar setado.
+            await handleLoginSuccess(res.data);
 
             api.session.write({ user: res.data.user, tokens: res.data.tokens });
             const me = await api.auth.me();

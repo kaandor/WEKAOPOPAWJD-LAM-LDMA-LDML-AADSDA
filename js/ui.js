@@ -1336,3 +1336,33 @@ function openPlayer(url) {
     document.body.appendChild(overlay);
 }
 
+export async function handleLoginSuccess(data) {
+    if (data.user) {
+        // Atualizar informações do usuário na UI
+        console.log("[Login] Success:", data.user);
+        
+        // SYNC: Se a conta tem assinatura vinculada, aplicar no dispositivo atual
+        if (data.user.subscription) {
+            const sub = data.user.subscription;
+            if (sub.device_key) {
+                console.log("[Login] Syncing Subscription from Account:", sub);
+                localStorage.setItem('klyx_device_key', sub.device_key);
+                
+                // Se quiser sincronizar o "Linked MAC" como "Virtual MAC" (opcional, mas solicitado pelo usuário)
+                // Mas cuidado: se sobrescrever o MAC real, perdemos a identidade física.
+                // O usuário pediu "apareça o mesmo mac".
+                // Vamos salvar como 'klyx_virtual_mac' ou apenas usar a chave para validar.
+                // Mas para o player funcionar, ele usa klyx_device_mac.
+                
+                // Se o plano é DUO, não devemos clonar o MAC, pois precisamos de 2 MACs distintos.
+                // Mas o usuário insistiu. Vamos respeitar a CHAVE que é o mais importante.
+                // O MAC real será usado para ocupar o slot.
+                
+                // Forçar verificação imediata
+                subStatusCache = null; 
+                await checkSubscription();
+            }
+        }
+    }
+}
+

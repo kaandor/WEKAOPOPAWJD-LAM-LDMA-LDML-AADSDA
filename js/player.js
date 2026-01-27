@@ -688,10 +688,15 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
   let currentPlayingUrl = streamUrl;
 
   // Helper to detect if we are running in a static environment (GitHub Pages, etc) where proxy is unavailable
+  // We assume static if:
+  // 1. Known static hosts (github.io, vercel, etc)
+  // 2. File protocol
+  // 3. URL path contains ".html" (PHP backend typically uses clean routes)
   const isStaticHost = window.location.hostname.includes("github.io") || 
                        window.location.hostname.includes("vercel.app") || 
                        window.location.hostname.includes("netlify.app") ||
-                       window.location.protocol === "file:";
+                       window.location.protocol === "file:" ||
+                       window.location.pathname.includes(".html");
 
   // Ensure HLS lib is loaded if needed
   // Always load HLS.js for 'live' type or if .m3u8 is detected
@@ -718,17 +723,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       if (window.location.protocol === 'https:' && url.startsWith('http:') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
           console.warn("Mixed Content detected (HTTP on HTTPS).");
           
-          if (isStaticHost) {
-               // On GitHub Pages, we MUST use a proxy for HTTP streams
-               if (!url.includes("corsproxy.io")) {
-                   console.warn("Forcing public CORS proxy for GitHub Pages...");
-                   // Use corsproxy.io which handles video streaming well
-                   url = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
-               }
-          } else {
-               // If not static host (maybe local HTTPS?), try direct upgrade
-               console.warn("Attempting to upgrade URL to HTTPS...");
-               url = url.replace(/^http:\/\//i, 'https://');
+          // ALWAYS use proxy for Mixed Content, because upgrading to HTTPS often fails (providers lack SSL)
+          // and we can't rely on isStaticHost to detect custom domains on GitHub Pages.
+          if (!url.includes("corsproxy.io")) {
+               console.warn("Forcing public CORS proxy for Mixed Content...");
+               url = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
           }
       }
 
@@ -1324,6 +1323,46 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       // If already proxied (or proxy failed), then try HLS fallback
       // Only if we haven't already tried HLS
       if (!hls) {
+           // If it's an MP4/MKV file (not HLS), HLS.js won't help.
+           // If we are on a static host, we can't do anything more than suggest external play.
+           const isLikelyHls = currentSrc.includes(".m3u8") || currentSrc.includes(".ts") || qs("type") === "live";
+           
+           if (!isLikelyHls && (isStaticHost || currentSrc.includes("corsproxy.io"))) {
+               console.warn("Native playback of static file failed on Static Host/Proxy. HLS fallback skipped.");
+               // Show "Open External" directly
+               const errMsgEl = document.getElementById("errorMsg");
+               const errOverlay = document.getElementById("errorOverlay");
+               if (errOverlay && errMsgEl) {
+                    errOverlay.style.display = "flex";
+                    errMsgEl.innerHTML = "Falha na reprodução do arquivo de vídeo.<br>Este navegador não suporta reproduzir este formato via Proxy.<br>Tente abrir externamente:";
+                    
+                    const btnId = "direct-play-btn-final";
+                    let btn = document.getElementById(btnId);
+                    if (!btn) {
+                         btn = document.createElement("a");
+                         btn.id = btnId;
+                         btn.target = "_blank";
+                         btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
+                         btn.innerText = "▶ Abrir Vídeo em Nova Aba";
+                         errMsgEl.parentNode.appendChild(btn);
+                    }
+                    // Extract original URL if proxied
+                    let original = currentSrc;
+                    if (currentSrc.includes("url=")) {
+                        try {
+                            const p = new URLSearchParams(currentSrc.split('?')[1]);
+                            original = decodeURIComponent(p.get('url'));
+                        } catch(e){}
+                    }
+                    btn.href = original;
+               }
+               
+               // Also hide loader
+               const loader = document.getElementById("loading-overlay");
+               if (loader) loader.style.display = "none";
+               return;
+           }
+
            console.warn("Native playback failed. Trying HLS fallback...");
            initHlsFallback();
       }

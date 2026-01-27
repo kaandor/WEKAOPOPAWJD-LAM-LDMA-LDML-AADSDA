@@ -703,7 +703,11 @@ export const api = {
             password: password, // NOTA: Em produção, NUNCA salve senhas em texto puro. Isso é apenas para MVP client-side.
             display_name: displayName,
             created_at: new Date().toISOString(),
-            // Assinatura (Subscription)
+            // Assinatura (Subscription) & Vinculação de Dispositivo
+            subscription: {
+                device_key: key || null,
+                linked_mac: mac || null
+            },
             plan: 'individual', // individual, duo, family, premium
             status: 'pending_activation', // active, expired, pending_activation
             expires_at: null, 
@@ -740,6 +744,20 @@ export const api = {
             const user = await res.json();
 
             if (user && user.password === password) {
+                // SYNC: Se usuário tem assinatura salva, retorna junto para o front
+                const sub = user.subscription || {};
+
+                // AUTO-LINK: Se o usuário não tem chave vinculada, mas está logando com um device válido, vincular agora
+                if (!sub.device_key && key) {
+                    sub.device_key = key;
+                    sub.linked_mac = mac;
+                    // Salvar vínculo no Firebase
+                    fetch(`${FIREBASE_DB_URL}/users/${emailKey}/subscription.json`, {
+                        method: 'PUT',
+                        body: JSON.stringify(sub)
+                    });
+                }
+
                 const session = {
                     user: { 
                         id: user.id, 
@@ -748,7 +766,9 @@ export const api = {
                         email_key: emailKey, // Guardar key para uso posterior
                         plan: user.plan || 'individual',
                         status: user.status || 'pending_activation',
-                        expires_at: user.expires_at || null
+                        expires_at: user.expires_at || null,
+                        // Retorna dados de assinatura para o front atualizar localmente
+                        subscription: sub
                     },
                     tokens: { accessToken: "firebase-mock-token", refreshToken: "firebase-mock-refresh" }
                 };
