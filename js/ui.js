@@ -18,18 +18,28 @@ async function checkSubscription() {
     try {
         const res = await api.auth.checkDevice(mac, key);
         // api.auth.checkDevice handles expiry logic and returns active=false if expired
-        if (res.ok && res.data && res.data.active) {
-            subStatusCache = true;
+        // Relaxed check: accept string "true" or "1" or boolean true
+        // Also check if status is explicitly 'active' even if boolean is missing
+        if (res.ok && res.data) {
+             const d = res.data;
+             const isActive = (d.active === true || d.active === "true" || d.active === "1" || d.status === 'active');
+             
+             // DEBUG: Log for troubleshooting
+             console.log(`[SubCheck] MAC:${mac} Active:${isActive} Status:${d.status} Expires:${d.expires_at}`);
+             
+             if (isActive) {
+                 subStatusCache = true;
+             } else {
+                 subStatusCache = false;
+             }
         } else {
             subStatusCache = false;
         }
     } catch (e) {
         console.warn("Sub check failed", e);
-        // On error, we default to BLOCK to be safe, or ALLOW if we want offline support?
-        // User requested BLOCKING behavior for expired accounts.
-        // API fallback logic usually returns active:true for network errors (offline mode),
-        // so if we are here it's likely a real error or logic failure.
-        // We trust api.js fallback.
+        // On error, default to ALLOW if likely a network glitch, but here we default to FALSE
+        // However, if user insists they are active, maybe we should be more lenient on network error?
+        // For now, keep secure.
         subStatusCache = false; 
     }
     
