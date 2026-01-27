@@ -698,13 +698,29 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
   const loadStream = (url, startTime = 0) => {
       const log = null;
+      // Save original URL for external fallback (to avoid forcing HTTPS on servers that don't support it)
+      const originalUrl = url; 
+
       if (log) log.innerHTML += `<div>Attempting load: ${url} (Start: ${startTime}s)</div>`;
 
       // MIXED CONTENT CHECK & AUTO-FIX
-      // GitHub Pages (HTTPS) cannot play HTTP streams. We try to upgrade to HTTPS automatically.
+      // GitHub Pages (HTTPS) cannot play HTTP streams directly.
       if (window.location.protocol === 'https:' && url.startsWith('http:') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
-          console.warn("Mixed Content detected. Attempting to upgrade URL to HTTPS...");
-          url = url.replace(/^http:\/\//i, 'https://');
+          console.warn("Mixed Content detected (HTTP on HTTPS).");
+          
+          if (isStaticHost) {
+               // On GitHub Pages, we try a public CORS proxy to bridge HTTP -> HTTPS
+               // Note: This is a best-effort fallback.
+               if (!url.includes("corsproxy.io")) {
+                   console.warn("Attempting to use public CORS proxy for GitHub Pages...");
+                   // Using corsproxy.io as it supports streaming reasonably well
+                   url = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+               }
+          } else {
+               // If not static host (maybe local HTTPS?), try direct upgrade or let it fail to proxy
+               console.warn("Attempting to upgrade URL to HTTPS...");
+               url = url.replace(/^http:\/\//i, 'https://');
+          }
       }
 
       // FORCE PROXY logic for simple_server with proxy support
@@ -836,14 +852,14 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                   btn.id = btnId;
                                   btn.target = "_blank";
                                   btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
-                                  btn.innerText = "▶ Abrir Vídeo em Nova Aba";
-                                  errMsgEl.parentNode.appendChild(btn);
-                              }
-                              btn.href = url; // Set current URL
+                              btn.innerText = "▶ Abrir Vídeo em Nova Aba";
+                              errMsgEl.parentNode.appendChild(btn);
                           }
+                          btn.href = originalUrl; // Use original URL (likely HTTP) to avoid SSL errors on external open
                       }
-                  });
-              }
+                  }
+              });
+          }
 
                                break;
                        }
@@ -919,14 +935,14 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                               btn = document.createElement("a");
                               btn.id = btnId;
                               btn.target = "_blank";
-                              btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;";
-                              btn.innerText = "▶ Abrir Externamente (Caso não carregue)";
-                              errMsgEl.appendChild(btn);
-                          }
-                          btn.href = url;
+                          btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;";
+                          btn.innerText = "▶ Abrir Externamente (Caso não carregue)";
+                          errMsgEl.appendChild(btn);
                       }
-                      
-                      // Check if HLS lib is loaded, if not load it
+                      btn.href = originalUrl;
+                  }
+                  
+                  // Check if HLS lib is loaded, if not load it
                       if (!window.Hls) {
                            console.warn("HLS.js not loaded. Loading dynamically...");
                            const script = document.createElement("script");

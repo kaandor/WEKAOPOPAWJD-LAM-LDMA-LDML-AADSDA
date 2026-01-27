@@ -213,16 +213,26 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
   card.append(body);
 
   if (onClick) {
-      card.addEventListener("click", (e) => {
-          onClick(e);
-      });
-  }
-  return card;
+        card.addEventListener("click", async (e) => {
+            // Intercept click to check subscription
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const hasSub = await checkSubscription();
+            if (!hasSub) {
+                showSubscriptionBlocker();
+                return;
+            }
+            
+            onClick(e);
+        });
+    }
+    return card;
 }
 
 export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick }) {
-  const card = el("div", "card");
-  const img = document.createElement("img");
+    const card = el("div", "card");
+    const img = document.createElement("img");
   img.className = "thumb";
   img.alt = title;
   img.loading = "lazy";
@@ -252,8 +262,21 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
   body.append(t, meta);
   card.append(img, body);
 
-  if (onClick) card.addEventListener("click", onClick);
-  return card;
+  if (onClick) {
+        card.addEventListener("click", async (e) => {
+             // Intercept click to check subscription
+             e.preventDefault();
+             e.stopPropagation();
+             
+             const hasSub = await checkSubscription();
+             if (!hasSub) {
+                 showSubscriptionBlocker();
+                 return;
+             }
+            onClick(e);
+        });
+    }
+    return card;
 }
 
 function setText(id, value) {
