@@ -700,22 +700,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       const log = null;
       if (log) log.innerHTML += `<div>Attempting load: ${url} (Start: ${startTime}s)</div>`;
 
-      // MIXED CONTENT CHECK
+      // MIXED CONTENT CHECK & AUTO-FIX
+      // GitHub Pages (HTTPS) cannot play HTTP streams. We try to upgrade to HTTPS automatically.
       if (window.location.protocol === 'https:' && url.startsWith('http:') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
-          console.error("Mixed Content Error: Trying to play HTTP stream on HTTPS site.");
-          const errMsgEl = document.getElementById("errorMsg");
-          const errOverlay = document.getElementById("errorOverlay");
-          if (errMsgEl && errOverlay) {
-              errMsgEl.innerHTML = "Erro de Segurança (Mixed Content).<br>O navegador bloqueou a conexão HTTP (insegura) no site HTTPS.<br>Esta fonte não pode ser reproduzida no GitHub Pages.";
-              errOverlay.style.display = "flex";
-              // On static host, we stop here because it won't work anyway and just causes confusion
-              if (isStaticHost) {
-                   const loader = document.getElementById("loading-overlay");
-                   if (loader) loader.style.display = "none";
-                   return;
-              }
-          }
-          // We continue anyway, but it will likely fail
+          console.warn("Mixed Content detected. Attempting to upgrade URL to HTTPS...");
+          url = url.replace(/^http:\/\//i, 'https://');
       }
 
       // FORCE PROXY logic for simple_server with proxy support
@@ -836,7 +825,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                       // If native fallback also fails on static host, show error
                       if (isStaticHost) {
                           const errMsgEl = document.getElementById("errorMsg");
-                          if (errMsgEl) errMsgEl.innerHTML = "Falha na reprodução (Compatibilidade).<br>Este formato não é suportado pelo navegador.";
+                          if (errMsgEl) errMsgEl.innerHTML = "Erro de Reprodução Web.<br>Este servidor não é compatível com navegadores (HTTPS/CORS).<br>Use o App Desktop ou Android.";
                       }
                   });
               }
@@ -1101,12 +1090,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
               }
 
               // On Static Host, show detailed error if it's a network error (likely CORS/Mixed Content)
-              if (isStaticHost && data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                   const errMsgEl = document.getElementById("errorMsg");
-                   if (errMsgEl) {
-                       errMsgEl.innerHTML = "Erro de Conexão (CORS/Mixed Content).<br>O navegador bloqueou este conteúdo no GitHub Pages.<br>Tente usar a versão Desktop.";
-                   }
-              }
+               if (isStaticHost && data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                    const errMsgEl = document.getElementById("errorMsg");
+                    if (errMsgEl) {
+                        errMsgEl.innerHTML = "Falha na Conexão Segura.<br>O servidor deste vídeo não suporta HTTPS (obrigatório no GitHub).<br>Use a versão Desktop ou Android do App.";
+                    }
+               }
 
               switch (data.type) {
                 case window.Hls.ErrorTypes.NETWORK_ERROR:
