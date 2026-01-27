@@ -1126,14 +1126,30 @@ async function loadLive(isLoadMore = false) {
 }
 
 export async function initSettings() {
-  // --- Device Info Logic (Run FIRST, client-side only) ---
-  console.log("Initializing Device Info...");
   const macEl = document.getElementById("deviceMac");
   const keyEl = document.getElementById("deviceKey");
   const planEl = document.getElementById("devicePlan");
   const statusEl = document.getElementById("subscriptionStatus");
 
-  // Ensure MAC/Key exist (migration/generation)
+  const session = api.session.read ? api.session.read() : null;
+  if (session && session.user) {
+      if (session.user.mac_address) {
+          localStorage.setItem('klyx_device_mac', session.user.mac_address);
+      }
+      if (session.user.device_key) {
+          localStorage.setItem('klyx_device_key', session.user.device_key);
+      }
+      if (session.user.subscription) {
+          const sub = session.user.subscription;
+          if (sub.device_key) {
+              localStorage.setItem('klyx_device_key', sub.device_key);
+          }
+          if (sub.linked_mac) {
+              localStorage.setItem('klyx_device_mac', sub.linked_mac);
+          }
+      }
+  }
+
   let storedMac = localStorage.getItem('klyx_device_mac');
   let storedKey = localStorage.getItem('klyx_device_key');
   console.log("Stored MAC:", storedMac, "Key:", storedKey ? "Found" : "Missing");
@@ -1338,31 +1354,26 @@ function openPlayer(url) {
 
 export async function handleLoginSuccess(data) {
     if (data.user) {
-        // Atualizar informações do usuário na UI
         console.log("[Login] Success:", data.user);
-        
-        // SYNC: Se a conta tem assinatura vinculada, aplicar no dispositivo atual
+
+        if (data.user.mac_address) {
+            localStorage.setItem('klyx_device_mac', data.user.mac_address);
+        }
+        if (data.user.device_key) {
+            localStorage.setItem('klyx_device_key', data.user.device_key);
+        }
+
         if (data.user.subscription) {
             const sub = data.user.subscription;
             if (sub.device_key) {
                 console.log("[Login] Syncing Subscription from Account:", sub);
                 localStorage.setItem('klyx_device_key', sub.device_key);
-                
-                // Se quiser sincronizar o "Linked MAC" como "Virtual MAC" (opcional, mas solicitado pelo usuário)
-                // Mas cuidado: se sobrescrever o MAC real, perdemos a identidade física.
-                // O usuário pediu "apareça o mesmo mac".
-                // Vamos salvar como 'klyx_virtual_mac' ou apenas usar a chave para validar.
-                // Mas para o player funcionar, ele usa klyx_device_mac.
-                
-                // Se o plano é DUO, não devemos clonar o MAC, pois precisamos de 2 MACs distintos.
-                // Mas o usuário insistiu. Vamos respeitar a CHAVE que é o mais importante.
-                // O MAC real será usado para ocupar o slot.
-                
-                // Forçar verificação imediata
-                subStatusCache = null; 
-                await checkSubscription();
             }
+            if (sub.linked_mac) {
+                localStorage.setItem('klyx_device_mac', sub.linked_mac);
+            }
+            subStatusCache = null; 
+            await checkSubscription();
         }
     }
 }
-

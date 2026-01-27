@@ -697,6 +697,17 @@ export const api = {
             return { ok: false, status: 400, data: { message: "User already exists" } };
         }
 
+        let subKey = key || null;
+        let subMac = mac || null;
+        if (!subKey) {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            subKey = Array(12).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join("");
+        }
+        if (!subMac) {
+            const hex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, "0");
+            subMac = `${hex()}:${hex()}:${hex()}:${hex()}:${hex()}:${hex()}`;
+        }
+
         const newUser = {
             id: emailKey,
             email: email,
@@ -705,8 +716,8 @@ export const api = {
             created_at: new Date().toISOString(),
             // Assinatura (Subscription) & Vinculação de Dispositivo
             subscription: {
-                device_key: key || null,
-                linked_mac: mac || null
+                device_key: subKey,
+                linked_mac: subMac
             },
             plan: 'individual', // individual, duo, family, premium
             status: 'pending_activation', // active, expired, pending_activation

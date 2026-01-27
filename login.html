@@ -174,17 +174,24 @@
               return;
             }
 
-            // Sync MAC/Key if server requires it (Unified Account MAC)
-            // Agora o 'handleLoginSuccess' já deve ter cuidado disso se implementado, mas vamos reforçar aqui
-            // Se o 'res.data.user.subscription' veio, usamos ele.
-            
+            if (res.data.user) {
+                 const u = res.data.user;
+                 if (u.mac_address) {
+                      localStorage.setItem('klyx_device_mac', u.mac_address);
+                 }
+                 if (u.device_key) {
+                      localStorage.setItem('klyx_device_key', u.device_key);
+                 }
+            }
+
             if (res.data.user && res.data.user.subscription) {
                  const sub = res.data.user.subscription;
                  if (sub.device_key) {
                       console.log("[Login] Syncing Account Subscription (Key)", sub.device_key);
                       localStorage.setItem('klyx_device_key', sub.device_key);
-                      // Se o usuário quiser forçar o MAC também:
-                      // localStorage.setItem('klyx_device_mac', sub.linked_mac);
+                 }
+                 if (sub.linked_mac) {
+                      localStorage.setItem('klyx_device_mac', sub.linked_mac);
                  }
             } else if (res.data.sync_device) {
                  console.log("Syncing device MAC/Key with account...", res.data.sync_device);
@@ -213,4 +220,3 @@
     </script>
   </body>
 </html>
-

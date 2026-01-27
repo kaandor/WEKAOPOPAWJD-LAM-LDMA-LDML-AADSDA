@@ -711,6 +711,20 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     });
   }
 
+  // --- MULTI-PROXY FALLBACK SYSTEM ---
+  // List of proxies to try in order.
+  // 1. corsproxy.io (Best, fast, HTTPS-compliant)
+  // 2. allorigins (Good backup)
+  // 3. thingproxy (Another option)
+  const PROXY_LIST = [
+       (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+       (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+       //(u) => `https://thingproxy.freeboard.io/fetch/${u}` // Often unstable, kept as last resort
+  ];
+
+  let currentProxyIndex = 0;
+  let hasTriedAllProxies = false;
+
   const loadStream = (url, startTime = 0) => {
       const log = null;
       // Save original URL for external fallback (to avoid forcing HTTPS on servers that don't support it)
@@ -723,13 +737,23 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       if (window.location.protocol === 'https:' && url.startsWith('http:') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
           console.warn("Mixed Content detected (HTTP on HTTPS).");
           
-          // ALWAYS use proxy for Mixed Content, because upgrading to HTTPS often fails (providers lack SSL)
-          // and we can't rely on isStaticHost to detect custom domains on GitHub Pages.
-          if (!url.includes("corsproxy.io")) {
-               console.warn("Forcing public CORS proxy for Mixed Content...");
-               url = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+          // Check if already proxied by one of our known proxies
+          const isProxied = url.includes("corsproxy.io") || url.includes("api.allorigins.win") || url.includes("thingproxy");
+
+          if (!isProxied) {
+               console.warn(`Forcing Proxy (Attempt ${currentProxyIndex + 1})...`);
+               
+               // Use the current proxy in the rotation
+               const proxyFn = PROXY_LIST[currentProxyIndex];
+               if (proxyFn) {
+                   url = proxyFn(url);
+               } else {
+                   // Should not happen if index is managed correctly, but fallback to first
+                   url = PROXY_LIST[0](url);
+               }
           }
       }
+
 
       // FORCE PROXY logic for simple_server with proxy support
       // Only apply if we are running on a server (http/https), not file://
@@ -960,6 +984,33 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                   // Many IPTV streams are MPEG-TS or HLS without .m3u8 extension.
                   // If native player fails with code 4, we try HLS.js
                   if (err && err.code === 4 && !hls) {
+                      
+                      // --- MULTI-PROXY ROTATION FOR MP4/STATIC FILES ---
+                      // If it's a Mixed Content situation (HTTPS) and we are using proxies,
+                      // Error 4 might mean the proxy failed or returned an error page.
+                      // Try the next proxy BEFORE giving up or trying HLS (which won't work for MP4).
+                      
+                      const isMP4 = originalUrl.includes(".mp4") || originalUrl.includes(".mkv") || originalUrl.includes(".avi");
+                      const isMixedContent = window.location.protocol === 'https:' && originalUrl.startsWith('http:');
+                      
+                      if (isMixedContent && isMP4 && currentProxyIndex < PROXY_LIST.length - 1) {
+                           console.warn(`Proxy ${currentProxyIndex} failed for MP4. Trying next proxy...`);
+                           currentProxyIndex++;
+                           
+                           if (errMsgEl) errMsgEl.innerHTML = `Tentando servidor alternativo (${currentProxyIndex+1}/${PROXY_LIST.length})...`;
+                           
+                           // Clean up and retry
+                           video.removeAttribute('src'); // Detach current broken stream
+                           video.load();
+                           
+                           // Use original URL, loadStream will apply the new proxy based on currentProxyIndex
+                           setTimeout(() => loadStream(originalUrl, startTime), 1000);
+                           return;
+                      }
+                      
+                      // If we exhausted proxies OR it's not a proxy issue, proceed to HLS check
+                      // ---------------------------------------------------------------------
+
                       console.warn("Media Format Error (4). Assuming IPTV Stream. Trying HLS.js...");
                       if (log) log.innerHTML += "<div>ERR 4: TRYING HLS.JS...</div>";
                       if (errMsgEl) {
