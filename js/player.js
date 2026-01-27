@@ -628,6 +628,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
   // Track the current playing URL to determine selection state
   let currentPlayingUrl = streamUrl;
 
+  // Helper to detect if we are running in a static environment (GitHub Pages, etc) where proxy is unavailable
+  const isStaticHost = window.location.hostname.includes("github.io") || 
+                       window.location.hostname.includes("vercel.app") || 
+                       window.location.hostname.includes("netlify.app") ||
+                       window.location.protocol === "file:";
+
   // Ensure HLS lib is loaded if needed
   // Always load HLS.js for 'live' type or if .m3u8 is detected
   if (!window.Hls && (streamType === "hls" || (streamUrlSub && getStreamType(streamUrlSub) === "hls") || qs("type") === "live")) {
@@ -645,9 +651,21 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       const log = null;
       if (log) log.innerHTML += `<div>Attempting load: ${url} (Start: ${startTime}s)</div>`;
 
+      // MIXED CONTENT CHECK
+      if (window.location.protocol === 'https:' && url.startsWith('http:') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+          console.error("Mixed Content Error: Trying to play HTTP stream on HTTPS site.");
+          const errMsgEl = document.getElementById("errorMsg");
+          const errOverlay = document.getElementById("errorOverlay");
+          if (errMsgEl && errOverlay) {
+              errMsgEl.innerHTML = "Erro de Segurança (Mixed Content).<br>Não é possível reproduzir canais HTTP (inseguros) no GitHub Pages (HTTPS).<br>Use a versão Desktop ou um servidor local.";
+              errOverlay.style.display = "flex";
+          }
+          // We continue anyway, but it will likely fail
+      }
+
       // FORCE PROXY logic for simple_server with proxy support
       // Only apply if we are running on a server (http/https), not file://
-      if (window.location.protocol.startsWith('http') && url.startsWith("http") && !url.includes("/stream-proxy") && !url.includes("localhost") && !url.includes("127.0.0.1")) {
+      if (!isStaticHost && window.location.protocol.startsWith('http') && url.startsWith("http") && !url.includes("/stream-proxy") && !url.includes("localhost") && !url.includes("127.0.0.1")) {
           console.warn("Forcing proxy for external URL...");
           if (log) log.innerHTML += "<div>Forcing Proxy...</div>";
           
@@ -851,7 +869,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                   // -------------------------------------------------------
 
                   // Proxy Fallback Logic
-                  if (!url.includes("/stream-proxy") && url.startsWith("http")) {
+                  if (!isStaticHost && !url.includes("/stream-proxy") && url.startsWith("http")) {
                       console.warn("Video failed, trying proxy...");
                       if (log) log.innerHTML += "<div>RETRYING WITH PROXY...</div>";
                       const proxyUrl = `/stream-proxy?url=${encodeURIComponent(url)}`;
@@ -886,10 +904,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
       }, 5000);
 
       // Helper to detect if we are running in a static environment (GitHub Pages, etc) where proxy is unavailable
-  const isStaticHost = window.location.hostname.includes("github.io") || 
-                       window.location.hostname.includes("vercel.app") || 
-                       window.location.hostname.includes("netlify.app") ||
-                       window.location.protocol === "file:";
+      // const isStaticHost = ... // Moved to top of attachSource
 
   // PROACTIVE TS FIX:
   // If the URL is a TS file OR a Live stream without .m3u8 extension, force it through the proxy
