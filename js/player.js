@@ -772,32 +772,35 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
           // Detect URL pattern: http://camelo.vip:80/movie/USER/PASS/ID.mp4
           // Or: http://camelo.vip:80/USER/PASS/ID.ts
           
+          // Sanitize MAC: Remove colons for URL compatibility
+          const cleanMac = mac.replace(/:/g, '');
+
           const parts = finalUrl.split('/');
           // Example parts: ["http:", "", "camelo.vip:80", "movie", "Jonas1854", "Q57Bmz", "363191.mp4"]
           
           if (finalUrl.includes("/movie/")) {
               if (parts.length >= 6) {
-                  parts[4] = mac;
+                  parts[4] = cleanMac;
                   parts[5] = key;
                   finalUrl = parts.join('/');
-                  logToOverlay(`Credential Replaced (Movie): ${finalUrl}`);
+                  logToOverlay(`Credential Replaced (Movie) [Sanitized MAC]: ${finalUrl}`);
               }
           } else if (finalUrl.includes("/series/")) {
                // http://host/series/user/pass/id.mp4
                if (parts.length >= 6) {
-                  parts[4] = mac;
+                  parts[4] = cleanMac;
                   parts[5] = key;
                   finalUrl = parts.join('/');
-                  logToOverlay(`Credential Replaced (Series): ${finalUrl}`);
+                  logToOverlay(`Credential Replaced (Series) [Sanitized MAC]: ${finalUrl}`);
                }
           } else if (parts.length >= 5) {
               // Live or other without /movie/ or /series/
               // Ensure we don't accidentally break URLs with other prefixes
               if (parts[3] !== 'movie' && parts[3] !== 'series') {
-                  parts[3] = mac;
+                  parts[3] = cleanMac;
                   parts[4] = key;
                   finalUrl = parts.join('/');
-                  logToOverlay(`Credential Replaced (Live): ${finalUrl}`);
+                  logToOverlay(`Credential Replaced (Live) [Sanitized MAC]: ${finalUrl}`);
               }
           }
       } else {
