@@ -286,69 +286,77 @@ export async function initPlayer() {
                }
                
                if (!isActive) {
-                   clearInterval(subCheckInterval);
-                   video.pause();
-                   showExpiredModal();
-               }
-           }
-       } catch (e) {
-           console.error("Sub check failed", e);
-       }
-  }, 10000); // Check every 10s
-
-  // Initial Check (Run once immediately)
-  (async () => {
-       try {
-           const mac = localStorage.getItem('klyx_device_mac');
-           if (mac) {
-               const dRes = await api.auth.checkDevice(mac, localStorage.getItem('klyx_device_key'));
-               if (dRes.ok && dRes.data) {
-                    const d = dRes.data;
-                    const now = new Date();
-                    const exp = d.expires_at || d.subscription_expires_at;
-                    if (exp && new Date(exp) < now) {
-                        showExpiredModal();
-                        if(video) video.pause();
-                        return; // Stop here
-                    }
-               }
-           } else {
-               const me = await api.auth.me();
-               if (me.ok && me.data?.user) {
-                   const u = me.data.user;
-                   const exp = u.expires_at || u.subscription_expires_at;
-                   const status = u.status || u.subscription_status || 'active';
-                   if (status !== 'active' || (exp && new Date(exp) < new Date())) {
-                       showExpiredModal();
-                       if(video) video.pause();
-                       return;
+                       clearInterval(subCheckInterval);
+                       video.pause();
+                       showExpiredModal(status === 'expired' ? 'expired' : 'blocked');
                    }
                }
+           } catch (e) {
+               console.error("Sub check failed", e);
            }
-       } catch(e) {}
-  })();
-
-  function showExpiredModal() {
-       // Show blocking modal
-       const modal = document.createElement('div');
-       modal.style.position = 'fixed';
-       modal.style.top = '0';
-       modal.style.left = '0';
-       modal.style.width = '100%';
-       modal.style.height = '100%';
-       modal.style.background = 'rgba(0,0,0,0.95)';
-       modal.style.display = 'flex';
-       modal.style.flexDirection = 'column';
-       modal.style.alignItems = 'center';
-       modal.style.justifyContent = 'center';
-       modal.style.zIndex = '9999';
-       modal.innerHTML = `
-           <h2 style="color: #e50914; margin-bottom: 20px;">Assinatura Expirada</h2>
-           <p style="color: white; margin-bottom: 30px; text-align: center;">Seu plano encerrou agora. Por favor, renove para continuar assistindo.</p>
-           <button onclick="window.location.href='./settings.html'" style="padding: 12px 24px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Renovar Agora</button>
-       `;
-       document.body.appendChild(modal);
-  }
+      }, 10000); // Check every 10s
+    
+      // Initial Check (Run once immediately)
+      (async () => {
+           try {
+               const mac = localStorage.getItem('klyx_device_mac');
+               if (mac) {
+                   const dRes = await api.auth.checkDevice(mac, localStorage.getItem('klyx_device_key'));
+                   if (dRes.ok && dRes.data) {
+                        const d = dRes.data;
+                        const now = new Date();
+                        const exp = d.expires_at || d.subscription_expires_at;
+                        if (exp && new Date(exp) < now) {
+                            showExpiredModal('expired');
+                            if(video) video.pause();
+                            return; // Stop here
+                        }
+                   }
+               } else {
+                   const me = await api.auth.me();
+                   if (me.ok && me.data?.user) {
+                       const u = me.data.user;
+                       const exp = u.expires_at || u.subscription_expires_at;
+                       const status = u.status || u.subscription_status || 'active';
+                       if (status !== 'active' || (exp && new Date(exp) < new Date())) {
+                           showExpiredModal(status === 'pending_activation' ? 'pending' : 'expired');
+                           if(video) video.pause();
+                           return;
+                       }
+                   }
+               }
+           } catch(e) {}
+      })();
+    
+      function showExpiredModal(type = 'expired') {
+           // Show blocking modal
+           let title = "Assinatura Expirada";
+           let msg = "Renove para continuar assistindo"; // Default for expired
+           
+           if (type === 'pending' || type === 'pending_activation') {
+               title = "Bem-vindo ao Klyx";
+               msg = "Ative pela primeira vez sua conta";
+           }
+           
+           const modal = document.createElement('div');
+           modal.style.position = 'fixed';
+           modal.style.top = '0';
+           modal.style.left = '0';
+           modal.style.width = '100%';
+           modal.style.height = '100%';
+           modal.style.background = 'rgba(0,0,0,0.95)';
+           modal.style.display = 'flex';
+           modal.style.flexDirection = 'column';
+           modal.style.alignItems = 'center';
+           modal.style.justifyContent = 'center';
+           modal.style.zIndex = '9999';
+           modal.innerHTML = `
+               <h2 style="color: #e50914; margin-bottom: 20px;">${title}</h2>
+               <p style="color: white; margin-bottom: 30px; text-align: center; text-transform: uppercase;">${msg}</p>
+               <button onclick="window.location.href='./settings.html'" style="padding: 12px 24px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Renovar Agora</button>
+           `;
+           document.body.appendChild(modal);
+      }
   
   // Clear interval on unload
   window.addEventListener('beforeunload', () => clearInterval(subCheckInterval));

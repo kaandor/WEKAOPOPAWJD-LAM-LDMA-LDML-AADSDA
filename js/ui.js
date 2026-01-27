@@ -234,14 +234,23 @@ export async function initDashboard() {
       const root = document.getElementById("dashboardContent");
       if (root) {
           const isExpired = session.user.status === 'expired';
-          const msg = isExpired 
-              ? "Sua assinatura expirou. Renove para continuar assistindo." 
-              : "Este conteúdo exige uma assinatura ativa.";
+          const isPending = session.user.status === 'pending_activation';
+          
+          let msg = "Este conteúdo exige uma assinatura ativa.";
+          let title = "🔒 Conteúdo Bloqueado";
+          
+          if (isExpired) {
+              msg = "Renove para continuar assistindo";
+              title = "Assinatura Expirada";
+          } else if (isPending) {
+              msg = "Ative pela primeira vez sua conta";
+              title = "Bem-vindo ao Klyx";
+          }
               
           root.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; color: #fff;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 20px;">🔒 Conteúdo Bloqueado</h1>
-                <p style="font-size: 1.2rem; margin-bottom: 30px; color: #ccc;">${msg}</p>
+                <h1 style="font-size: 2.5rem; margin-bottom: 20px;">${title}</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 30px; color: #ccc; text-transform: uppercase;">${msg}</p>
                 <button onclick="window.showSubscriptionModal()" style="background: #e50914; color: white; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase;">
                     Assine Já
                 </button>
@@ -1066,32 +1075,7 @@ export async function initSettings() {
                    const dateStr = expires ? ` (Vence: ${new Date(expires).toLocaleDateString()})` : "";
                    statusEl.textContent = (u.status || "Ativo").toUpperCase() + dateStr;
                    statusEl.style.color = (u.status === 'active') ? "#4caf50" : "#f44336";
-                   if (planEl) planEl.textContent = (u.plan || "Individual").toUpperCase();
-                   
-                   // Update visual elements for User Mode
-                   if (macEl) {
-                        // Change label if possible
-                        try {
-                            // Try previous sibling (label)
-                            let label = macEl.previousElementSibling;
-                            // If wrapped in a div, try parent's previous sibling or child
-                            if (!label && macEl.parentElement) {
-                                label = macEl.parentElement.querySelector('label') || macEl.parentElement.querySelector('.subtext');
-                            }
-                            if (label) label.textContent = "Email";
-                        } catch(e) {}
-                        macEl.textContent = u.email;
-                   }
-                   if (keyEl) {
-                        try {
-                            let label = keyEl.previousElementSibling;
-                            if (!label && keyEl.parentElement) {
-                                label = keyEl.parentElement.querySelector('label') || keyEl.parentElement.querySelector('.subtext');
-                            }
-                            if (label) label.textContent = "Plano";
-                        } catch(e) {}
-                        keyEl.textContent = (u.plan || "Individual").toUpperCase();
-                   }
+                   if (planEl) planEl.textContent = (u.plan || "Individual").toUpperCase() + " - " + u.email;
                    return; 
               }
           }
