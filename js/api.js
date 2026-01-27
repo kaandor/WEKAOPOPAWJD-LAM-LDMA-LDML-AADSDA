@@ -703,6 +703,10 @@ export const api = {
             password: password, // NOTA: Em produção, NUNCA salve senhas em texto puro. Isso é apenas para MVP client-side.
             display_name: displayName,
             created_at: new Date().toISOString(),
+            // Assinatura (Subscription)
+            plan: 'individual', // individual, duo, family, premium
+            status: 'pending_activation', // active, expired, pending_activation
+            expires_at: null, 
             profiles: [
                 { id: "p1", name: displayName || "Perfil 1", avatar: "avatar1.png", is_kid: false }
             ]
@@ -741,7 +745,10 @@ export const api = {
                         id: user.id, 
                         email: user.email, 
                         name: user.display_name,
-                        email_key: emailKey // Guardar key para uso posterior
+                        email_key: emailKey, // Guardar key para uso posterior
+                        plan: user.plan || 'individual',
+                        status: user.status || 'pending_activation',
+                        expires_at: user.expires_at || null
                     },
                     tokens: { accessToken: "firebase-mock-token", refreshToken: "firebase-mock-refresh" }
                 };
@@ -952,6 +959,25 @@ export const api = {
     updateProfile: (payload) => request("PUT", "/api/users/me", payload),
     updateSettings: (payload) => request("PUT", "/api/users/settings", payload),
     changePassword: (payload) => request("POST", "/api/users/password", payload),
+    sync: async () => {
+        const session = readSession();
+        if (!session || !session.user || !session.user.email_key) return null;
+        
+        try {
+            const res = await fetch(`${FIREBASE_DB_URL}/users/${session.user.email_key}.json`);
+            if (res.ok) {
+                const remoteUser = await res.json();
+                if (remoteUser) {
+                    session.user = { ...session.user, ...remoteUser };
+                    writeSession(session);
+                    return session.user;
+                }
+            }
+        } catch (e) {
+            console.error("Sync user failed", e);
+        }
+        return session.user;
+    },
   },
   posters: {
     get: async (title, originalUrl, type = 'series') => {

@@ -272,9 +272,18 @@ export async function initPlayer() {
            const me = await api.auth.me();
            if (me.ok && me.data?.user) {
                const u = me.data.user;
-               const expires = u.subscription_expires_at ? new Date(u.subscription_expires_at) : null;
+               // Check both field names for compatibility
+               const expires = (u.expires_at || u.subscription_expires_at) ? new Date(u.expires_at || u.subscription_expires_at) : null;
                const now = new Date();
-               const isActive = u.subscription_status === 'active' && (expires && expires > now);
+               
+               // Check if status is explicitly active OR (if status is missing/active) check expiration date
+               // Some active users might not have status field set, so default to active if not 'blocked'/'expired'
+               const status = u.status || u.subscription_status || 'active';
+               let isActive = (status === 'active');
+               
+               if (isActive && expires && expires < now) {
+                   isActive = false;
+               }
                
                if (!isActive) {
                    clearInterval(subCheckInterval);
@@ -286,6 +295,38 @@ export async function initPlayer() {
            console.error("Sub check failed", e);
        }
   }, 10000); // Check every 10s
+
+  // Initial Check (Run once immediately)
+  (async () => {
+       try {
+           const mac = localStorage.getItem('klyx_device_mac');
+           if (mac) {
+               const dRes = await api.auth.checkDevice(mac, localStorage.getItem('klyx_device_key'));
+               if (dRes.ok && dRes.data) {
+                    const d = dRes.data;
+                    const now = new Date();
+                    const exp = d.expires_at || d.subscription_expires_at;
+                    if (exp && new Date(exp) < now) {
+                        showExpiredModal();
+                        if(video) video.pause();
+                        return; // Stop here
+                    }
+               }
+           } else {
+               const me = await api.auth.me();
+               if (me.ok && me.data?.user) {
+                   const u = me.data.user;
+                   const exp = u.expires_at || u.subscription_expires_at;
+                   const status = u.status || u.subscription_status || 'active';
+                   if (status !== 'active' || (exp && new Date(exp) < new Date())) {
+                       showExpiredModal();
+                       if(video) video.pause();
+                       return;
+                   }
+               }
+           }
+       } catch(e) {}
+  })();
 
   function showExpiredModal() {
        // Show blocking modal

@@ -1,7 +1,14 @@
 import { api } from "./api.js";
 import { requireAuth } from "./auth.js";
 
-const MAX_PROFILES = 4;
+// Plan Limits
+function getMaxProfiles() {
+    const plan = (session.user?.plan || 'individual').toLowerCase();
+    if (plan === 'premium') return 4;
+    if (plan === 'familia' || plan === 'family') return 3;
+    if (plan === 'duo') return 2;
+    return 1; // individual
+}
 
 // Ensure user is logged in
 const session = await requireAuth();
@@ -89,7 +96,8 @@ function render() {
   });
 
   // Render "Add Profile" if limit not reached
-  if (profiles.length < MAX_PROFILES) {
+  const maxProfiles = getMaxProfiles();
+  if (profiles.length < maxProfiles) {
     const addCard = document.createElement("div");
     addCard.className = "profile-card";
     

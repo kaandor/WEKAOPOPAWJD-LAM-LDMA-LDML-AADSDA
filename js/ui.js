@@ -228,6 +228,54 @@ function filterGrid(gridId, query) {
 }
 
 export async function initDashboard() {
+  // Check Subscription Status
+  const session = api.session.read();
+  if (session?.user && session.user.status !== 'active') {
+      const root = document.getElementById("dashboardContent");
+      if (root) {
+          const isExpired = session.user.status === 'expired';
+          const msg = isExpired 
+              ? "Sua assinatura expirou. Renove para continuar assistindo." 
+              : "Este conteúdo exige uma assinatura ativa.";
+              
+          root.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; color: #fff;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 20px;">🔒 Conteúdo Bloqueado</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 30px; color: #ccc;">${msg}</p>
+                <button onclick="window.showSubscriptionModal()" style="background: #e50914; color: white; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase;">
+                    Assine Já
+                </button>
+                ${session.user.expires_at ? `<p style="margin-top: 20px; color: #777;">Vencimento: ${new Date(session.user.expires_at).toLocaleDateString()}</p>` : ''}
+            </div>
+          `;
+      }
+      return;
+  }
+
+  // Define global modal helper
+  if (!window.showSubscriptionModal) {
+      window.showSubscriptionModal = () => {
+        const modal = document.createElement('div');
+        modal.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);";
+        modal.innerHTML = `
+            <div style="background:#1f1f1f;padding:40px;border-radius:12px;max-width:500px;width:90%;text-align:center;color:#fff;border:1px solid #333;box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                <h2 style="margin-bottom:20px;color:#e50914;font-size:2rem;">Assine o Klyx Premium</h2>
+                <p style="margin-bottom:30px;line-height:1.6;font-size:1.1rem;color:#ddd;">
+                    Tenha acesso ilimitado a todo o catálogo de filmes, séries e canais ao vivo em Full HD.
+                    <br><br>
+                    <strong>Planos a partir de R$ 19,90/mês</strong>
+                </p>
+                <div style="background:#2a2a2a;padding:20px;border-radius:8px;margin-bottom:30px;text-align:left;">
+                    <div style="margin-bottom:10px;">📱 <strong>WhatsApp:</strong> (11) 99999-9999</div>
+                    <div>📧 <strong>Email:</strong> suporte@klyx.com</div>
+                </div>
+                <button onclick="this.closest('div').parentElement.remove()" style="background:#e50914;color:white;border:none;padding:12px 30px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:1rem;transition:transform 0.2s;">Fechar</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+      };
+  }
+
   const res = await api.catalog.home();
   
   if (!res.ok) {
@@ -1010,14 +1058,55 @@ export async function initSettings() {
   // Poll device status (async)
   if (statusEl) {
        const pollDevice = async () => {
+          // 1. Check User Session First (Email/Pass)
+          if (api.users.sync) {
+              const u = await api.users.sync();
+              if (u && u.email) {
+                   const expires = u.expires_at;
+                   const dateStr = expires ? ` (Vence: ${new Date(expires).toLocaleDateString()})` : "";
+                   statusEl.textContent = (u.status || "Ativo").toUpperCase() + dateStr;
+                   statusEl.style.color = (u.status === 'active') ? "#4caf50" : "#f44336";
+                   if (planEl) planEl.textContent = (u.plan || "Individual").toUpperCase();
+                   
+                   // Update visual elements for User Mode
+                   if (macEl) {
+                        // Change label if possible
+                        try {
+                            // Try previous sibling (label)
+                            let label = macEl.previousElementSibling;
+                            // If wrapped in a div, try parent's previous sibling or child
+                            if (!label && macEl.parentElement) {
+                                label = macEl.parentElement.querySelector('label') || macEl.parentElement.querySelector('.subtext');
+                            }
+                            if (label) label.textContent = "Email";
+                        } catch(e) {}
+                        macEl.textContent = u.email;
+                   }
+                   if (keyEl) {
+                        try {
+                            let label = keyEl.previousElementSibling;
+                            if (!label && keyEl.parentElement) {
+                                label = keyEl.parentElement.querySelector('label') || keyEl.parentElement.querySelector('.subtext');
+                            }
+                            if (label) label.textContent = "Plano";
+                        } catch(e) {}
+                        keyEl.textContent = (u.plan || "Individual").toUpperCase();
+                   }
+                   return; 
+              }
+          }
+
           try {
               // Try to check status, but don't block if API fails
               const dRes = await api.auth.checkDevice(storedMac, storedKey);
               if (dRes.ok && dRes.data) {
                   const d = dRes.data;
-                  statusEl.textContent = d.status || (d.active ? "Ativo" : "Inativo");
-                  statusEl.style.color = d.active ? "#4caf50" : "#f44336";
-                  if (planEl) planEl.textContent = d.plan || "Padrão";
+                  const expires = d.expires_at || d.subscription_expires_at;
+                  const dateStr = expires ? ` (Vence: ${new Date(expires).toLocaleDateString()})` : "";
+                  
+                  statusEl.textContent = (d.status || (d.active ? "Ativo" : "Inativo")) + dateStr;
+                  statusEl.style.color = (d.active || d.status === 'active') ? "#4caf50" : "#f44336";
+                  if (planEl) planEl.textContent = (d.plan || "Padrão").toUpperCase();
               } else {
                   // If check fails (offline/API down), show fallback
                   statusEl.textContent = "Offline / Local";
