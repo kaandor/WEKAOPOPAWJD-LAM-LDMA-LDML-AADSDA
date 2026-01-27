@@ -874,49 +874,30 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                               const errMsgEl = document.getElementById("errorMsg");
                               if (errMsgEl) {
                                   // Keep error message minimal if we are auto-retrying or just failed proxy
-                                   errMsgEl.innerHTML = "Tentando conectar via Proxy Seguro...";
+                                   errMsgEl.innerHTML = "Falha na reprodução. Tente abrir externamente.";
                                    
-                                   // If proxy fails or takes too long, switch to Fullscreen Iframe "Emulation"
+                                   // Create Action Button
+                                   const btnId = "direct-play-btn-fallback";
+                                   let btn = document.getElementById(btnId);
+                                   if (!btn) {
+                                       btn = document.createElement("a");
+                                       btn.id = btnId;
+                                       btn.target = "_blank";
+                                       btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
+                                       btn.innerText = "▶ Abrir Vídeo em Nova Aba";
+                                       errMsgEl.parentNode.appendChild(btn);
+                                   }
+                                   btn.href = originalUrl;
+                                   
+                                   // REMOVED: Auto-switch to Iframe Emulation (causes 404s)
+                                   /*
                                    setTimeout(() => {
                                        if (video.paused || video.error) {
                                             console.warn("Proxy/Direct play failed. Switching to Iframe Emulation Mode.");
-                                            errMsgEl.style.display = 'none'; // Hide error text
-                                            
-                                            // Create Fullscreen Iframe to emulate "new page" inside the player
-                                            const iframeId = "klyx-embed-frame";
-                                            let ifr = document.getElementById(iframeId);
-                                            if (!ifr) {
-                                                ifr = document.createElement("iframe");
-                                                ifr.id = iframeId;
-                                                ifr.allowFullscreen = true;
-                                                ifr.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999; background: #000;";
-                                                document.body.appendChild(ifr);
-                                                
-                                                // Add a Close/Back button for the iframe
-                                                const closeBtn = document.createElement("button");
-                                                closeBtn.innerText = "✖ Fechar Player";
-                                                closeBtn.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; background: rgba(0,0,0,0.7); color: white; border: 1px solid #fff; padding: 5px 10px; cursor: pointer; border-radius: 4px;";
-                                                closeBtn.onclick = () => {
-                                                    ifr.remove();
-                                                    closeBtn.remove();
-                                                    // Reload page to reset player state or go back
-                                                    window.location.reload(); 
-                                                };
-                                                document.body.appendChild(closeBtn);
-                                            }
-                                            
-                                            // Try to use proxy for iframe content too if HTTP
-                                            let embedUrl = originalUrl;
-                                            if (originalUrl.startsWith("http:") && !originalUrl.includes("corsproxy.io")) {
-                                                 // Some sites block embedding via proxy, but for direct streams it helps
-                                                 // For generic web pages, direct URL is better if browser allows mixed content (it won't on Github Pages)
-                                                 // So we prefer proxy.
-                                                 embedUrl = `https://corsproxy.io/?url=${encodeURIComponent(originalUrl)}`;
-                                            }
-                                            
-                                            ifr.src = embedUrl;
+                                            // ...
                                        }
                                    }, 2500);
+                                   */
                               }
                           }
               });
@@ -1331,6 +1312,16 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
   video.onerror = function(e) {
       console.error("Video Error:", video.error);
       if (log) log.innerHTML += `<div>VIDEO ERROR: ${video.error ? video.error.message : 'Unknown'}</div>`;
+
+      // PREVENT PREMATURE FAILURE DURING PROXY ROTATION
+      // If we are rotating proxies for MP4/Mixed Content, ignore this error (let the rotation logic handle it)
+      const isMP4 = streamUrl.includes(".mp4") || streamUrl.includes(".mkv") || streamUrl.includes(".avi");
+      const isMixedContent = window.location.protocol === 'https:' && streamUrl.startsWith('http:');
+      
+      if (isMixedContent && isMP4 && currentProxyIndex < PROXY_LIST.length - 1) {
+           console.warn(`[VideoError] Ignoring error during proxy rotation (Attempt ${currentProxyIndex + 1}/${PROXY_LIST.length})`);
+           return;
+      }
       
       const currentSrc = video.src;
       
