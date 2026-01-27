@@ -822,10 +822,25 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                   const p = video.play();
                   if (p) p.catch(e => { 
                       if (e.name !== 'AbortError') console.error("Native fallback play error:", e);
-                      // If native fallback also fails on static host, show error
+                      // If native fallback also fails on static host, show error with Action Button
                       if (isStaticHost) {
                           const errMsgEl = document.getElementById("errorMsg");
-                          if (errMsgEl) errMsgEl.innerHTML = "Erro de Reprodução Web.<br>Este servidor não é compatível com navegadores (HTTPS/CORS).<br>Use o App Desktop ou Android.";
+                          if (errMsgEl) {
+                              errMsgEl.innerHTML = "Erro de Reprodução Web.<br>Este servidor não é compatível com navegadores seguros (HTTPS).<br>Tente abrir diretamente:";
+                              
+                              // Create Action Button
+                              const btnId = "direct-play-btn";
+                              let btn = document.getElementById(btnId);
+                              if (!btn) {
+                                  btn = document.createElement("a");
+                                  btn.id = btnId;
+                                  btn.target = "_blank";
+                                  btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
+                                  btn.innerText = "▶ Abrir Vídeo em Nova Aba";
+                                  errMsgEl.parentNode.appendChild(btn);
+                              }
+                              btn.href = url; // Set current URL
+                          }
                       }
                   });
               }
@@ -1090,12 +1105,25 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
               }
 
               // On Static Host, show detailed error if it's a network error (likely CORS/Mixed Content)
-               if (isStaticHost && data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                    const errMsgEl = document.getElementById("errorMsg");
-                    if (errMsgEl) {
-                        errMsgEl.innerHTML = "Falha na Conexão Segura.<br>O servidor deste vídeo não suporta HTTPS (obrigatório no GitHub).<br>Use a versão Desktop ou Android do App.";
-                    }
-               }
+                if (isStaticHost && data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                     const errMsgEl = document.getElementById("errorMsg");
+                     if (errMsgEl) {
+                         errMsgEl.innerHTML = "Falha na Conexão Segura.<br>O servidor deste vídeo não suporta HTTPS (obrigatório no GitHub).<br>Tente abrir externamente:";
+                         
+                         // Create Action Button
+                         const btnId = "direct-play-btn-hls";
+                         let btn = document.getElementById(btnId);
+                         if (!btn) {
+                             btn = document.createElement("a");
+                             btn.id = btnId;
+                             btn.target = "_blank";
+                             btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
+                             btn.innerText = "▶ Abrir Vídeo em Nova Aba";
+                             errMsgEl.parentNode.appendChild(btn);
+                         }
+                         btn.href = url;
+                     }
+                }
 
               switch (data.type) {
                 case window.Hls.ErrorTypes.NETWORK_ERROR:
