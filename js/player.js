@@ -742,14 +742,19 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
   }
 
   const logToOverlay = (msg) => {
-      console.log("[PlayerDebug]", msg);
-      if (debugEl) {
-          const line = document.createElement("div");
-          line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-          debugEl.appendChild(line);
-          debugEl.scrollTop = debugEl.scrollHeight;
-      }
-  };
+              console.log("[PlayerDebug]", msg);
+              if (debugEl) {
+                  const line = document.createElement("div");
+                  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                  line.style.borderBottom = "1px solid #333";
+                  debugEl.appendChild(line);
+                  debugEl.scrollTop = debugEl.scrollHeight;
+              }
+          };
+
+          // Initial instructions
+          logToOverlay("Debug Mode ON. Press 'D' to toggle.");
+          logToOverlay("Se filmes falham (404), tente um Canal ao Vivo e compare a URL.");
 
   const loadStream = (url, startTime = 0) => {
       const log = null;
@@ -1069,11 +1074,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                               btn = document.createElement("a");
                               btn.id = btnId;
                               btn.target = "_blank";
-                          btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;";
-                          btn.innerText = "▶ Abrir Externamente (Caso não carregue)";
+                          btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;";
+                          btn.innerText = "▶ Abrir Vídeo em Nova Aba";
                           errMsgEl.appendChild(btn);
                       }
-                      btn.href = originalUrl;
+                      btn.href = finalUrl;
+                      logToOverlay(`Fallback Button URL set to: ${finalUrl}`);
                   }
                   
                   // Check if HLS lib is loaded, if not load it
