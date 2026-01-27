@@ -792,6 +792,62 @@ export const api = {
                  const device = await res.json();
                  
                  if (!device) {
+                     // TENTATIVA DE AUTO-ATIVAÇÃO VIA CHAVE MESTRA
+                     // Se não achou pelo MAC, verifique se a CHAVE existe e permite múltiplos dispositivos
+                     if (key) {
+                         try {
+                             const keyRes = await fetch(`${FIREBASE_DB_URL}/keys/${key}.json`, { signal: controller.signal });
+                             const keyData = await keyRes.json();
+                             
+                             if (keyData && keyData.mac) {
+                                 const masterMac = keyData.mac;
+                                 // Fetch master device
+                                 const masterRes = await fetch(`${FIREBASE_DB_URL}/devices/${masterMac}.json`, { signal: controller.signal });
+                                 const masterDevice = await masterRes.json();
+                                 
+                                 if (masterDevice && masterDevice.status === 'active') {
+                                     // Check limits
+                                     const max = parseInt(masterDevice.max_ips || 1);
+                                     const allowed = Array.isArray(masterDevice.allowed_ips) ? masterDevice.allowed_ips : [];
+                                     
+                                     // Se já está na lista (mas por algum motivo não tinha registro próprio), ok
+                                     // Se não está, verifica se tem vaga
+                                     if (allowed.includes(macId) || allowed.length < max) {
+                                          console.log(`[AutoActivate] Linking ${macId} to master ${masterMac} (Slots: ${allowed.length}/${max})`);
+                                          
+                                          // Add to allowed list if not present
+                                          if (!allowed.includes(macId)) {
+                                              allowed.push(macId);
+                                              // Update master allowed list
+                                              await fetch(`${FIREBASE_DB_URL}/devices/${masterMac}.json`, {
+                                                  method: 'PATCH',
+                                                  body: JSON.stringify({ allowed_ips: allowed })
+                                              });
+                                          }
+                                          
+                                          // Create Mirror Device Record
+                                          const newDevice = { ...masterDevice };
+                                          newDevice.mac_address = macId; // Override MAC
+                                          // Manter referência ao mestre? Talvez não precise, basta copiar os dados de acesso.
+                                          // Mas se o mestre renovar, esse aqui fica desatualizado.
+                                          // IDEAL: O cliente deveria sempre checar o mestre.
+                                          // MAS para compatibilidade, vamos criar um registro duplicado E manter sincronia futura (difícil sem backend).
+                                          // SOLUÇÃO: Criar registro independente mas com MESMOS dados.
+                                          
+                                          await fetch(`${FIREBASE_DB_URL}/devices/${macId}.json`, {
+                                              method: 'PUT',
+                                              body: JSON.stringify(newDevice)
+                                          });
+                                          
+                                          return { ok: true, status: 200, data: newDevice };
+                                     }
+                                 }
+                             }
+                         } catch(e) {
+                             console.error("Auto-activate failed", e);
+                         }
+                     }
+
                     return { ok: true, status: 200, data: { status: 'inactive', active: false, plan: 'free' } };
                  }
 

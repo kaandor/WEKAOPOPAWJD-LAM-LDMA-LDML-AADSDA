@@ -434,9 +434,9 @@ export async function initDashboard() {
              // (Note: api.js maps recent items, check if season/episode are preserved)
              if (item.season_number) params.set("season", item.season_number);
              if (item.episode_number) params.set("episode", item.episode_number);
-             window.location.href = `./player.html?${params.toString()}`;
+             openPlayer(`./player.html?${params.toString()}`);
           } else {
-             window.location.href = `./player.html?${params.toString()}`;
+             openPlayer(`./player.html?${params.toString()}`);
           }
         },
       }),
@@ -451,7 +451,7 @@ export async function initDashboard() {
       imageKey: "poster_url",
       onSelect: async (item) => {
           if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
-          window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`;
+          openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`);
       },
     }),
   );
@@ -465,7 +465,7 @@ export async function initDashboard() {
         imageKey: "poster_url",
       onSelect: async (item) => {
           if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
-          window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`;
+          openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`);
       },
     }),
     );
@@ -488,7 +488,7 @@ export async function initDashboard() {
         items: rails.nightMovies,
         itemType: "movie",
         imageKey: "poster_url",
-        onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
+        onSelect: (item) => (openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`)),
       }),
     );
   }
@@ -500,7 +500,7 @@ export async function initDashboard() {
         items: rails.horrorMovies,
         itemType: "movie",
         imageKey: "poster_url",
-        onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
+        onSelect: (item) => (openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`)),
       }),
     );
   }
@@ -512,7 +512,7 @@ export async function initDashboard() {
         items: rails.comedyMovies,
         itemType: "movie",
         imageKey: "poster_url",
-        onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
+        onSelect: (item) => (openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`)),
       }),
     );
   }
@@ -524,7 +524,7 @@ export async function initDashboard() {
         items: rails.actionMovies,
         itemType: "movie",
         imageKey: "poster_url",
-        onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
+        onSelect: (item) => (openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`)),
       }),
     );
   }
@@ -536,7 +536,7 @@ export async function initDashboard() {
         items: rails.adventureMovies,
         itemType: "movie",
         imageKey: "poster_url",
-        onSelect: (item) => (window.location.href = `./player.html?type=movie&id=${encodeURIComponent(item.id)}`),
+        onSelect: (item) => (openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`)),
       }),
     );
   }
@@ -740,7 +740,7 @@ async function loadMoviesCatalog() {
                       streamSub: item.stream_url_sub || "",
                       category: item.category || ""
                   });
-                  window.location.href = `./player.html?${params.toString()}`;
+                  openPlayer(`./player.html?${params.toString()}`);
               },
           }));
       }
@@ -809,7 +809,7 @@ async function loadMovies(isLoadMore = false) {
                  streamSub: m.stream_url_sub || "",
                  category: m.category || ""
              });
-             window.location.href = `./player.html?${params.toString()}`;
+             openPlayer(`./player.html?${params.toString()}`);
          },
         progress: (m.position_seconds && m.duration_seconds) ? (m.position_seconds / m.duration_seconds) * 100 : 0,
         type: 'movie'
@@ -1034,7 +1034,7 @@ async function showSeriesDetails(seriesId) {
                   season: ep.season_number || "",
                   episode: ep.episode_number || ""
               });
-              window.location.href = `./player.html?${params.toString()}`;
+              openPlayer(`./player.html?${params.toString()}`);
           }
         });
         epList.append(card);
@@ -1110,7 +1110,7 @@ async function loadLive(isLoadMore = false) {
                   stream: c.stream_url || "",
                   category: c.category || ""
               });
-              window.location.href = `./player.html?${params.toString()}`;
+              openPlayer(`./player.html?${params.toString()}`);
           },
           type: 'live'
         });
@@ -1293,3 +1293,46 @@ export async function initSettings() {
     save.addEventListener("click", saveSettings);
   }
 }
+
+function openPlayer(url) {
+    // Remove existing player if any
+    let existing = document.getElementById("klyx-player-overlay");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "klyx-player-overlay";
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999; display: flex; flex-direction: column;";
+
+    // Close Button
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.cssText = "position: absolute; top: 20px; right: 20px; z-index: 100000; background: rgba(0,0,0,0.5); color: white; border: 2px solid white; border-radius: 50%; width: 50px; height: 50px; font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;";
+    closeBtn.onmouseover = () => closeBtn.style.background = "rgba(200,0,0,0.8)";
+    closeBtn.onmouseout = () => closeBtn.style.background = "rgba(0,0,0,0.5)";
+    
+    const closeHandler = (event) => {
+        if (event.data === "klyx-close-player") {
+            overlay.remove();
+            window.removeEventListener("message", closeHandler);
+        }
+    };
+    window.addEventListener("message", closeHandler);
+
+    closeBtn.onclick = () => {
+        overlay.remove();
+        window.removeEventListener("message", closeHandler);
+        // Reload to stop audio if iframe doesn't handle it
+        // Or just removing iframe is enough for modern browsers
+    };
+
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.style.cssText = "width: 100%; height: 100%; border: none; flex: 1;";
+    iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
+    iframe.allowFullscreen = true;
+    
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+}
+

@@ -144,6 +144,16 @@ export async function initPlayer() {
 
   if (back) {
     back.addEventListener("click", () => {
+      // If inside iframe (overlay mode), close it
+      if (window.self !== window.top) {
+          try {
+              window.parent.postMessage("klyx-close-player", "*");
+          } catch(e) {
+              console.error("Failed to post message to parent", e);
+          }
+          return;
+      }
+
       if (type === "live") window.location.href = "./live-tv.html";
       else if (type === "movie") window.location.href = "./movies.html";
       else window.location.href = "./series.html";
