@@ -6,7 +6,6 @@ let subStatusTime = 0;
 
 async function checkSubscription() {
     const now = Date.now();
-    // Cache valid for 30 seconds to avoid spamming API on rapid clicks
     if (subStatusCache !== null && (now - subStatusTime < 30000)) { 
         return subStatusCache;
     }
@@ -32,29 +31,42 @@ async function checkSubscription() {
              } else {
                  // Fallback: Check user session directly if device is not linked/active
                  // User reported that DB might not have MAC/Key linked properly.
-                 console.log("[SubCheck] Device check failed/inactive. Trying User Session fallback...");
+                console.log("[SubCheck] Device check failed/inactive. Trying User Session fallback...");
                  try {
                      const userRes = await api.auth.me();
-                     if (userRes.ok && userRes.data && (userRes.data.active === true || userRes.data.active === "true" || userRes.data.active === "1" || userRes.data.status === 'active')) {
-                         console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
-                         subStatusCache = true;
-                     } else {
-                         console.log("[SubCheck] User Session also inactive/failed.");
-                         subStatusCache = false;
-                     }
+                    if (userRes.ok && userRes.data) {
+                        const user = userRes.data.user || userRes.data;
+                        const uStatus = String(user.status || "").toLowerCase();
+                        const isUserActive = (uStatus === "active" || user.active === true || user.active === "true" || user.active === "1");
+                        if (isUserActive) {
+                            console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
+                            subStatusCache = true;
+                        } else {
+                            console.log("[SubCheck] User Session also inactive/failed.");
+                            subStatusCache = false;
+                        }
+                    } else {
+                        subStatusCache = false;
+                    }
                  } catch (userErr) {
                      console.warn("[SubCheck] Session fallback error", userErr);
                      subStatusCache = false;
                  }
              }
         } else {
-            // If device check failed completely (e.g. 404), try session fallback too
             console.log("[SubCheck] Device check error. Trying User Session fallback...");
              try {
                  const userRes = await api.auth.me();
-                 if (userRes.ok && userRes.data && (userRes.data.active === true || userRes.data.active === "true" || userRes.data.active === "1" || userRes.data.status === 'active')) {
-                     console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
-                     subStatusCache = true;
+                 if (userRes.ok && userRes.data) {
+                     const user = userRes.data.user || userRes.data;
+                     const uStatus = String(user.status || "").toLowerCase();
+                     const isUserActive = (uStatus === "active" || user.active === true || user.active === "true" || user.active === "1");
+                     if (isUserActive) {
+                         console.log("[SubCheck] User Session is ACTIVE. Allowing access.");
+                         subStatusCache = true;
+                     } else {
+                         subStatusCache = false;
+                     }
                  } else {
                      subStatusCache = false;
                  }
@@ -360,17 +372,18 @@ function filterGrid(gridId, query) {
 }
 
 export async function initDashboard() {
-  // Check Subscription Status
-  const session = api.session.read();
-  if (session?.user && session.user.status !== 'active') {
+  const hasSub = await checkSubscription().catch(() => true);
+  if (!hasSub) {
+      const session = api.session.read();
       const root = document.getElementById("dashboardContent");
       if (root) {
-          const isExpired = session.user.status === 'expired';
-          const isPending = session.user.status === 'pending_activation';
-          
+          const status = session?.user?.status || "";
+          const isExpired = status === 'expired';
+          const isPending = status === 'pending_activation';
+
           let msg = "Este conteúdo exige uma assinatura ativa.";
           let title = "🔒 Conteúdo Bloqueado";
-          
+
           if (isExpired) {
               msg = "Renove para continuar assistindo";
               title = "Assinatura Expirada";
@@ -378,7 +391,9 @@ export async function initDashboard() {
               msg = "Ative pela primeira vez sua conta";
               title = "Bem-vindo ao Klyx";
           }
-              
+
+          const exp = session?.user?.expires_at;
+
           root.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; color: #fff;">
                 <h1 style="font-size: 2.5rem; margin-bottom: 20px;">${title}</h1>
@@ -386,7 +401,7 @@ export async function initDashboard() {
                 <button onclick="window.showSubscriptionModal()" style="background: #e50914; color: white; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase;">
                     Assine Já
                 </button>
-                ${session.user.expires_at ? `<p style="margin-top: 20px; color: #777;">Vencimento: ${new Date(session.user.expires_at).toLocaleDateString()}</p>` : ''}
+                ${exp ? `<p style="margin-top: 20px; color: #777;">Vencimento: ${new Date(exp).toLocaleDateString()}</p>` : ''}
             </div>
           `;
       }
