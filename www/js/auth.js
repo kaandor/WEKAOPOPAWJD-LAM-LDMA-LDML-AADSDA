@@ -63,7 +63,21 @@ export async function requireAuth({ redirectTo = "./login.html" } = {}) {
   }
 
   if (redirectTo) {
-    window.location.href = redirectTo;
+    // Check if we are already at the target URL to avoid "ERR_ABORTED" and reload loops
+    try {
+        const currentUrl = new URL(window.location.href);
+        const targetUrl = new URL(redirectTo, window.location.href);
+        
+        if (currentUrl.href !== targetUrl.href) {
+            console.log(`[Auth] Redirecting to ${redirectTo}`);
+            window.location.href = redirectTo;
+        } else {
+             console.log(`[Auth] Already at target ${redirectTo}, skipping redirect.`);
+        }
+    } catch (e) {
+        // Fallback if URL parsing fails
+        window.location.href = redirectTo;
+    }
     return null;
   }
   return null;

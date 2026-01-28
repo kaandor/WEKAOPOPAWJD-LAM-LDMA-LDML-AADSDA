@@ -139,6 +139,31 @@ function formatReleaseDate(dateStr, fallbackYear) {
   return fallbackYear ? String(fallbackYear) : "";
 }
 
+// --- IMAGE PROXY HELPER ---
+// Uses images.weserv.nl to proxy HTTP images to HTTPS and optimize them.
+// This fixes "Mixed Content" warnings and access issues with some IPTV providers (e.g. camelo.vip).
+function getOptimizedImageUrl(url) {
+    if (!url) return "./assets/logos/logo.svg";
+    
+    // If it's already a local asset or data URL, return as is
+    if (url.startsWith("./") || url.startsWith("data:")) return url;
+
+    // Specific fix for camelo.vip or any HTTP url when we are on HTTPS
+    // We can just proxy EVERYTHING external through weserv for better caching and HTTPS support.
+    // Excluding tmdb if we want, but weserv is fast.
+    
+    // Check if it's an external URL
+    if (url.startsWith("http")) {
+        // Use weserv.nl
+        // url param must be without protocol for some versions, but standard support full url.
+        // Let's strip protocol to be safe and cleaner.
+        const cleanUrl = url.replace(/^https?:\/\//, '');
+        return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=400&fit=cover&output=webp&q=80`;
+    }
+    
+    return url;
+}
+
 export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClick, progress, watched }) {
   const card = el("div", "card");
   // Ensure card is relative for positioning
@@ -150,11 +175,20 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
   img.loading = "lazy";
   
   const fallbackUrl = "./assets/logos/logo.svg";
-  img.src = posterUrl || fallbackUrl;
+  // Use proxy
+  img.src = getOptimizedImageUrl(posterUrl);
   
   img.onerror = () => {
-      if (img.src.includes(fallbackUrl)) return;
-      img.src = fallbackUrl;
+      // If proxy fails, try original as last resort (if different) or fallback
+      if (img.src.includes("images.weserv.nl")) {
+          // Try original url if proxy failed (might be a Mixed Content issue if we do this, but worth a shot? No, just fallback)
+          console.warn(`[ImageError] Proxy failed for ${posterUrl}. Reverting to fallback.`);
+          img.src = fallbackUrl;
+      } else {
+          if (img.src.includes(fallbackUrl)) return;
+          img.src = fallbackUrl;
+      }
+      
       img.style.objectFit = "contain";
       img.style.padding = "20px";
       img.style.background = "#000";
