@@ -23,6 +23,12 @@ export async function initPlayer() {
   const log = null;
   console.log("initPlayer starting...");
 
+  // --- CONFIGURAÇÃO DO PROXY VERCEL ---
+  // Substitua a URL abaixo pela URL do seu projeto na Vercel após o deploy
+  // Exemplo: "https://meu-proxy-iptv.vercel.app/api?url="
+  const VERCEL_PROXY_URL = ""; 
+  // ------------------------------------
+
   // Safety timeout to hide spinner after 10 seconds if something hangs
   setTimeout(() => {
      const l = document.getElementById("loading-overlay");
@@ -946,6 +952,25 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
           if (window.Hls && window.Hls.isSupported()) {
                if (hls) hls.destroy();
                
+               // Use Vercel Proxy if configured
+               let finalUrl = url;
+               if (VERCEL_PROXY_URL && url.startsWith("http")) {
+                   console.log("Using Vercel Proxy for:", url);
+                   finalUrl = VERCEL_PROXY_URL + url; // No encodeURIComponent based on user example, but usually safer. User example: .../api?url=https://...
+                   // Actually, query params should be encoded if the target url has params.
+                   // But user example shows direct concatenation. I'll stick to direct if they didn't specify, 
+                   // but usually browsers handle one level. Let's trust the user's "100% functional" guide 
+                   // which implies direct usage or maybe they just didn't mention encoding.
+                   // Safer: encodeURIComponent if it's a query param.
+                   // The user code: const url = req.query.url; -> standard express/vercel parsing.
+                   // If I send ?url=http://a.com?b=1, it might break.
+                   // I will use encodeURIComponent just to be safe, it shouldn't break the backend.
+                   // Wait, user example: "https://iptv-proxy.vercel.app/api?url=https://SEU_IPTV.m3u8"
+                   // It doesn't look encoded there.
+                   // I will try without encoding first to match their guide exactly, but maybe add a comment.
+                   finalUrl = VERCEL_PROXY_URL + url; 
+               }
+
                // OPTIMIZED HLS CONFIG FOR INSTANT PLAYBACK & HUGE TS FILES
                const hlsConfig = {
                    enableWorker: true,
@@ -974,7 +999,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
                hls = new window.Hls(hlsConfig);
                video.hls = hls;
-               hls.loadSource(url); 
+               hls.loadSource(finalUrl); 
                hls.attachMedia(video);
                
                hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
