@@ -61,3 +61,42 @@ export async function initDashboard() {
         content.innerHTML = `<p style="color:red">Erro ao carregar dashboard: ${e.message}</p>`;
     }
 }
+
+export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClick }) {
+    const card = document.createElement("div");
+    card.className = "movie-card focusable";
+    card.tabIndex = 0;
+    
+    const img = document.createElement("img");
+    img.src = posterUrl;
+    img.alt = title;
+    img.loading = "lazy";
+    
+    const info = document.createElement("div");
+    info.className = "movie-info";
+    
+    const h3 = document.createElement("h3");
+    h3.textContent = title;
+    
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.innerHTML = `<span>${metaLeft}</span><span>${metaRight}</span>`;
+    
+    info.append(h3, meta);
+    card.append(img, info);
+    
+    if (onClick) {
+        card.addEventListener("click", onClick);
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") onClick();
+        });
+    }
+    
+    return card;
+}
+
+export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick }) {
+    // Similar to poster card but maybe different styling class if needed
+    // For now reusing similar structure
+    return createPosterCard({ title, posterUrl: thumbUrl, metaLeft, metaRight, onClick });
+}

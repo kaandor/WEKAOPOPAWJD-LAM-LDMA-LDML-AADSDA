@@ -45,7 +45,7 @@ export function initSearch() {
               thumbUrl: r.image_url,
               metaLeft: r.category || "Live",
               metaRight: "LIVE",
-              onClick: () => (window.location.href = `/play?type=live&id=${encodeURIComponent(r.id)}`),
+              onClick: () => (window.location.href = `./player.html?type=live&id=${encodeURIComponent(r.id)}`),
             })
           : createPosterCard({
               title: r.title,
@@ -53,8 +53,8 @@ export function initSearch() {
               metaLeft: r.year ? String(r.year) : "",
               metaRight: r.rating ? `★ ${Number(r.rating).toFixed(1)}` : r.category || "",
               onClick: () => {
-                if (r.type === "movie") window.location.href = `/play?type=movie&id=${encodeURIComponent(r.id)}`;
-                else window.location.href = `/series?seriesId=${encodeURIComponent(r.id)}`;
+                if (r.type === "movie") window.location.href = `./player.html?type=movie&id=${encodeURIComponent(r.id)}`;
+                else window.location.href = `./series.html?seriesId=${encodeURIComponent(r.id)}`;
               },
             });
       results.append(card);
