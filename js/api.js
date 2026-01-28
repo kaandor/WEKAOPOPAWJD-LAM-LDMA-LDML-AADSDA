@@ -148,9 +148,31 @@ export const api = {
   },
   content: {
     // Keep these for ui.js compatibility
-    async getHome() { return { ok: true, data: await getLocalData("home.json") }; },
-    async getMovies() { return { ok: true, data: await getLocalData("movies.json") }; },
-    async getSeries() { return { ok: true, data: await getLocalData("series.json") }; }
+    async getHome() { 
+        const data = await getLocalData("home.json");
+        if (data && data.rails) {
+            for (const key in data.rails) {
+                if (Array.isArray(data.rails[key])) {
+                    data.rails[key] = data.rails[key].map(normalize);
+                }
+            }
+        }
+        return { ok: true, data }; 
+    },
+    async getMovies() { 
+        const data = await getLocalData("movies.json");
+        if (data && data.movies) {
+            data.movies = data.movies.map(normalize);
+        }
+        return { ok: true, data }; 
+    },
+    async getSeries() { 
+        const data = await getLocalData("series.json");
+        if (data && data.series) {
+            data.series = data.series.map(normalize);
+        }
+        return { ok: true, data }; 
+    }
   },
   profiles: {
       async list() {

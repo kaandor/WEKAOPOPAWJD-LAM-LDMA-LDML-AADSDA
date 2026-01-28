@@ -123,7 +123,7 @@ async function processPlaylist(filePath) {
                             seriesMap.set(seriesName, {
                                 id: generateId(),
                                 title: seriesName,
-                                poster_url: currentItem.logo || "",
+                                poster: currentItem.logo || "",
                                 category: currentItem.group || "Series",
                                 description: "Series",
                                 rating: 0,
@@ -140,7 +140,7 @@ async function processPlaylist(filePath) {
                             episode_number: episode,
                             title: currentItem.title,
                             stream_url: currentItem.url,
-                            poster_url: currentItem.logo || "",
+                            poster: currentItem.logo || "",
                             duration: 0
                         });
 
@@ -155,7 +155,7 @@ async function processPlaylist(filePath) {
                             year: year,
                             rating: 0,
                             category: currentItem.group,
-                            poster_url: currentItem.logo || "",
+                            poster: currentItem.logo || "",
                             stream_url: currentItem.url,
                             description: "Movie"
                         });
