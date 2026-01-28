@@ -295,36 +295,43 @@ async function request(method, path, body) {
                return { ok: false, status: 401, data: null };
           }
           
-          if (firebasePath && !USE_LOCAL_ONLY) {
-              console.log(`[Firebase] Fetching ${firebasePath}...`);
+          if (firebasePath || USE_LOCAL_ONLY) {
+              if (firebasePath && !USE_LOCAL_ONLY) {
+                  console.log(`[Firebase] Fetching ${firebasePath}...`);
+              }
+
               let rawData = null;
 
-              try {
-                  // Check cache first for catalog items
-                  if (requestCache[firebasePath]) {
-                      console.log(`[Firebase] Cache hit for ${firebasePath}`);
-                      rawData = requestCache[firebasePath];
-                  } else {
-                      const fbRes = await fetch(`${FIREBASE_DB_URL}/${firebasePath}.json`);
-                      if (fbRes.ok) {
-                          rawData = await fbRes.json();
-                          // Cache large catalogs
-                          if (firebasePath.startsWith("catalog/") && rawData) {
-                              requestCache[firebasePath] = rawData;
+              if (firebasePath && !USE_LOCAL_ONLY) {
+                  try {
+                      // Check cache first for catalog items
+                      if (requestCache[firebasePath]) {
+                          console.log(`[Firebase] Cache hit for ${firebasePath}`);
+                          rawData = requestCache[firebasePath];
+                      } else {
+                          const fbRes = await fetch(`${FIREBASE_DB_URL}/${firebasePath}.json`);
+                          if (fbRes.ok) {
+                              rawData = await fbRes.json();
+                              // Cache large catalogs
+                              if (firebasePath.startsWith("catalog/") && rawData) {
+                                  requestCache[firebasePath] = rawData;
+                              }
                           }
                       }
+                  } catch (e) {
+                      console.warn("[Firebase] Fetch failed, trying fallback", e);
                   }
-              } catch (e) {
-                  console.warn("[Firebase] Fetch failed, trying fallback", e);
               }
               
-              // Se Firebase falhar ou retornar null/vazio, tenta fallback local
+              // Se Firebase falhar ou retornar null/vazio, OU se estivermos em modo local, usa fallback
               if ((!rawData || (Array.isArray(rawData) && rawData.length === 0) || (typeof rawData === 'object' && Object.keys(rawData).length === 0)) && localFallback) {
-                  console.log(`[Firebase] Data not found/error, using local fallback: ${localFallback}`);
+                  console.log(`[Firebase] Using local fallback: ${localFallback}`);
                   try {
                       const localRes = await fetch(localFallback);
                       if (localRes.ok) {
                           rawData = await localRes.json();
+                      } else {
+                          console.error(`[Firebase] Local fallback failed to load: ${localFallback} (${localRes.status})`);
                       }
                   } catch(e) {
                       console.error("Fallback failed", e);
