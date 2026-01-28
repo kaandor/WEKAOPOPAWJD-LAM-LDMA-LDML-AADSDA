@@ -1,3 +1,88 @@
 {
-  "channels": []
+  "channels": [
+    {
+      "id": "globo_sp",
+      "title": "Globo SP",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/TV_Globo_logo_2014.svg/800px-TV_Globo_logo_2014.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "sbt",
+      "title": "SBT",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/SBT_logo_2014.svg/800px-SBT_logo_2014.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "record",
+      "title": "Record TV",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/RecordTV_2016_logo.svg/800px-RecordTV_2016_logo.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "band",
+      "title": "Band",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Band_2018_logo.svg/800px-Band_2018_logo.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "redetv",
+      "title": "RedeTV!",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/RedeTV%21_2015_logo.svg/800px-RedeTV%21_2015_logo.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "sportv",
+      "title": "SporTV",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/SporTV_2021_Logo.svg/800px-SporTV_2021_Logo.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Esportes"
+    },
+    {
+      "id": "espn",
+      "title": "ESPN",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/800px-ESPN_wordmark.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Esportes"
+    },
+    {
+      "id": "telecine_premium",
+      "title": "Telecine Premium",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Telecine_Premium_2010.svg/800px-Telecine_Premium_2010.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Filmes"
+    },
+    {
+      "id": "hbo",
+      "title": "HBO",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/800px-HBO_logo.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Filmes"
+    },
+    {
+      "id": "cnn_brasil",
+      "title": "CNN Brasil",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/CNN_Brasil_Logo_2023.svg/800px-CNN_Brasil_Logo_2023.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Notícias"
+    },
+    {
+      "id": "cartoon",
+      "title": "Cartoon Network",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/800px-Cartoon_Network_2010_logo.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Infantil"
+    },
+    {
+      "id": "discovery",
+      "title": "Discovery Channel",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Discovery_Channel_logo.svg/800px-Discovery_Channel_logo.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Documentários"
+    }
+  ]
 }
