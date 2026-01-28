@@ -46,6 +46,7 @@ object IptvRepository {
 
     fun initialize(context: Context) {
         try {
+            // Initializing IPTV Repository
             android.util.Log.d("IptvRepository", "Initializing...")
             movies = loadMovies(context)
             series = loadSeries(context)
