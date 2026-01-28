@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — App</title>
+    <link rel="stylesheet" href="./css/global.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="brand" style="justify-content:center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" fill="none" class="brand-logo">
+            <path d="M20 15 L 20 65 L 60 40 Z" fill="none" stroke="#A855F7" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+            <text x="75" y="52" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="42" fill="currentColor">Klyx</text>
+            <text x="78" y="72" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="13" fill="currentColor" opacity="0.8" letter-spacing="4">IPTV</text>
+            <rect x="155" y="15" width="6" height="6" rx="1" fill="#A855F7" />
+            <rect x="163" y="8" width="6" height="6" rx="1" fill="#A855F7" />
+            <rect x="148" y="22" width="4" height="4" rx="1" fill="#A855F7" opacity="0.8" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      body {
+        background-color: #0b0e14;
+        color: #fff;
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+    </style>
+    <script>
+      // Inline session check to ensure fast redirection without module dependency
+      (function() {
+        try {
+          const raw = localStorage.getItem("klyx.session");
+          let hasSession = false;
+          if (raw) {
+            const session = JSON.parse(raw);
+            if (session && session.tokens && session.tokens.accessToken) {
+              hasSession = true;
+            }
+          }
+          // Redirect immediately
+          window.location.replace(hasSession ? "./dashboard.html" : "./login.html");
+        } catch (e) {
+          console.error("Session check failed", e);
+          window.location.replace("./login.html");
+        }
+      })();
+    </script>
+  </body>
+</html>
+
