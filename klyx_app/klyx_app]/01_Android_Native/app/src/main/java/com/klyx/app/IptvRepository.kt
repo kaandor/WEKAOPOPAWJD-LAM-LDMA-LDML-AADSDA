@@ -46,10 +46,13 @@ object IptvRepository {
 
     fun initialize(context: Context) {
         try {
+            android.util.Log.d("IptvRepository", "Initializing...")
             movies = loadMovies(context)
             series = loadSeries(context)
-            channels = loadChannels(context)
+            // channels = loadChannels(context) // Disabled as per request
+            android.util.Log.d("IptvRepository", "Loaded: ${movies.size} movies, ${series.size} series")
         } catch (e: Exception) {
+            android.util.Log.e("IptvRepository", "Error initializing", e)
             e.printStackTrace()
         }
     }
@@ -57,20 +60,26 @@ object IptvRepository {
     private fun loadMovies(context: Context): List<IptvContent> {
         return try {
             val stream = context.assets.open("data/movies.json")
-            val response = Gson().fromJson(InputStreamReader(stream), MovieResponse::class.java)
-            response.movies.map { it.apply { type = ContentType.MOVIE } }
+            val reader = InputStreamReader(stream)
+            val response = Gson().fromJson(reader, MovieResponse::class.java)
+            response?.movies?.map { it.apply { type = ContentType.MOVIE } } ?: emptyList()
         } catch (e: Exception) {
-            emptyList()
+            android.util.Log.e("IptvRepository", "Error loading movies", e)
+            // Fallback for debugging if file fails
+            listOf(IptvContent("debug1", "Debug Movie", "Debug Desc", null, null, "", "Debug"))
         }
     }
 
     private fun loadSeries(context: Context): List<IptvContent> {
         return try {
             val stream = context.assets.open("data/series.json")
-            val response = Gson().fromJson(InputStreamReader(stream), SeriesResponse::class.java)
-            response.series.map { it.apply { type = ContentType.SERIES } }
+            val reader = InputStreamReader(stream)
+            val response = Gson().fromJson(reader, SeriesResponse::class.java)
+            response?.series?.map { it.apply { type = ContentType.SERIES } } ?: emptyList()
         } catch (e: Exception) {
-            emptyList()
+            android.util.Log.e("IptvRepository", "Error loading series", e)
+             // Fallback for debugging
+             listOf(IptvContent("debug2", "Debug Series", "Debug Desc", null, null, "", "Debug"))
         }
     }
 
