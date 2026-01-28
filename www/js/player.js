@@ -726,13 +726,13 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
   // --- MULTI-PROXY FALLBACK SYSTEM ---
   // List of proxies to try in order.
-  // 1. corsproxy.io (Best, fast, HTTPS-compliant)
-  // 2. allorigins (Good backup)
-  // 3. thingproxy (Another option)
+  // 1. VERCEL PROXY (User Dedicated) - Best for IPTV
+  // 2. corsproxy.io (Backup)
+  // 3. allorigins (Backup)
   const PROXY_LIST = [
+       (u) => `${VERCEL_PROXY_URL}${encodeURIComponent(u)}`,
        (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-       //(u) => `https://thingproxy.freeboard.io/fetch/${u}` // Often unstable, kept as last resort
   ];
 
   let currentProxyIndex = 0;
