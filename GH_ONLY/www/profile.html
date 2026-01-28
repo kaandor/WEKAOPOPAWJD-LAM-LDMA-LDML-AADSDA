@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Profile</title>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header id="app-header"></header>
+      <main class="page">
+        <div class="container">
+          <h1>Editar Perfil</h1>
+          <div class="subtext" style="margin-top: 8px">Gerencie as informações do seu perfil.</div>
+          <div class="section two-col">
+            <div class="panel">
+              <div style="font-weight: 750">Avatar</div>
+              <div class="field" style="margin-top: 12px">
+                <div class="avatar-preview" style="margin-bottom: 10px;">
+                   <img id="avatarPreview" src="" alt="Avatar" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #333;" />
+                </div>
+                <label class="subtext">URL do Avatar</label>
+                <input id="avatarUrl" class="input" style="margin-top: 6px" placeholder="https://..." />
+              </div>
+            </div>
+            <div class="panel">
+              <div style="font-weight: 750">Informações</div>
+              <div class="field" style="margin-top: 12px">
+                <label class="subtext">Nome do Perfil</label>
+                <input id="displayName" class="input" style="margin-top: 6px" placeholder="Nome" />
+              </div>
+              <div class="field" style="margin-top: 12px">
+                <label class="subtext">PIN de Acesso (4 dígitos)</label>
+                <input id="profilePin" class="input" style="margin-top: 6px" placeholder="****" maxlength="4" type="password" inputmode="numeric" />
+              </div>
+              <div class="toolbar" style="margin-top: 14px">
+                <button id="saveProfile" class="btn btn-primary" type="button">Salvar</button>
+                <span id="profileStatus" class="subtext"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      import { mountAppShell } from "./js/router.js";
+      import { initProfile } from "./js/ui.js";
+      await mountAppShell({ currentPath: "/profile" });
+      await initProfile();
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,810 @@
+{
+  "rails": {
+    "topMovies": [
+      {
+        "id": "46eec689-ccf8-4dff-819e-53aef5e465e4",
+        "title": "Given On The Other Hand [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/u2udmZWJX7EJAsexMkrizbd19Vm.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363191.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "eee00c28-cbd5-47c5-9764-a95054d65350",
+        "title": "Utopia Tropical",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/xAfC8VZ61857ul9tQ5AweQAeaNj.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363190.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "68719785-6422-497d-b7f3-e66654ac3224",
+        "title": "PAPAI X DOIS",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/sW23aL0W7iGCjN53XJTfXAuMzN3.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363189.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "e57607d1-aa2c-4316-9a97-aedba3903f6f",
+        "title": "PAPAI X DOIS",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/sW23aL0W7iGCjN53XJTfXAuMzN3.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363189.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "e3910623-58e1-4011-b8dc-9fa17e1d51a0",
+        "title": "PAPAI X DOIS [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/sW23aL0W7iGCjN53XJTfXAuMzN3.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363188.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "c6aad883-6b8e-40fc-b059-e1d5f87b8095",
+        "title": "O Último Azul",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/4LV2kTS54D7v1da2ooQ8knhptLh.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363187.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "3ca0b989-4e05-4670-9eab-8a80da14a657",
+        "title": "O Último Azul",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Nacionais",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/4LV2kTS54D7v1da2ooQ8knhptLh.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363187.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "a3482396-3b44-409f-9aa3-2acaf4a47cc1",
+        "title": "O Grande Irmão: O Dia que Durou 21 Anos 2",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/icqHxVObPHyo6N8Cn58EhQ1n5SX.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363186.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "54ebc1e7-a746-44aa-817f-f614a38f5c8b",
+        "title": "No Céu da Pátria Nesse Instante",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/1E6y1b2ZEGboS3DpHPPBn4z9Euy.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363185.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "2c3107f3-9b52-4a29-9590-5810d483c735",
+        "title": "Memória Sufocada",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/kQaWv4RbZQ3lQiBpzmDgAZeZawY.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363184.mp4",
+        "description": "Movie"
+      }
+    ],
+    "topSeries": [
+      {
+        "id": "668fdced-aae2-4845-b60e-baf9747e5067",
+        "title": "[XXX] Brazzersexxtra 24 03 05 Jada Sparks Life Is Sex Episode 3 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "bc71957c-eff3-4c4a-b47e-bff205bcc560",
+        "title": "[XXX] Vivthomas 24 02 27 Kira Queen And Betzz The Residence Episode 4 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "4630babe-c2e7-42a5-8d80-6591e6e8d1cc",
+        "title": "[XXX] Resident Alien",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "2f3f8f04-47bf-4ce8-88c8-bdfd90e6af83",
+        "title": "[XXX] Expats",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "b720a605-24d7-4c8c-87e7-106e304476b2",
+        "title": "[XXX] Zzseries 23 10 17 Brazzers House 4 Episode 9 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "00524588-ea55-43de-a20b-ef22ba00df8d",
+        "title": "[XXX] Zzseries 23 10 06 Brazzers House 4 Episode 6 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "85c9b78c-e2c5-452a-a40c-07b0e81e056e",
+        "title": "[XXX] Zzseries 23 10 13 Brazzers House 4 Episode 8 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "36364c78-71bf-4995-89fa-03ab5cb85fd4",
+        "title": "[XXX] Zzseries 23 10 10 Victoria Cakes Ryan Reid Brazzers House 4 Episode 7 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "37d773d5-8102-404b-ae97-5d7f10531b9a",
+        "title": "[XXX] The Gilded Age",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      },
+      {
+        "id": "26da1e3d-a8fe-44e0-8184-5dede7f9e863",
+        "title": "[XXX] Zzseries 23 10 03 Brazzers House 4 Episode 5 [Adulto]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | [XXX] Adultos",
+        "poster_url": "http://camelo.vip/images/bab6708d1f47b31e7e844e8bfa0e64aa.jpg",
+        "description": "Series"
+      }
+    ],
+    "recentMovies": [
+      {
+        "id": "5d69bb43-4f6a-4def-af49-1a9de03af5e4",
+        "title": "A Língua do Amor",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/1EediCxkAZ6u3vVlF35pgQ4LhV5.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363183.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "c4ccfac3-d263-48a3-abd0-71cf01b9ce74",
+        "title": "A Língua do Amor",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/1EediCxkAZ6u3vVlF35pgQ4LhV5.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363183.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "92757492-03ef-41db-a856-a85cdfce07c2",
+        "title": "No Interior do Casulo Amarelo [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/5ilFiTSoD2RugvdoFHJUAj9sg4F.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363182.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "f04fcd31-3a04-43b0-80dd-510668988182",
+        "title": "Temporada de Sangue",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/fDXOdFhBoUNyY7GsM11z7EfKk68.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363181.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "bbf24249-000a-4af1-b5db-dcd9220d3973",
+        "title": "Temporada de Sangue",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/fDXOdFhBoUNyY7GsM11z7EfKk68.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363181.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "426ba95c-f761-4b41-830b-26ce1e29db62",
+        "title": "Temporada de Sangue [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/fDXOdFhBoUNyY7GsM11z7EfKk68.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363180.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "75ed6407-abff-4dbb-bc12-be5c8c104f56",
+        "title": "Meu Amigo",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Lancamentos",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/fAs6hWOgplp1jZgs00GDxS5bjj0.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363179.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "f7dca86a-1a19-4421-a4a4-6001a69323ee",
+        "title": "Meu Amigo",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Nacionais",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/fAs6hWOgplp1jZgs00GDxS5bjj0.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363179.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "2ac5a2e5-6744-4245-8463-1ceb769333ef",
+        "title": "Triangle: Lembranças do Incêndio [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/asLRf1R4WDyxJ5UhNTQoOfgwmPz.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362870.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "fad0b9ee-424e-4405-9bb4-89a7bb17ae16",
+        "title": "Superstar: Despenca uma Estrela",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/AnIxM8o9F2putyz5AtR7AqTMwWW.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362869.mp4",
+        "description": "Movie"
+      }
+    ],
+    "nightMovies": [
+      {
+        "id": "b9503ed8-9342-4f7c-96f7-cc77e1fb97c4",
+        "title": "Superstar: Despenca uma Estrela [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/AnIxM8o9F2putyz5AtR7AqTMwWW.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362868.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "47300d7d-a7f1-4f98-bd69-61e2b417698c",
+        "title": "O Último Golpe",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/p6XnQSd0kSqjTcPW7nEKPpPfKmN.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362867.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "f3f5ac53-91fe-4175-9de5-e483aca89cd6",
+        "title": "O Último Golpe [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/p6XnQSd0kSqjTcPW7nEKPpPfKmN.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362866.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9001ba77-a73e-4714-8d94-d0d4b775bb43",
+        "title": "Na Riqueza e na Pobreza",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/xk5IZIBmLjmZIDmYC6XVImX8Hvn.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362865.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "3695c32e-efca-49fe-bde9-993a9dcb79a4",
+        "title": "Na Riqueza e na Pobreza [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/xk5IZIBmLjmZIDmYC6XVImX8Hvn.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362864.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1d01ffe1-c470-4ee8-b64f-7c38a2d4b4e2",
+        "title": "Mais um Besteirol ao Extremo",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/x0Zd9cAuofRgLxJTfugTZnRfaHo.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362863.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "c3b9cb85-927d-4e92-b82d-5af676e3e750",
+        "title": "Mais um Besteirol ao Extremo [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/x0Zd9cAuofRgLxJTfugTZnRfaHo.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362862.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9c0a8a69-54ca-42c2-8d8c-53c9992f3535",
+        "title": "Los Nobles: Quando os Ricos Quebram a Cara",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/kZRKkJwz8DFQW9OYOeCmCDAifJI.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362861.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "be733ecc-9b46-45c3-9c96-5764b442fc9a",
+        "title": "Los Nobles: Quando os Ricos Quebram a Cara [L]",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Legendados",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/kZRKkJwz8DFQW9OYOeCmCDAifJI.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362860.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "800c0147-9ef1-4ba8-b93e-a58efa162d1b",
+        "title": "Grávida e Perseguida",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Drama",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/lG40TpozpphDgLzUYyLRtF7075g.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362859.mp4",
+        "description": "Movie"
+      }
+    ],
+    "horrorMovies": [
+      {
+        "id": "53c63168-5b4a-420c-aed5-1b01776b0e52",
+        "title": "Noite Escura da Alma",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/dEBln0sPMTHaVpD3r4e7xOPaCEA.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362609.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "77896b5a-09f8-4489-a230-4fdf567bc5d3",
+        "title": "Faces da Morte",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/2BESzZHggYa2unbdzm82Zohob2T.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362604.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "10580af1-3bba-4dcc-ad24-9d6b466a961d",
+        "title": "Banana Splits - O Filme",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/3ut1Ji6mEkO3bHW4xUEazNOb32W.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362598.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "4473ba3e-202f-4a30-9a9f-b69e844cb391",
+        "title": "Adeus",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/ol0Dw74aTzVaMsWI9PE8IIBCO0w.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362592.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "6df3d8c3-d45a-4c9d-ab8e-1e6061e5af4c",
+        "title": "Voice of Shadows",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/hffZQgrulC6jgneLuTANQrYgiui.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362274.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "64399c77-8444-4c1c-b8fc-ab89c36dcf95",
+        "title": "ROMI",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/kgeCklZUXdImDcop8odTbCmvvjr.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362266.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1e0ca2ab-927d-4dab-9d51-310d7f2bd991",
+        "title": "Μινόρε",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/w95whXyEQLg6y3bkypCUOzXRae1.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362260.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "34a36197-df50-4253-9008-9fd2fc707d00",
+        "title": "Malum",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/m1rcLLs0KmS8Cg60sLoMZC2OyDR.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362258.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "114085e8-8542-4d1a-b369-4411cfd114ae",
+        "title": "All You Need Is Blood",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/wKsEuOFH9cdMXljHZ7QKjfO0EoH.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362250.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "a1ecd847-5366-4793-aca0-dc58931f3ca2",
+        "title": "O Demônio da Meia-Noite",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Terror",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/5S2UsBHRo7cR5XV6MV6wBY015IY.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/360858.mp4",
+        "description": "Movie"
+      }
+    ],
+    "comedyMovies": [
+      {
+        "id": "e57607d1-aa2c-4316-9a97-aedba3903f6f",
+        "title": "PAPAI X DOIS",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/sW23aL0W7iGCjN53XJTfXAuMzN3.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363189.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "c4ccfac3-d263-48a3-abd0-71cf01b9ce74",
+        "title": "A Língua do Amor",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/1EediCxkAZ6u3vVlF35pgQ4LhV5.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363183.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "fad0b9ee-424e-4405-9bb4-89a7bb17ae16",
+        "title": "Superstar: Despenca uma Estrela",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/AnIxM8o9F2putyz5AtR7AqTMwWW.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362869.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9001ba77-a73e-4714-8d94-d0d4b775bb43",
+        "title": "Na Riqueza e na Pobreza",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/xk5IZIBmLjmZIDmYC6XVImX8Hvn.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362865.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1d01ffe1-c470-4ee8-b64f-7c38a2d4b4e2",
+        "title": "Mais um Besteirol ao Extremo",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/x0Zd9cAuofRgLxJTfugTZnRfaHo.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362863.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9c0a8a69-54ca-42c2-8d8c-53c9992f3535",
+        "title": "Los Nobles: Quando os Ricos Quebram a Cara",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/kZRKkJwz8DFQW9OYOeCmCDAifJI.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362861.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "fdec6ab6-30ae-4214-897e-c2974f212a0d",
+        "title": "A Melhor Casa Suspeita do Texas",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/sYXQM4TgoTrY8alZX2BtUC91Tpa.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362855.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "eec0aaa2-76fd-4c48-8bb8-401ed7e0bd3d",
+        "title": "A História Real de um Assassino Falso",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/q2OngfPuEE70GhoOPxrAJWBCvPT.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362590.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "5c76b0aa-8722-4230-96b3-307144407070",
+        "title": "A Garota Ideal",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/zBIC8b5dOjY8VVHfD9Jk1VbLmKz.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362588.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "2d86de39-0b50-46b4-8ff1-c633d1d6abf9",
+        "title": "Escola da Vida",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Comedia",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/mZifEY09JNU4lTpukg4vzIUyUAK.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/361828.mp4",
+        "description": "Movie"
+      }
+    ],
+    "actionMovies": [
+      {
+        "id": "bbf24249-000a-4af1-b5db-dcd9220d3973",
+        "title": "Temporada de Sangue",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/fDXOdFhBoUNyY7GsM11z7EfKk68.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/363181.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "47300d7d-a7f1-4f98-bd69-61e2b417698c",
+        "title": "O Último Golpe",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/p6XnQSd0kSqjTcPW7nEKPpPfKmN.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362867.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "d2c35d12-c18c-46ef-a2b5-2432e98a6a38",
+        "title": "O Filho de Spartacus",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/vESoMNS9zhm0DMjRd7TlazxGnJZ.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362611.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ecf2e73f-40eb-4097-ac2e-5ed522c17947",
+        "title": "Jumanji",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/vgpXmVaVyUL7GGiDeiK1mKEKzcX.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362606.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "77a2feaf-0ab2-4155-acee-5a229d5d0865",
+        "title": "Bloodshot",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/5Z7AJiQhocA20MkI5JXZ6OjTxEW.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362601.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "e4de7c2e-fd88-4623-bde3-20e6339f8820",
+        "title": "Aeroporto 79 - O Concorde",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/yedB8Rk6C6GiLVEl3zFIBfoTblI.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362594.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "d780590b-dd01-4631-9e6b-efdc83c033ca",
+        "title": "Dinheiro Suspeito",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/bm04TGkE5ySrHbHlO6YloYZvs4P.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362586.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "035b6601-f9fa-4af1-8965-ebb45851b442",
+        "title": "The Final Run",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Acao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/umBTqmDFpXhSbmxL0ghM3pu0lJt.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/362269.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "a93b9e7e-bf7b-46c8-af10-ceb29ba9ae17",
+        "title": "O Golfinho - A História de Um Sonhador",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Animacao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/f1jSTZY3POZl7cA4qWOgx0zyfUx.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/361827.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "d58d285f-b568-4a5d-a399-d8213ff4b46e",
+        "title": "Mosley",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Animacao",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/xRWDliPINkVz5IRl4mCbJFCsQf4.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/361823.mp4",
+        "description": "Movie"
+      }
+    ],
+    "adventureMovies": [
+      {
+        "id": "39f5c223-6a9c-402f-a676-c1ca00dd8a2c",
+        "title": "O Elo Perdido",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/ysKqcDxPGbSx5hfUynjyase7om3.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/352408.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "4ede68ae-e923-4baa-bf05-8e3deb4023f7",
+        "title": "Náufragos em Luta",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/cofVA8Y9yQWGXtZVDeYZuI7ioH4.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/341797.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1ef6c1e3-b851-43d6-a5ca-66ed4a868632",
+        "title": "Show Dogs: O Agente Canino",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/x7xXm9EDs5YTnGjczAATJ5jsown.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/329698.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "93e50dba-29ce-4db9-871c-2c49b5124720",
+        "title": "Uma Aventura Entre Irmãos",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/8BLdM0zzEbB1WcnBXrc8lc41heS.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/322028.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "f332796a-81f9-4a3a-9d88-f1ad4fb6403b",
+        "title": "Um Garoto no Palácio de Aladdin",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/8IqwqEwVDT569abnAfKlSirIqag.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/320923.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "47fff8e1-573a-487e-8014-933c4336d478",
+        "title": "Tarzan Vai à Índia",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/wds220kRFoZs69hLsRAtBZFZH58.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/320920.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "4375fb35-788c-43bf-888b-f8f8e53dc796",
+        "title": "Max: O Cão Herói",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/30kFBE0I4sG9zum3Tv2wz9ulv8g.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/319158.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "eb73c4a4-8132-489d-89ea-96ba75ca620a",
+        "title": "O Segredo de Mercator",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/S7F1B9HyltgbxAVPtErmRx8zmq.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/318112.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9a12fcbd-3fe5-4e5c-a887-a897eb562179",
+        "title": "9: A Salvação",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/6fe0PbMkDSaGEM6kj5RM5ToMuAL.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/317444.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "b7254aab-489a-462a-b68c-80205bccf058",
+        "title": "Paddington: Uma Aventura na Floresta",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes | Aventura",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_bestv2/gsPWpCx5ezjoGT9WvST0CwcZvat.jpg",
+        "stream_url": "http://camelo.vip:80/movie/caiolima30/Cb84395/314984.mp4",
+        "description": "Movie"
+      }
+    ]
+  }
+}
