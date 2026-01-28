@@ -1,0 +1,684 @@
+:root {
+  --bg: #0b0e14;
+  --surface: #121826;
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.10);
+  --text: #e6eaf2;
+  --muted: #a7b0c0;
+  --accent: #6d5ef5;
+  --accent-2: rgba(109, 94, 245, 0.20);
+  --danger: #f04438;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: rgba(15, 23, 42, 0.04);
+  --border: rgba(15, 23, 42, 0.10);
+  --text: #0b0e14;
+  --muted: rgba(11, 14, 20, 0.70);
+  --accent: #4f46e5;
+  --accent-2: rgba(79, 70, 229, 0.14);
+  --danger: #dc2626;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
+  background: transparent; /* Moved to ::before */
+  padding-top: env(safe-area-inset-top);
+}
+
+.app-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: -1;
+}
+
+.header-inner {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--accent-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brand-title strong {
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.brand-title span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+  scroll-margin-top: 100px;
+  scroll-margin-bottom: 50px;
+}
+
+.focusable {
+  scroll-margin-top: 100px;
+  scroll-margin-bottom: 50px;
+  outline: none; /* Remove default outline, we handle it */
+}
+
+/* TV Mode Styles */
+body[data-device-mode="tv"] .app-header {
+  /* Ensure header is visible and styled for TV */
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 80px;
+  background: rgba(11, 14, 20, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+body[data-device-mode="tv"] .header-inner {
+  height: 100%;
+  padding: 0 40px;
+  max-width: none;
+}
+
+body[data-device-mode="tv"] .nav {
+  /* Reset fixed positioning since it's inside header now */
+  position: static;
+  width: auto;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  justify-content: center;
+  flex: 1; /* Take available space */
+}
+
+body[data-device-mode="tv"] .nav a {
+  flex-direction: row;
+  width: auto;
+  height: auto;
+  padding: 10px 20px;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  opacity: 0.6;
+}
+
+body[data-device-mode="tv"] .nav a.active-focus,
+body[data-device-mode="tv"] .nav a:focus {
+  opacity: 1;
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+body[data-device-mode="tv"] .nav a[aria-current="page"] {
+  opacity: 1;
+  color: var(--accent);
+}
+
+body[data-device-mode="tv"] .nav a[aria-current="page"].active-focus {
+  color: white;
+}
+
+/* Ensure content has padding top in TV mode */
+body[data-device-mode="tv"] main.page {
+  padding-top: 40px; /* Header is sticky, so just some breathing room */
+  padding-bottom: 20px;
+}
+
+/* Navigation - GLOBAL (Mobile Style Everywhere) */
+.nav {
+  position: fixed;
+  bottom: max(12px, env(safe-area-inset-bottom) + 8px);
+  left: 16px;
+  right: 16px;
+  width: auto;
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  gap: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.nav a {
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent !important;
+  color: var(--muted);
+  min-width: auto;
+  width: 60px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.nav a:active {
+  transform: scale(0.9);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--accent);
+  background: transparent;
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.nav a[aria-current="page"] .nav-icon {
+  filter: drop-shadow(0 0 8px var(--accent-2));
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  margin: 0 auto;
+}
+
+.nav-text {
+  display: block;
+  font-weight: 500;
+  text-align: center;
+}
+
+.nav a:hover {
+  color: var(--text);
+  /* background: var(--surface-2); removed for mobile style */
+}
+
+/* Sticky Toolbar for Search/Filter */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: var(--bg);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Ensure header doesn't overlap if it exists */
+/* But header is usually empty in this app structure or just logo */
+
+
+/* Ensure content has padding bottom for nav */
+main.page {
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative; /* For dropdown positioning */
+}
+
+.profile-dropdown-container {
+  position: relative;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--surface-2);
+}
+
+.dropdown-icon {
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-item:hover .dropdown-icon {
+  color: var(--accent);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.dropdown-danger {
+  color: var(--danger);
+}
+
+.dropdown-danger:hover {
+  background: rgba(240, 68, 56, 0.1);
+}
+
+.dropdown-danger .dropdown-icon {
+  color: var(--danger);
+}
+
+.chip {
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 90%, white);
+}
+
+.btn-danger {
+  background: rgba(240, 68, 56, 0.1);
+  color: var(--danger);
+  border-color: rgba(240, 68, 56, 0.2);
+}
+
+.btn-danger:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* Profile Avatar Button */
+.profile-avatar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: #859033; /* Olive green */
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.profile-avatar-btn:hover {
+  opacity: 0.9;
+}
+
+/* Hide Home nav item on Desktop */
+/* Removed .nav-item-home display:none to allow Home button on desktop */
+
+/* Mobile Layout */
+@media (max-width: 1024px) {
+  /* Lock body scroll for app-like feel */
+  html, body {
+    overflow: hidden;
+    height: 100%;
+    position: fixed;
+    width: 100%;
+  }
+
+  /* App Shell Structure */
+  .app-shell {
+    height: 100%;
+    overflow: hidden; /* Prevent shell from scrolling */
+  }
+
+  /* Auth Shell & Profile Shell for Mobile */
+  .auth-shell, .profile-shell {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block; /* Override grid/flex if needed to allow scroll */
+  }
+  
+  .auth-shell > *, .profile-shell > * {
+     min-height: auto; /* Reset min-height to avoid forcing overflow */
+  }
+
+  /* Player Shell */
+  .player-shell {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Scrollable Content Area */
+  main.page {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+  
+  /* Ensure Auth pages scroll independently */
+  .auth-shell {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-item-home {
+    display: flex !important;
+  }
+  .header-inner {
+    height: 60px;
+    padding: 0 16px;
+  }
+  
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .brand-logo {
+    height: 40px;
+    width: 40px;
+  }
+
+  .brand-text-group, .brand-dots {
+    display: none;
+  }
+  
+  /* Nav styles are now global */
+  .header-actions {
+    display: flex;
+  }
+  
+  .profile-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: max(80px, env(safe-area-inset-bottom) + 70px); /* Above floating nav */
+    right: 16px;
+    width: 220px;
+    margin-top: 0;
+    transform-origin: bottom right;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    z-index: 2000;
+  }
+  
+  main.page {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+  
+  /* Hide scrollbar on mobile but allow scrolling */
+  main.page::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* TV / Keyboard Navigation Styles */
+body.using-keyboard .focusable {
+  outline: none; /* Reset default outline */
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s;
+}
+
+body.using-keyboard .focusable:focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+  z-index: 50;
+  position: relative; /* Ensure z-index works */
+}
+
+/* Card Specific Focus */
+body.using-keyboard .card.focusable:focus {
+  transform: scale(1.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  outline: 4px solid var(--accent);
+  outline-offset: 0; /* Border tight on card */
+  z-index: 100;
+}
+
+/* Nav Item Specific Focus */
+body.using-keyboard .nav a.focusable:focus,
+body.using-keyboard .profile-avatar-btn.focusable:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Dropdown Item Focus */
+body.using-keyboard .dropdown-item.focusable:focus {
+  background: var(--surface-2);
+  outline: none;
+  border-left: 4px solid var(--accent);
+}
+ 
+ / *   R e s t o r e   D e s k t o p   N a v i g a t i o n   f o r   l a r g e r   s c r e e n s   * /  
+ @ m e d i a   ( m i n - w i d t h :   7 6 8 p x )   {  
+     . n a v   {  
+         p o s i t i o n :   s t a t i c ;  
+         b o t t o m :   a u t o ;  
+         l e f t :   a u t o ;  
+         r i g h t :   a u t o ;  
+         w i d t h :   a u t o ;  
+         b a c k g r o u n d :   t r a n s p a r e n t ;  
+         b a c k d r o p - f i l t e r :   n o n e ;  
+         - w e b k i t - b a c k d r o p - f i l t e r :   n o n e ;  
+         b o r d e r :   n o n e ;  
+         b o x - s h a d o w :   n o n e ;  
+         p a d d i n g :   0 ;  
+         g a p :   1 0 p x ;  
+         t r a n s f o r m :   n o n e ;  
+     }  
+  
+     . n a v   a   {  
+         f l e x - d i r e c t i o n :   r o w ;  
+         f o n t - s i z e :   1 4 p x ;  
+         w i d t h :   a u t o ;  
+         h e i g h t :   4 0 p x ;  
+         p a d d i n g :   0   1 6 p x ;  
+         g a p :   8 p x ;  
+         b a c k g r o u n d :   t r a n s p a r e n t   ! i m p o r t a n t ;  
+         o p a c i t y :   0 . 7 ;  
+         b o r d e r - r a d i u s :   8 p x ;  
+     }  
+  
+     . n a v   a : h o v e r   {  
+         b a c k g r o u n d :   v a r ( - - s u r f a c e - 2 )   ! i m p o r t a n t ;  
+         o p a c i t y :   1 ;  
+     }  
+  
+     . n a v   a [ a r i a - c u r r e n t = " p a g e " ]   {  
+         b a c k g r o u n d :   v a r ( - - a c c e n t - 2 )   ! i m p o r t a n t ;  
+         c o l o r :   v a r ( - - a c c e n t ) ;  
+         t r a n s f o r m :   n o n e ;  
+     }  
+      
+     . n a v - i c o n   s v g   {  
+         w i d t h :   2 0 p x ;  
+         h e i g h t :   2 0 p x ;  
+     }  
+ }  
+ 
