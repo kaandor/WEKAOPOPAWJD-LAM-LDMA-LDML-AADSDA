@@ -61,7 +61,7 @@ export async function mountAppShell({ currentPath }) {
   header.innerHTML = `
     <div class="app-header">
       <div class="container header-inner">
-        <a class="brand" href="/dashboard">
+        <a class="brand" href="./dashboard.html">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" preserveAspectRatio="xMinYMid slice" fill="none" class="brand-logo">
             <g class="brand-icon-group">
               <path d="M20 15 L 20 65 L 60 40 Z" fill="none" stroke="#A855F7" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
@@ -76,15 +76,15 @@ export async function mountAppShell({ currentPath }) {
           </svg>
         </a>
         <nav class="nav" aria-label="Primary">
-          <a href="/dashboard" data-path="/dashboard" class="nav-item-home focusable" translate="no">
+          <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home focusable" translate="no">
             <span class="nav-icon">${icons.home}</span>
             <span class="nav-text">Início</span>
           </a>
-          <a href="/movies" data-path="/movies" class="focusable" translate="no">
+          <a href="./movies.html" data-path="/movies" class="focusable" translate="no">
             <span class="nav-icon">${icons.movies}</span>
             <span class="nav-text">Filmes</span>
           </a>
-          <a href="/series" data-path="/series" class="focusable" translate="no">
+          <a href="./series.html" data-path="/series" class="focusable" translate="no">
             <span class="nav-icon">${icons.series}</span>
             <span class="nav-text">Séries</span>
           </a>
@@ -93,15 +93,15 @@ export async function mountAppShell({ currentPath }) {
           <div class="profile-dropdown-container">
             <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
             <div id="profileDropdown" class="profile-dropdown hidden">
-              <a href="/profile" class="dropdown-item focusable">
+              <a href="./profile.html" class="dropdown-item focusable">
                 <span class="dropdown-icon">${icons.profile}</span>
                 Perfil
               </a>
-              <a href="/settings" class="dropdown-item focusable">
+              <a href="./settings.html" class="dropdown-item focusable">
                 <span class="dropdown-icon">${icons.settings}</span>
                 Configurações
               </a>
-              <a href="/profiles" class="dropdown-item focusable">
+              <a href="./profile-selection.html" class="dropdown-item focusable">
                 <span class="dropdown-icon">${icons.switch}</span>
                 Trocar Perfil
               </a>
@@ -150,7 +150,7 @@ export async function mountAppShell({ currentPath }) {
     localStorage.removeItem("klyx_profile_name");
     localStorage.removeItem("klyx_profile_avatar");
     await api.auth.logout();
-    window.location.href = "/login";
+    window.location.href = "./login.html";
   });
   
   const switchBtn = document.getElementById("switchProfileBtn");

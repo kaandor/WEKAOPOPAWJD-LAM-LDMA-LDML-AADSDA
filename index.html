@@ -39,16 +39,9 @@
       // Inline session check to ensure fast redirection without module dependency
       (function() {
         try {
-          const raw = localStorage.getItem("klyx.session");
-          let hasSession = false;
-          if (raw) {
-            const session = JSON.parse(raw);
-            if (session && session.tokens && session.tokens.accessToken) {
-              hasSession = true;
-            }
-          }
+          const user = localStorage.getItem("klyx_user");
           // Redirect immediately
-          window.location.replace(hasSession ? "./dashboard.html" : "./login.html");
+          window.location.replace(user ? "./profile-selection.html" : "./login.html");
         } catch (e) {
           console.error("Session check failed", e);
           window.location.replace("./login.html");

@@ -28,14 +28,15 @@ export async function initDashboard() {
         let html = '';
         
         // Helper to render a rail
-        const renderRail = (title, items) => {
+        const renderRail = (title, items, type = 'movie') => {
             if (!items || items.length === 0) return '';
             return `
                 <div class="category-row">
                     <h2 class="category-title">${title}</h2>
                     <div class="movie-row">
                         ${items.map(item => `
-                            <div class="movie-card focusable" data-id="${item.id}" tabindex="0">
+                            <div class="movie-card focusable" data-id="${item.id}" tabindex="0" 
+                                 onclick="window.location.href='./player.html?type=${type}&id=${encodeURIComponent(item.id)}'">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-info">
                                     <h3>${item.title}</h3>
@@ -47,18 +48,92 @@ export async function initDashboard() {
             `;
         };
 
-        html += renderRail("Top Filmes", data.rails.topMovies);
-        html += renderRail("Top Séries", data.rails.topSeries);
-        html += renderRail("Adicionados Recentemente", data.rails.recentMovies);
-        html += renderRail("Filmes de Terror", data.rails.horrorMovies);
-        html += renderRail("Comédia", data.rails.comedyMovies);
-        html += renderRail("Ação", data.rails.actionMovies);
+        html += renderRail("Top Filmes", data.rails.topMovies, "movie");
+        html += renderRail("Top Séries", data.rails.topSeries, "series");
+        html += renderRail("Adicionados Recentemente", data.rails.recentMovies, "movie");
+        html += renderRail("Filmes de Terror", data.rails.horrorMovies, "movie");
+        html += renderRail("Comédia", data.rails.comedyMovies, "movie");
+        html += renderRail("Ação", data.rails.actionMovies, "movie");
 
         content.innerHTML = html;
 
     } catch (e) {
         console.error("Dashboard error:", e);
         content.innerHTML = `<p style="color:red">Erro ao carregar dashboard: ${e.message}</p>`;
+    }
+}
+
+export async function initMovies() {
+    console.log("Movies Initialized");
+    const container = document.getElementById("moviesGrid");
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading-spinner">Carregando filmes...</div>';
+
+    try {
+        const res = await api.content.getMovies();
+        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar filmes");
+
+        const movies = res.data.movies;
+        if (!movies || movies.length === 0) {
+            container.innerHTML = "<p>Nenhum filme encontrado.</p>";
+            return;
+        }
+
+        container.innerHTML = "";
+        movies.forEach(movie => {
+            const card = createPosterCard({
+                title: movie.title,
+                posterUrl: movie.poster,
+                metaLeft: movie.year,
+                metaRight: movie.rating ? `★ ${movie.rating}` : "",
+                onClick: () => {
+                    window.location.href = `./player.html?type=movie&id=${encodeURIComponent(movie.id)}`;
+                }
+            });
+            container.append(card);
+        });
+
+    } catch (e) {
+        console.error("Movies error:", e);
+        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
+    }
+}
+
+export async function initSeries() {
+    console.log("Series Initialized");
+    const container = document.getElementById("seriesGrid");
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading-spinner">Carregando séries...</div>';
+
+    try {
+        const res = await api.content.getSeries();
+        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar séries");
+
+        const seriesList = res.data.series;
+        if (!seriesList || seriesList.length === 0) {
+            container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+            return;
+        }
+
+        container.innerHTML = "";
+        seriesList.forEach(series => {
+            const card = createPosterCard({
+                title: series.title,
+                posterUrl: series.poster,
+                metaLeft: series.year,
+                metaRight: series.rating ? `★ ${series.rating}` : "",
+                onClick: () => {
+                    window.location.href = `./player.html?type=series&id=${encodeURIComponent(series.id)}`;
+                }
+            });
+            container.append(card);
+        });
+
+    } catch (e) {
+        console.error("Series error:", e);
+        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
 }
 

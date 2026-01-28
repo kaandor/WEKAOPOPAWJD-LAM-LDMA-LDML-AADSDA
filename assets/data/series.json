@@ -1,3 +1,49 @@
 {
-  "series": []
+  "series": [
+    {
+      "id": "s1",
+      "title": "Breaking Bad",
+      "poster": "https://image.tmdb.org/t/p/w500/30erzlzIBtCV3prVxUYIVuu5E2.jpg",
+      "backdrop": "https://image.tmdb.org/t/p/original/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg",
+      "year": 2008,
+      "rating": 9.5,
+      "category": "Crime"
+    },
+    {
+      "id": "s2",
+      "title": "Game of Thrones",
+      "poster": "https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+      "backdrop": "https://image.tmdb.org/t/p/original/suopoADq0k8diZM8CnhIWAN4Wy.jpg",
+      "year": 2011,
+      "rating": 9.3,
+      "category": "Fantasy"
+    },
+    {
+      "id": "s3",
+      "title": "Stranger Things",
+      "poster": "https://image.tmdb.org/t/p/w500/x2LSRK2Cm7MZhjluni1msSn3w0f.jpg",
+      "backdrop": "https://image.tmdb.org/t/p/original/56v2KjBlU4XaOv9rVYkJu64COcfe.jpg",
+      "year": 2016,
+      "rating": 8.7,
+      "category": "Sci-Fi"
+    },
+    {
+      "id": "s4",
+      "title": "The Mandalorian",
+      "poster": "https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg",
+      "backdrop": "https://image.tmdb.org/t/p/original/6T10m59BCiQ488dFm2gGgW88lG.jpg",
+      "year": 2019,
+      "rating": 8.8,
+      "category": "Sci-Fi"
+    },
+    {
+      "id": "s5",
+      "title": "The Witcher",
+      "poster": "https://image.tmdb.org/t/p/w500/zrPpUlehQaBf8YX2NrVrKK8IEpf.jpg",
+      "backdrop": "https://image.tmdb.org/t/p/original/jBJWaqoSCiARWtfV0GlqHrcdidd.jpg",
+      "year": 2019,
+      "rating": 8.2,
+      "category": "Fantasy"
+    }
+  ]
 }

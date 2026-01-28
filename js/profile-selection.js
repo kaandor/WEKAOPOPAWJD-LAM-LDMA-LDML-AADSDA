@@ -93,7 +93,7 @@ function selectProfile(profile) {
   localStorage.setItem("klyx_profile_id", profile.id);
   localStorage.setItem("klyx_profile_name", profile.name);
   localStorage.setItem("klyx_profile_avatar", profile.avatar_url || "");
-  window.location.href = "/dashboard";
+  window.location.href = "./dashboard.html";
 }
 
 function openCreateModal() {
