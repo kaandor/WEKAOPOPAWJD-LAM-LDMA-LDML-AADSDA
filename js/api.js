@@ -73,9 +73,11 @@ export const api = {
   movies: {
     async get(id) {
         const data = await getLocalData("movies.json");
-        const movie = data?.movies?.find(m => m.id === id);
+        let movie = data?.movies?.find(m => m.id === id);
         if (!movie) return { ok: false, data: { error: "Movie not found" } };
         
+        movie = normalize(movie);
+
         // Ensure stream_url exists (fallback to sample if missing)
         if (!movie.stream_url) {
             movie.stream_url = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"; // Big Buck Bunny HLS
@@ -84,14 +86,16 @@ export const api = {
     },
     async list() {
          const data = await getLocalData("movies.json");
-         return { ok: true, data: data?.movies || [] };
+         const movies = (data?.movies || []).map(normalize);
+         return { ok: true, data: movies };
     }
   },
   series: {
     async get(id) {
         const data = await getLocalData("series.json");
-        const series = data?.series?.find(s => s.id === id);
+        let series = data?.series?.find(s => s.id === id);
         if (!series) return { ok: false, data: { error: "Series not found" } };
+        series = normalize(series);
         return { ok: true, data: { item: series } };
     },
     async episodes(seriesId) {
