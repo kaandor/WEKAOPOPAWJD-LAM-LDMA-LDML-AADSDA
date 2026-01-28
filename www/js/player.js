@@ -26,7 +26,7 @@ export async function initPlayer() {
   // --- CONFIGURAÇÃO DO PROXY VERCEL ---
   // Substitua a URL abaixo pela URL do seu projeto na Vercel após o deploy
   // Exemplo: "https://meu-proxy-iptv.vercel.app/api?url="
-  const VERCEL_PROXY_URL = ""; 
+  const VERCEL_PROXY_URL = "https://klyx-web-app2.vercel.app/api?url="; 
   // ------------------------------------
 
   // Safety timeout to hide spinner after 10 seconds if something hangs
