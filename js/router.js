@@ -19,7 +19,7 @@ export async function mountAppShell({ currentPath }) {
   // Check profile selection
   const profileId = localStorage.getItem("klyx_profile_id");
   if (!profileId) {
-      window.location.href = "/profiles";
+      window.location.href = "./profile-selection.html";
       return;
   }
 
