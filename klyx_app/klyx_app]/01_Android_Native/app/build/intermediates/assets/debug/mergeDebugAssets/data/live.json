@@ -1,0 +1,53 @@
+{
+  "channels": [
+    {
+      "id": "globo_sp",
+      "title": "Globo SP",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/TV_Globo_logo_2014.svg/800px-TV_Globo_logo_2014.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "sbt",
+      "title": "SBT",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/SBT_Logo_2014.svg/800px-SBT_Logo_2014.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "record",
+      "title": "Record TV",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/RecordTV_logo_2016.svg/800px-RecordTV_logo_2016.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "band",
+      "title": "Band",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Rede_Bandeirantes_logo_2018.svg/800px-Rede_Bandeirantes_logo_2018.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Aberta"
+    },
+    {
+      "id": "espn",
+      "title": "ESPN",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/800px-ESPN_wordmark.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Esportes"
+    },
+    {
+      "id": "sportv",
+      "title": "SporTV",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/SporTV_Logo_2010.svg/800px-SporTV_Logo_2010.svg.png",
+      "stream_url": "http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+      "category": "Esportes"
+    },
+    {
+      "id": "tnt",
+      "title": "TNT",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/TNT_Logo_2016.svg/800px-TNT_Logo_2016.svg.png",
+      "stream_url": "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8",
+      "category": "Filmes"
+    }
+  ]
+}

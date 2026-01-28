@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Klyx</string>
+    <string name="login_title">Entrar</string>
+    <string name="email_hint">E-mail</string>
+    <string name="password_hint">Senha</string>
+    <string name="login_button">Entrar</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="loading">Carregando...</string>
+</resources>

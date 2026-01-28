@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/klyx_background"
+    android:padding="24dp">
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:src="@drawable/ic_placeholder" 
+        android:tint="@color/klyx_primary"
+        android:layout_marginBottom="48dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quem está assistindo?"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="48dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Profile 1 -->
+        <LinearLayout
+            android:id="@+id/profile1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="32dp">
+            
+            <FrameLayout
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_login_button">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="K"
+                    android:textSize="48sp"
+                    android:textColor="@color/white"
+                    android:layout_gravity="center"/>
+            </FrameLayout>
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kaandro"
+                android:textColor="@color/klyx_text_secondary"
+                android:layout_marginTop="8dp"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- Profile 2 -->
+        <LinearLayout
+            android:id="@+id/profile2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+            
+            <FrameLayout
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="@drawable/bg_login_button_secondary">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="C"
+                    android:textSize="48sp"
+                    android:textColor="@color/white"
+                    android:layout_gravity="center"/>
+            </FrameLayout>
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Criança"
+                android:textColor="@color/klyx_text_secondary"
+                android:layout_marginTop="8dp"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/editProfilesButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gerenciar Perfis"
+        android:background="@android:color/transparent"
+        android:textColor="@color/klyx_text_secondary"
+        android:textAllCaps="false"
+        android:layout_marginTop="64dp"/>
+
+</LinearLayout>

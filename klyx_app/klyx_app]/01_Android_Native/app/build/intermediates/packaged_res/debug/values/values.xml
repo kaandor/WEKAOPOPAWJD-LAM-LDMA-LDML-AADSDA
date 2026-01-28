@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="klyx_background">#0b0e14</color>
+    <color name="klyx_primary">#A855F7</color>
+    <color name="klyx_surface">#1f2937</color>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="white">#FFFFFFFF</color>
+    <string name="app_name">Klyx</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="email_hint">E-mail</string>
+    <string name="loading">Carregando...</string>
+    <string name="login_button">Entrar</string>
+    <string name="login_title">Entrar</string>
+    <string name="password_hint">Senha</string>
+    <style name="Theme.KlyxNative" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        
+        <item name="colorPrimary">@color/klyx_primary</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        
+        <item name="android:statusBarColor">@color/klyx_background</item>
+        
+        <item name="android:windowBackground">@color/klyx_background</item>
+    </style>
+    <style name="Theme.KlyxNative.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+</resources>

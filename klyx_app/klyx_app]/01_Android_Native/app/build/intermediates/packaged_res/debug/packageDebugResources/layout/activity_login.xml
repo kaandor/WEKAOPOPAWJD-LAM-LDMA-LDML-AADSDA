@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/klyx_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
+
+        <!-- Logo Area -->
+        <ImageView
+            android:id="@+id/logoImage"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_placeholder"
+            android:layout_marginBottom="24dp"
+            android:tint="@color/white" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Entrar"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Acesso seguro a Filmes, Séries e TV ao vivo."
+            android:textColor="@color/klyx_text_secondary"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Form Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_login_input"
+            android:backgroundTint="@android:color/transparent" 
+            >
+            <!-- Note: Card background removed to match the transparent look in screenshot or apply specifically if needed. 
+                 Using simple layout structure for now. -->
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="E-mail"
+                android:textColor="@color/klyx_text_secondary"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"/>
+
+            <EditText
+                android:id="@+id/emailInput"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/bg_login_input"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/white"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Senha"
+                android:textColor="@color/klyx_text_secondary"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"/>
+
+            <EditText
+                android:id="@+id/passwordInput"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/bg_login_input"
+                android:inputType="textPassword"
+                android:textColor="@color/white"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textSize="16sp"
+                android:layout_marginBottom="32dp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/loginButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Entrar"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_login_button"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/createAccountButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Criar uma nova conta"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_login_button_secondary"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/loadingIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginTop="24dp"
+            android:indeterminateTint="@color/klyx_primary" />
+
+    </LinearLayout>
+</ScrollView>
