@@ -1,5 +1,6 @@
 const STORAGE_KEY = "klyx.session";
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
+const USE_LOCAL_ONLY = true; // Força o uso de arquivos locais e desativa o banco de dados externo
 
 // Simple in-memory cache for catalog data to prevent redownloading huge JSONs
 const requestCache = {};
@@ -240,7 +241,7 @@ async function request(method, path, body) {
                return { ok: false, status: 401, data: null };
           }
           
-          if (firebasePath) {
+          if (firebasePath && !USE_LOCAL_ONLY) {
               console.log(`[Firebase] Fetching ${firebasePath}...`);
               let rawData = null;
 
@@ -807,6 +808,10 @@ export const api = {
     },
     async checkDevice(mac, key) {
         if (isClientSideMode()) {
+             if (USE_LOCAL_ONLY) {
+                 return { ok: true, status: 200, data: { status: 'active', active: true, plan: 'premium' } };
+             }
+
              try {
                  // Sanitize MAC for Firebase Key (matches manage-subs.js logic)
                  const macId = mac.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -985,12 +990,16 @@ export const api = {
     create: async (payload) => {
         if (isClientSideMode()) {
             const session = readSession();
-            if (!session?.user?.email_key) return { ok: false };
+            if (!session?.user?.email_key && !USE_LOCAL_ONLY) return { ok: false };
             
             // Gerar ID simples
             const newId = "p" + Date.now();
             const newProfile = { ...payload, id: newId };
             
+            if (USE_LOCAL_ONLY) {
+                return { ok: true, status: 201, data: newProfile };
+            }
+
             // Salvar no Firebase (adicionar à lista ou objeto)
             await fetch(`${FIREBASE_DB_URL}/users/${session.user.email_key}/profiles/${newId}.json`, {
                 method: "PUT",
@@ -1049,6 +1058,8 @@ export const api = {
         const session = readSession();
         if (!session || !session.user || !session.user.email_key) return null;
         
+        if (USE_LOCAL_ONLY) return session.user;
+
         try {
             const res = await fetch(`${FIREBASE_DB_URL}/users/${session.user.email_key}.json`);
             if (res.ok) {
@@ -1137,6 +1148,7 @@ export const api = {
       getLastError: () => api.status._lastError,
       checkConnection: async () => {
           if (!isClientSideMode()) return true;
+          if (USE_LOCAL_ONLY) return true;
           try {
               // Timeout curto para verificar conexão (Aumentado para 10s)
               const controller = new AbortController();
