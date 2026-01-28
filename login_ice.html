@@ -116,11 +116,10 @@
 
     <script type="module">
       import { api } from "./js/api.js";
-      import { redirectIfAuthed, applyTheme } from "./js/auth.js";
-      import { handleLoginSuccess } from "./js/ui.js";
+      import { redirectIfAuthed, applyTheme, handleLoginSuccess } from "./js/auth.js";
 
       redirectIfAuthed();
-      applyTheme();
+      applyTheme("dark");
 
       // GitHub Login Handler
       const githubBtn = document.getElementById('githubLoginBtn');
@@ -202,13 +201,24 @@
               return;
             }
 
-            if (res.data.user) {
-                 handleLoginSuccess(res.data.user);
+            // Sync MAC/Key if server requires it (Unified Account MAC)
+            if (res.data.sync_device) {
+                 console.log("Syncing device MAC/Key with account...", res.data.sync_device);
+                 localStorage.setItem('klyx_device_mac', res.data.sync_device.mac);
+                 localStorage.setItem('klyx_device_key', res.data.sync_device.key);
             }
+
+            api.session.write({ user: res.data.user, tokens: res.data.tokens });
+            const me = await api.auth.me();
+            if (me.ok) {
+              api.session.write({ user: me.data.user, tokens: res.data.tokens, settings: me.data.settings });
+              applyTheme(me.data.settings?.theme || "dark");
+            }
+            window.location.href = "/profiles";
 
         } catch (e) {
             console.error(e);
-            error.textContent = "Erro inesperado: " + e.message;
+            error.textContent = "Erro inesperado. Tente novamente.";
             error.classList.remove("hidden");
         }
       });

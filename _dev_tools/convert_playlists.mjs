@@ -8,9 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Adjust these paths as needed
-// From: klyx_web_export/www/_dev_tools
-// To:   klyx_app/klyx-app/playlists
-const PLAYLISTS_DIR = path.resolve(__dirname, "../../../klyx-app/playlists");
+// From: klyx_web_export/_dev_tools
+// To:   klyx_app/01_Master_App/playlists
+const PLAYLISTS_DIR = path.resolve(__dirname, "../../01_Master_App/playlists");
 const OUTPUT_DIR = path.resolve(__dirname, "../assets/data");
 
 // Ensure output directory exists
