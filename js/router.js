@@ -1,6 +1,6 @@
-import { requireAuth } from "/js/auth.js";
-import { api } from "/js/api.js";
-import { initInput } from "/js/input.js";
+import { requireAuth } from "./auth.js";
+import { api } from "./api.js";
+import { initInput } from "./input.js";
 
 function icon() {
   return `
