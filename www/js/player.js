@@ -79,6 +79,15 @@ export async function initPlayer() {
   // metaEl already defined above
   const back = document.getElementById("backBtn");
   
+  // Retry Button Logic
+  const btnRetry = document.getElementById("btnRetry");
+  if (btnRetry) {
+      btnRetry.onclick = () => {
+          // Reload the page to retry cleanly
+          window.location.reload();
+      };
+  }
+  
   // --- IMMEDIATE UI UPDATE (OPTIMIZATION) ---
   // If we have metadata in URL params, render it immediately to reduce perceived latency
   const pTitle = qs("title");
@@ -956,19 +965,8 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                let finalUrl = url;
                if (VERCEL_PROXY_URL && url.startsWith("http")) {
                    console.log("Using Vercel Proxy for:", url);
-                   finalUrl = VERCEL_PROXY_URL + url; // No encodeURIComponent based on user example, but usually safer. User example: .../api?url=https://...
-                   // Actually, query params should be encoded if the target url has params.
-                   // But user example shows direct concatenation. I'll stick to direct if they didn't specify, 
-                   // but usually browsers handle one level. Let's trust the user's "100% functional" guide 
-                   // which implies direct usage or maybe they just didn't mention encoding.
-                   // Safer: encodeURIComponent if it's a query param.
-                   // The user code: const url = req.query.url; -> standard express/vercel parsing.
-                   // If I send ?url=http://a.com?b=1, it might break.
-                   // I will use encodeURIComponent just to be safe, it shouldn't break the backend.
-                   // Wait, user example: "https://iptv-proxy.vercel.app/api?url=https://SEU_IPTV.m3u8"
-                   // It doesn't look encoded there.
-                   // I will try without encoding first to match their guide exactly, but maybe add a comment.
-                   finalUrl = VERCEL_PROXY_URL + url; 
+                   // FIX: Always encodeURIComponent to preserve query parameters (tokens, etc)
+                   finalUrl = VERCEL_PROXY_URL + encodeURIComponent(url); 
                }
 
                // OPTIMIZED HLS CONFIG FOR INSTANT PLAYBACK & HUGE TS FILES
