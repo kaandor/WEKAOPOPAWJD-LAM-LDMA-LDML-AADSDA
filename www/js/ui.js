@@ -1311,45 +1311,19 @@ export async function initSettings() {
 }
 
 function openPlayer(url) {
-    // Remove existing player if any
-    let existing = document.getElementById("klyx-player-overlay");
-    if (existing) existing.remove();
-
-    const overlay = document.createElement("div");
-    overlay.id = "klyx-player-overlay";
-    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999; display: flex; flex-direction: column;";
-
-    // Close Button
-    const closeBtn = document.createElement("button");
-    closeBtn.innerHTML = "&times;";
-    closeBtn.style.cssText = "position: absolute; top: 20px; right: 20px; z-index: 100000; background: rgba(0,0,0,0.5); color: white; border: 2px solid white; border-radius: 50%; width: 50px; height: 50px; font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;";
-    closeBtn.onmouseover = () => closeBtn.style.background = "rgba(200,0,0,0.8)";
-    closeBtn.onmouseout = () => closeBtn.style.background = "rgba(0,0,0,0.5)";
+    // Open in a new window/popup as requested to avoid Mixed Content/Overlay issues
+    const width = 1280;
+    const height = 720;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
     
-    const closeHandler = (event) => {
-        if (event.data === "klyx-close-player") {
-            overlay.remove();
-            window.removeEventListener("message", closeHandler);
-        }
-    };
-    window.addEventListener("message", closeHandler);
+    const newWindow = window.open(url, 'klyx_player', `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`);
 
-    closeBtn.onclick = () => {
-        overlay.remove();
-        window.removeEventListener("message", closeHandler);
-        // Reload to stop audio if iframe doesn't handle it
-        // Or just removing iframe is enough for modern browsers
-    };
-
-    const iframe = document.createElement("iframe");
-    iframe.src = url;
-    iframe.style.cssText = "width: 100%; height: 100%; border: none; flex: 1;";
-    iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
-    iframe.allowFullscreen = true;
-    
-    overlay.appendChild(closeBtn);
-    overlay.appendChild(iframe);
-    document.body.appendChild(overlay);
+    if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+        alert("Por favor, habilite os popups para abrir o player.");
+    } else {
+        newWindow.focus();
+    }
 }
 
 export async function handleLoginSuccess(data) {

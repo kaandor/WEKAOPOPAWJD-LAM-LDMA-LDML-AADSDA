@@ -154,6 +154,12 @@ export async function initPlayer() {
           return;
       }
 
+      // If opened in a popup/new window (opener exists), close it
+      if (window.opener) {
+          window.close();
+          return;
+      }
+
       if (type === "live") window.location.href = "./live-tv.html";
       else if (type === "movie") window.location.href = "./movies.html";
       else window.location.href = "./series.html";
