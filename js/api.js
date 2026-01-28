@@ -89,9 +89,74 @@ async function refreshTokens() {
 
 async function request(method, path, body) {
   const isClient = isClientSideMode();
+  console.log(`[API Request] ${method} ${path} (ClientMode: ${isClient})`);
   
   if (isClient) {
       // --- LÓGICA FIREBASE / CLIENT SIDE ---
+
+      // --- PROFILES HANDLER (Client-Side) ---
+      if (path.includes("profiles")) {
+          console.log("[API] Intercepting Profiles Route");
+          const profilesKey = 'klyx_profiles';
+          
+          if (method === "GET") {
+              let profiles = [];
+              try {
+                  const raw = localStorage.getItem(profilesKey);
+                  if (raw) profiles = JSON.parse(raw);
+              } catch (e) {}
+              
+              if (profiles.length === 0) {
+                  const session = readSession();
+                  profiles = [{ 
+                      id: "default", 
+                      name: session?.user?.name || "Perfil Principal", 
+                      avatar: "assets/logos/logo.svg",
+                      is_kid: false 
+                  }];
+                  localStorage.setItem(profilesKey, JSON.stringify(profiles));
+              }
+              return { ok: true, status: 200, data: profiles };
+          }
+          
+          if (method === "POST") {
+              try {
+                  let profiles = [];
+                  const raw = localStorage.getItem(profilesKey);
+                  if (raw) profiles = JSON.parse(raw);
+                  
+                  const newProfile = {
+                      id: "p" + Date.now(),
+                      ...body,
+                      created_at: new Date().toISOString()
+                  };
+                  profiles.push(newProfile);
+                  localStorage.setItem(profilesKey, JSON.stringify(profiles));
+                  return { ok: true, status: 200, data: newProfile };
+              } catch (e) {
+                  return { ok: false, status: 500, data: { error: e.message } };
+              }
+          }
+
+          if (method === "DELETE") {
+               try {
+                   const idMatch = path.match(/\/profiles\/([^/?]+)$/);
+                   const idToDelete = idMatch ? idMatch[1] : null;
+                   
+                   if (idToDelete) {
+                       let profiles = [];
+                       const raw = localStorage.getItem(profilesKey);
+                       if (raw) profiles = JSON.parse(raw);
+                       
+                       profiles = profiles.filter(p => p.id !== idToDelete);
+                       localStorage.setItem(profilesKey, JSON.stringify(profiles));
+                       return { ok: true, status: 200, data: { success: true } };
+                   }
+               } catch (e) {
+                   return { ok: false, status: 500, data: { error: e.message } };
+               }
+          }
+      }
 
       // --- PLAYBACK HANDLER (Client-Side) ---
       if (path.includes("/playback/progress")) {
@@ -198,70 +263,6 @@ async function request(method, path, body) {
       }
 
       
-      // --- PROFILES HANDLER (Client-Side) ---
-          if (path.includes("/profiles")) {
-              const profilesKey = 'klyx_profiles';
-              
-              if (method === "GET") {
-                  let profiles = [];
-                  try {
-                      const raw = localStorage.getItem(profilesKey);
-                      if (raw) profiles = JSON.parse(raw);
-                  } catch (e) {}
-                  
-                  // Initialize default if empty
-                  if (profiles.length === 0) {
-                      const session = readSession();
-                      profiles = [{ 
-                          id: "default", 
-                          name: session?.user?.name || "Perfil Principal", 
-                          avatar: "assets/logos/logo.svg",
-                          is_kid: false 
-                      }];
-                      localStorage.setItem(profilesKey, JSON.stringify(profiles));
-                  }
-                  return { ok: true, status: 200, data: profiles };
-              }
-              
-              if (method === "POST") {
-                  try {
-                      let profiles = [];
-                      const raw = localStorage.getItem(profilesKey);
-                      if (raw) profiles = JSON.parse(raw);
-                      
-                      const newProfile = {
-                          id: "p" + Date.now(),
-                          ...body,
-                          created_at: new Date().toISOString()
-                      };
-                      profiles.push(newProfile);
-                      localStorage.setItem(profilesKey, JSON.stringify(profiles));
-                      return { ok: true, status: 200, data: newProfile };
-                  } catch (e) {
-                      return { ok: false, status: 500, data: { error: e.message } };
-                  }
-              }
-
-              if (method === "DELETE") {
-                   try {
-                       const idMatch = path.match(/\/profiles\/([^/?]+)$/);
-                       const idToDelete = idMatch ? idMatch[1] : null;
-                       
-                       if (idToDelete) {
-                           let profiles = [];
-                           const raw = localStorage.getItem(profilesKey);
-                           if (raw) profiles = JSON.parse(raw);
-                           
-                           profiles = profiles.filter(p => p.id !== idToDelete);
-                           localStorage.setItem(profilesKey, JSON.stringify(profiles));
-                           return { ok: true, status: 200, data: { success: true } };
-                       }
-                   } catch (e) {
-                       return { ok: false, status: 500, data: { error: e.message } };
-                   }
-              }
-          }
-
           // Roteamento de requisições para o Firebase
       if (method === "GET") {
           let firebasePath = null;
