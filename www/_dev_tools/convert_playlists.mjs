@@ -8,8 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Adjust these paths as needed
-const PLAYLISTS_DIR = path.resolve(__dirname, "../klyx-app/playlists");
-const OUTPUT_DIR = path.resolve(__dirname, "assets/data");
+// From: klyx_web_export/www/_dev_tools
+// To:   klyx_app/klyx-app/playlists
+const PLAYLISTS_DIR = path.resolve(__dirname, "../../../klyx-app/playlists");
+const OUTPUT_DIR = path.resolve(__dirname, "../assets/data");
 
 // Ensure output directory exists
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -64,10 +66,12 @@ async function processPlaylist(filePath) {
 
     let currentItem = {};
 
-    let lineCount = 0;
+    let linesProcessed = 0;
     for await (const line of rl) {
-        lineCount++;
-        if (lineCount % 5000 === 0) console.log(`Processed ${lineCount} lines...`);
+        linesProcessed++;
+        if (linesProcessed % 50000 === 0) {
+            process.stdout.write(`Processed ${linesProcessed} lines...\r`);
+        }
         const l = line.trim();
         if (!l) continue;
 
@@ -100,14 +104,29 @@ async function processPlaylist(filePath) {
                 const type = detectType(currentItem.title, currentItem.group);
 
                 if (type === "live") {
-                    live.push({
+                    const isAdult = /adulto|xxx|porn|sex|18\+|sexy|hentai/i.test((currentItem.group || "") + " " + (currentItem.title || ""));
+                    const isLegendado = /legendado|\[LEG\]/i.test((currentItem.group || "") + " " + (currentItem.title || ""));
+                    
+                    const channelObj = {
                         id: generateId(),
                         title: currentItem.title,
                         category: currentItem.group,
                         thumbnail_url: currentItem.logo || "",
                         stream_url: currentItem.url,
                         description: "Live Channel"
-                    });
+                    };
+
+                    if (isAdult) {
+                        channelObj.locked = true;
+                    }
+                    
+                    if (isLegendado) {
+                        console.log(`Detected Legendado: ${currentItem.title}`);
+                        channelObj.audio_track = "audio2";
+                        // console.log("Channel Object:", JSON.stringify(channelObj));
+                    }
+
+                    live.push(channelObj);
                 } else if (type === "movie") {
                     const yearMatch = currentItem.title.match(/\b(19|20)\d{2}\b/);
                     const year = yearMatch ? parseInt(yearMatch[0], 10) : new Date().getFullYear();
@@ -185,12 +204,20 @@ async function processPlaylist(filePath) {
             }
         }
     }
+    console.log(`\nProcessed ${linesProcessed} lines from ${path.basename(filePath)}`);
 }
 
 async function run() {
     console.log("Looking for playlists in:", PLAYLISTS_DIR);
     if (fs.existsSync(PLAYLISTS_DIR)) {
-        const files = fs.readdirSync(PLAYLISTS_DIR).filter(f => f.endsWith(".m3u") || f.endsWith(".m3u8"));
+        let files = fs.readdirSync(PLAYLISTS_DIR).filter(f => f.endsWith(".m3u") || f.endsWith(".m3u8"));
+        
+        // Priority Override: If CanaisBR04.m3u exists, ONLY process it (Temporary Fix)
+        if (files.includes("CanaisBR04.m3u")) {
+            console.log("⚠️  OVERRIDE ACTIVE: Processing ONLY CanaisBR04.m3u as requested.");
+            files = ["CanaisBR04.m3u"];
+        }
+
         for (const file of files) {
             await processPlaylist(path.join(PLAYLISTS_DIR, file));
         }
