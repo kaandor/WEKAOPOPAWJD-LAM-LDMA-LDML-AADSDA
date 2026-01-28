@@ -735,8 +735,8 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
   // --- MULTI-PROXY FALLBACK SYSTEM ---
   // List of proxies to try in order.
-  // 1. VERCEL PROXY (User Dedicated) - Best for IPTV
-  // 2. corsproxy.io (Backup)
+  // 1. VERCEL PROXY (User Dedicated) - Best for IPTV (HLS/m3u8)
+  // 2. corsproxy.io (Backup) - Better for large files (MP4/MKV)
   // 3. allorigins (Backup)
   const PROXY_LIST = [
        (u) => `${VERCEL_PROXY_URL}${encodeURIComponent(u)}`,
@@ -744,7 +744,17 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   ];
 
-  let currentProxyIndex = 0;
+  // Helper to choose the best initial proxy based on content type
+  const getInitialProxyIndex = (url) => {
+      // If MP4/MKV, avoid Vercel (Limit 4.5MB) and prefer corsproxy.io (Index 1)
+      if (url.includes(".mp4") || url.includes(".mkv") || url.includes(".avi")) {
+          console.log("[ProxySelector] Large file detected (MP4/MKV). Preferring corsproxy.io");
+          return 1; // Index 1 is corsproxy.io
+      }
+      return 0; // Default to Vercel for HLS/Live
+  };
+
+  let currentProxyIndex = getInitialProxyIndex(streamUrl);
   let hasTriedAllProxies = false;
 
   // --- DEBUG OVERLAY ---
@@ -1160,9 +1170,9 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                       else loader.style.display = "none";
                   }
 
-                  // --- IPTV FIX: Handle FORMAT ERROR (4) by forcing HLS ---
+                  // --- IPTV FIX: Handle FORMAT ERROR (4) ---
                   // Many IPTV streams are MPEG-TS or HLS without .m3u8 extension.
-                  // If native player fails with code 4, we try HLS.js
+                  // If native player fails with code 4, we try HLS.js ONLY if it's not a static file (MP4)
                   if (err && err.code === 4 && !hls) {
                       
                       // --- MULTI-PROXY ROTATION FOR MP4/STATIC FILES ---
@@ -1173,19 +1183,41 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                       const isMP4 = originalUrl.includes(".mp4") || originalUrl.includes(".mkv") || originalUrl.includes(".avi");
                       const isMixedContent = window.location.protocol === 'https:' && originalUrl.startsWith('http:');
                       
-                      if (isMixedContent && isMP4 && currentProxyIndex < PROXY_LIST.length - 1) {
-                           console.warn(`Proxy ${currentProxyIndex} failed for MP4. Trying next proxy...`);
-                           currentProxyIndex++;
-                           
-                           if (errMsgEl) errMsgEl.innerHTML = `Tentando servidor alternativo (${currentProxyIndex+1}/${PROXY_LIST.length})...`;
-                           
-                           // Clean up and retry
-                           video.removeAttribute('src'); // Detach current broken stream
-                           video.load();
-                           
-                           // Use original URL, loadStream will apply the new proxy based on currentProxyIndex
-                           setTimeout(() => loadStream(originalUrl, startTime), 1000);
-                           return;
+                      if (isMP4) {
+                          console.warn("Media Format Error (4) on Static File (MP4/MKV).");
+                          
+                          if (currentProxyIndex < PROXY_LIST.length - 1) {
+                               console.warn(`Proxy ${currentProxyIndex} failed for MP4. Trying next proxy...`);
+                               currentProxyIndex++;
+                               
+                               if (errMsgEl) errMsgEl.innerHTML = `Tentando servidor alternativo (${currentProxyIndex+1}/${PROXY_LIST.length})...`;
+                               
+                               // Clean up and retry
+                               video.removeAttribute('src'); // Detach current broken stream
+                               video.load();
+                               
+                               // Use original URL, loadStream will apply the new proxy based on currentProxyIndex
+                               setTimeout(() => loadStream(originalUrl, startTime), 1000);
+                               return;
+                          } else {
+                              // Exhausted proxies for MP4
+                              if (errMsgEl) {
+                                  errMsgEl.innerHTML = "Falha na reprodução do arquivo (MP4/MKV).<br>Tente abrir externamente.";
+                                  
+                                  const btnId = "direct-play-btn-final";
+                                  let btn = document.getElementById(btnId);
+                                  if (!btn) {
+                                      btn = document.createElement("a");
+                                      btn.id = btnId;
+                                      btn.target = "_blank";
+                                      btn.style.cssText = "display: block; width: fit-content; margin: 15px auto; padding: 10px 20px; background: #e50914; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; cursor: pointer;";
+                                      btn.innerText = "▶ Abrir Vídeo em Nova Aba";
+                                      errMsgEl.parentNode.appendChild(btn);
+                                  }
+                                  btn.href = originalUrl;
+                              }
+                              return; // STOP HERE. Do NOT try HLS for MP4.
+                          }
                       }
                       
                       // If we exhausted proxies OR it's not a proxy issue, proceed to HLS check
