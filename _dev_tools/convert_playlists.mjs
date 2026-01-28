@@ -9,8 +9,8 @@ const __dirname = path.dirname(__filename);
 
 // Adjust these paths as needed
 // From: klyx_web_export/_dev_tools
-// To:   klyx_app/01_Master_App/playlists
-const PLAYLISTS_DIR = path.resolve(__dirname, "../../01_Master_App/playlists");
+// To:   klyx_app/playlists
+const PLAYLISTS_DIR = path.resolve(__dirname, "../../playlists");
 const OUTPUT_DIR = path.resolve(__dirname, "../assets/data");
 
 // Ensure output directory exists
@@ -212,7 +212,7 @@ async function run() {
     if (fs.existsSync(PLAYLISTS_DIR)) {
         let files = fs.readdirSync(PLAYLISTS_DIR).filter(f => f.endsWith(".m3u") || f.endsWith(".m3u8"));
         
-        // Priority Override: If CanaisBR04.m3u exists, ONLY process it (Temporary Fix)
+        // OVERRIDE: Process ONLY CanaisBR04.m3u if it exists (User request)
         if (files.includes("CanaisBR04.m3u")) {
             console.log("⚠️  OVERRIDE ACTIVE: Processing ONLY CanaisBR04.m3u as requested.");
             files = ["CanaisBR04.m3u"];
@@ -227,30 +227,40 @@ async function run() {
     }
 
     console.log(`Writing output...`);
+    console.log(`DEBUG: Target directory: ${OUTPUT_DIR}`);
     console.log(`Movies: ${movies.length}`);
     console.log(`Series: ${seriesMap.size}`);
     console.log(`Episodes: ${episodes.length}`);
     console.log(`Live Channels: ${live.length}`);
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, "movies.json"), JSON.stringify({ movies }, null, 2));
-    fs.writeFileSync(path.join(OUTPUT_DIR, "series.json"), JSON.stringify({ series: Array.from(seriesMap.values()) }, null, 2));
-    fs.writeFileSync(path.join(OUTPUT_DIR, "live.json"), JSON.stringify({ channels: live }, null, 2));
-    fs.writeFileSync(path.join(OUTPUT_DIR, "episodes.json"), JSON.stringify({ episodes }, null, 2));
+    try {
+        fs.writeFileSync(path.join(OUTPUT_DIR, "movies.json"), JSON.stringify({ movies }, null, 2));
+        console.log("DEBUG: Wrote movies.json");
+        fs.writeFileSync(path.join(OUTPUT_DIR, "series.json"), JSON.stringify({ series: Array.from(seriesMap.values()) }, null, 2));
+        console.log("DEBUG: Wrote series.json");
+        fs.writeFileSync(path.join(OUTPUT_DIR, "live.json"), JSON.stringify({ channels: live }, null, 2));
+        console.log("DEBUG: Wrote live.json");
+        fs.writeFileSync(path.join(OUTPUT_DIR, "episodes.json"), JSON.stringify({ episodes }, null, 2));
+        console.log("DEBUG: Wrote episodes.json");
 
-    // Generate a simple home.json based on imported data
-    const home = {
-        rails: {
-            topMovies: movies.slice(0, 10),
-            topSeries: Array.from(seriesMap.values()).slice(0, 10),
-            recentMovies: movies.slice(10, 20),
-            nightMovies: movies.slice(20, 30),
-            horrorMovies: movies.filter(m => m.category.toLowerCase().includes("terror") || m.category.toLowerCase().includes("horror")).slice(0, 10),
-            comedyMovies: movies.filter(m => m.category.toLowerCase().includes("comedia") || m.category.toLowerCase().includes("comedy")).slice(0, 10),
-            actionMovies: movies.filter(m => m.category.toLowerCase().includes("acao") || m.category.toLowerCase().includes("action")).slice(0, 10),
-            adventureMovies: movies.filter(m => m.category.toLowerCase().includes("aventura") || m.category.toLowerCase().includes("adventure")).slice(0, 10)
-        }
-    };
-    fs.writeFileSync(path.join(OUTPUT_DIR, "home.json"), JSON.stringify(home, null, 2));
+        // Generate a simple home.json based on imported data
+        const home = {
+            rails: {
+                topMovies: movies.slice(0, 10),
+                topSeries: Array.from(seriesMap.values()).slice(0, 10),
+                recentMovies: movies.slice(10, 20),
+                nightMovies: movies.slice(20, 30),
+                horrorMovies: movies.filter(m => m.category.toLowerCase().includes("terror") || m.category.toLowerCase().includes("horror")).slice(0, 10),
+                comedyMovies: movies.filter(m => m.category.toLowerCase().includes("comedia") || m.category.toLowerCase().includes("comedy")).slice(0, 10),
+                actionMovies: movies.filter(m => m.category.toLowerCase().includes("acao") || m.category.toLowerCase().includes("action")).slice(0, 10),
+                adventureMovies: movies.filter(m => m.category.toLowerCase().includes("aventura") || m.category.toLowerCase().includes("adventure")).slice(0, 10)
+            }
+        };
+        fs.writeFileSync(path.join(OUTPUT_DIR, "home.json"), JSON.stringify(home, null, 2));
+        console.log("DEBUG: Wrote home.json");
+    } catch (err) {
+        console.error("DEBUG: Write failed!", err);
+    }
 
     console.log("Done!");
 }
