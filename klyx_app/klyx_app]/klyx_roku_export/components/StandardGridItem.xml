@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StandardGridItem" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="itemContentChanged" />
+    <field id="width" type="float" onChange="widthChanged" />
+    <field id="height" type="float" onChange="heightChanged" />
+    <field id="rowFocusPercent" type="float" onChange="onFocusPercentChange" /> 
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/components/StandardGridItem.brs" />
+
+  <children>
+    <Poster 
+      id="poster" 
+      width="196" 
+      height="294" 
+      loadDisplayMode="scaleToFill" />
+      
+    <!-- Focus Border -->
+    <Rectangle 
+        id="focusRing" 
+        width="206" 
+        height="304" 
+        translation="[-5, -5]" 
+        color="0xFFFFFFFF" 
+        filled="false" 
+        lineThickness="3" 
+        visible="false" />
+  </children>
+</component>

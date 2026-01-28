@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProfileScreen" extends="Group">
+  <interface>
+    <field id="profiles" type="assocarray" onChange="onProfilesChange" />
+    <field id="selectedProfile" type="assocarray" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/components/ProfileScreen.brs" />
+
+  <children>
+    <Rectangle width="1920" height="1080" color="0x000000FF" />
+    
+    <Label 
+        text="Quem está assistindo?" 
+        width="1920" 
+        translation="[0, 200]" 
+        horizAlign="center" 
+        font="font:LargeBoldSystemFont" 
+        color="0xFFFFFFFF" />
+        
+    <MarkupGrid 
+        id="profileGrid" 
+        translation="[560, 400]" 
+        itemComponentName="ProfileItem" 
+        itemSize="[200, 250]" 
+        itemSpacing="[50, 0]" 
+        numColumns="4" 
+        numRows="1" />
+        
+  </children>
+</component>

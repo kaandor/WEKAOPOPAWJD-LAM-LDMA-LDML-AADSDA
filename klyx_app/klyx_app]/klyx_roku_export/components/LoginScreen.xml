@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="LoginScreen" extends="Group">
+  <interface>
+    <field id="authResult" type="assocarray" />
+  </interface>
+
+  <script type="text/brightscript" uri="pkg:/components/LoginScreen.brs" />
+
+  <children>
+    <!-- Background Image -->
+    <Poster 
+        uri="pkg:/images/splash_hd.png" 
+        width="1920" 
+        height="1080" 
+        loadDisplayMode="scaleToFill" />
+        
+    <!-- Dark Overlay (Site Style: Very Dark) -->
+    <Rectangle 
+        width="1920" 
+        height="1080" 
+        color="0x050505FF" />
+    
+    <!-- Login Card -->
+    <Rectangle 
+        id="cardBg"
+        translation="[660, 150]" 
+        width="600" 
+        height="780" 
+        color="0x111111FF" 
+        opacity="1.0" />
+
+    <!-- Card Content -->
+    <LayoutGroup 
+        translation="[660, 180]" 
+        layoutDirection="vert" 
+        itemSpacings="[10]"
+        horizAlignment="center"
+        width="600">
+        
+        <!-- Header -->
+        <LayoutGroup 
+            layoutDirection="vert" 
+            horizAlignment="center" 
+            itemSpacings="[10]">
+            <Poster 
+                uri="pkg:/images/logo.png" 
+                width="150" 
+                height="60" 
+                loadDisplayMode="scaleToFit" />
+            
+            <Label 
+                text="Entrar" 
+                width="500" 
+                horizAlign="left" 
+                font="font:LargeBoldSystemFont" 
+                color="0xFFFFFFFF" />
+                
+            <Label 
+                text="Acesso seguro a Filmes, Séries e TV ao vivo." 
+                width="500" 
+                horizAlign="left" 
+                font="font:SmallSystemFont" 
+                color="0xAAAAAAFF" />
+        </LayoutGroup>
+        
+        <Rectangle width="10" height="20" color="0x00000000" />
+
+        <!-- Form Section -->
+        <LayoutGroup 
+            layoutDirection="vert" 
+            horizAlignment="left" 
+            itemSpacings="[5]">
+            
+            <Label 
+                text="E-mail" 
+                width="500" 
+                font="font:SmallSystemFont" 
+                color="0xAAAAAAFF" />
+                
+            <!-- Custom Email Input -->
+            <Group>
+                <!-- Background -->
+                <Rectangle 
+                    id="emailBg" 
+                    width="520" 
+                    height="60" 
+                    color="0x262626FF" />
+                <!-- Text Value -->
+                <Label 
+                    id="emailLabel" 
+                    width="500" 
+                    height="60" 
+                    text="Digite seu email" 
+                    color="0x888888FF"
+                    vertAlign="center" 
+                    translation="[15, 0]" />
+                <!-- Invisible Interactive Button -->
+                <Button 
+                    id="emailButton" 
+                    minWidth="520"
+                    height="60"
+                    showFocusFootprint="false" 
+                    opacity="0" />
+            </Group>
+                
+            <Rectangle width="10" height="10" color="0x00000000" />
+            
+            <Label 
+                text="Senha" 
+                width="500" 
+                font="font:SmallSystemFont" 
+                color="0xAAAAAAFF" />
+                
+            <!-- Custom Password Input -->
+            <Group>
+                <Rectangle 
+                    id="passBg" 
+                    width="520" 
+                    height="60" 
+                    color="0x262626FF" />
+                <Label 
+                    id="passLabel" 
+                    width="500" 
+                    height="60" 
+                    text="Digite sua senha" 
+                    color="0x888888FF"
+                    vertAlign="center" 
+                    translation="[15, 0]" />
+                <Button 
+                    id="passwordButton" 
+                    minWidth="520"
+                    height="60"
+                    showFocusFootprint="false" 
+                    opacity="0" />
+            </Group>
+                
+            <!-- Show Password Toggle -->
+            <Button 
+                id="showPasswordButton" 
+                text="[ ] Mostrar Senha" 
+                minWidth="520"
+                height="40"
+                showFocusFootprint="true" />
+                
+        </LayoutGroup>
+
+        <Rectangle width="10" height="30" color="0x00000000" />
+
+        <!-- Actions -->
+        <LayoutGroup 
+            layoutDirection="vert" 
+            horizAlignment="center" 
+            itemSpacings="[15]">
+            
+            <!-- Custom Login Button (Purple) -->
+            <Group>
+                <Rectangle 
+                    id="loginBg" 
+                    width="520" 
+                    height="60" 
+                    color="0x6F42C1FF" />
+                <Label 
+                    id="loginLabel"
+                    width="520" 
+                    height="60" 
+                    text="Entrar" 
+                    color="0xFFFFFFFF"
+                    horizAlign="center"
+                    vertAlign="center" 
+                    font="font:MediumBoldSystemFont" />
+                <Button 
+                    id="loginButton" 
+                    minWidth="520" 
+                    height="60"
+                    showFocusFootprint="false" 
+                    opacity="0" />
+            </Group>
+                
+            <!-- Custom Guest Button (Outline or Dark) -->
+            <Group>
+                <Rectangle 
+                    id="guestBg" 
+                    width="520" 
+                    height="50" 
+                    color="0x00000000" /> <!-- Transparent -->
+                <Label 
+                    id="guestLabel"
+                    width="520" 
+                    height="50" 
+                    text="Criar uma nova conta" 
+                    color="0xAAAAAAFF"
+                    horizAlign="center"
+                    vertAlign="center" 
+                    font="font:MediumSystemFont" />
+                <Button 
+                    id="guestButton" 
+                    minWidth="520" 
+                    height="50"
+                    showFocusFootprint="false" 
+                    opacity="0" />
+            </Group>
+                
+             <!-- Status Message -->
+            <Label 
+                id="statusLabel" 
+                text="" 
+                width="500" 
+                horizAlign="center" 
+                color="0xFF0000FF" />
+        </LayoutGroup>
+
+    </LayoutGroup>
+
+    <!-- Hidden Keyboard -->
+    <KeyboardDialog 
+        id="keyboard" 
+        visible="false" />
+        
+  </children>
+</component>
