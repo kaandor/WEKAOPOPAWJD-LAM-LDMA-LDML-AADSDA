@@ -198,7 +198,71 @@ async function request(method, path, body) {
       }
 
       
-      // Roteamento de requisições para o Firebase
+      // --- PROFILES HANDLER (Client-Side) ---
+          if (path.includes("/profiles")) {
+              const profilesKey = 'klyx_profiles';
+              
+              if (method === "GET") {
+                  let profiles = [];
+                  try {
+                      const raw = localStorage.getItem(profilesKey);
+                      if (raw) profiles = JSON.parse(raw);
+                  } catch (e) {}
+                  
+                  // Initialize default if empty
+                  if (profiles.length === 0) {
+                      const session = readSession();
+                      profiles = [{ 
+                          id: "default", 
+                          name: session?.user?.name || "Perfil Principal", 
+                          avatar: "assets/logos/logo.svg",
+                          is_kid: false 
+                      }];
+                      localStorage.setItem(profilesKey, JSON.stringify(profiles));
+                  }
+                  return { ok: true, status: 200, data: profiles };
+              }
+              
+              if (method === "POST") {
+                  try {
+                      let profiles = [];
+                      const raw = localStorage.getItem(profilesKey);
+                      if (raw) profiles = JSON.parse(raw);
+                      
+                      const newProfile = {
+                          id: "p" + Date.now(),
+                          ...body,
+                          created_at: new Date().toISOString()
+                      };
+                      profiles.push(newProfile);
+                      localStorage.setItem(profilesKey, JSON.stringify(profiles));
+                      return { ok: true, status: 200, data: newProfile };
+                  } catch (e) {
+                      return { ok: false, status: 500, data: { error: e.message } };
+                  }
+              }
+
+              if (method === "DELETE") {
+                   try {
+                       const idMatch = path.match(/\/profiles\/([^/?]+)$/);
+                       const idToDelete = idMatch ? idMatch[1] : null;
+                       
+                       if (idToDelete) {
+                           let profiles = [];
+                           const raw = localStorage.getItem(profilesKey);
+                           if (raw) profiles = JSON.parse(raw);
+                           
+                           profiles = profiles.filter(p => p.id !== idToDelete);
+                           localStorage.setItem(profilesKey, JSON.stringify(profiles));
+                           return { ok: true, status: 200, data: { success: true } };
+                       }
+                   } catch (e) {
+                       return { ok: false, status: 500, data: { error: e.message } };
+                   }
+              }
+          }
+
+          // Roteamento de requisições para o Firebase
       if (method === "GET") {
           let firebasePath = null;
           let localFallback = null;
@@ -224,17 +288,7 @@ async function request(method, path, body) {
                firebasePath = "catalog/live";
                localFallback = "./assets/data/live.json";
           }
-          else if (path.includes("/profiles")) {
-              // Perfis são buscados diretamente do nó do usuário logado
-              const session = readSession();
-              if (session && session.user && session.user.email_key) {
-                  firebasePath = `users/${session.user.email_key}/profiles`;
-              } else {
-                  // Fallback para demo se não estiver logado (improvável nessa rota)
-                  console.log("[Firebase] User not logged in for profiles, returning mock");
-                  return { ok: true, status: 200, data: [{ id: "p1", name: "Perfil 1" }, { id: "p2", name: "Infantil" }] };
-              }
-          }
+          // Profile handling moved to specific block above
           else if (path.includes("/auth/me") || path.includes("/users/me")) {
                const session = readSession();
                if (session) return { ok: true, status: 200, data: { user: session.user, settings: { theme: "dark" } } };
