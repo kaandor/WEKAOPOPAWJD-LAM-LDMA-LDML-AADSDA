@@ -95,36 +95,41 @@ export const api = {
         return { ok: true, data: { item: series } };
     },
     async episodes(seriesId) {
-        // Mock episodes for any series
-        // In real app, we'd fetch episodes.json and filter by seriesId
-        // For now, generate dynamic dummy episodes
-        return { 
-            ok: true, 
-            data: { 
-                episodes: [
-                    { 
-                        id: "ep1", 
-                        season_number: 1, 
-                        episode_number: 1, 
-                        title: "Pilot", 
-                        overview: "The beginning.", 
-                        stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-                        duration_minutes: 45
-                    },
-                    { 
-                        id: "ep2", 
-                        season_number: 1, 
-                        episode_number: 2, 
-                        title: "The Second One", 
-                        overview: "It continues.", 
-                        stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-                        duration_minutes: 42
+        try {
+            // Check if we have loaded all episodes yet
+            if (!window.allEpisodesCache) {
+                console.log("Loading all episodes chunks...");
+                window.allEpisodesCache = [];
+                let chunkIndex = 0;
+                let loading = true;
+                
+                while (loading) {
+                    try {
+                        const response = await fetch(`assets/data/episodes/episodes_${chunkIndex}.json`);
+                        if (!response.ok) {
+                            loading = false;
+                            break;
+                        }
+                        const data = await response.json();
+                        window.allEpisodesCache = window.allEpisodesCache.concat(data.episodes);
+                        chunkIndex++;
+                    } catch (e) {
+                        console.warn(`Stopped loading chunks at index ${chunkIndex}`, e);
+                        loading = false;
                     }
-                ] 
-            } 
-        };
-    }
-  },
+                }
+                console.log(`Loaded ${window.allEpisodesCache.length} episodes total.`);
+            }
+
+            // Filter from memory
+            const episodes = window.allEpisodesCache.filter(ep => ep.series_id === seriesId);
+            return { ok: true, data: { episodes } };
+
+        } catch (error) {
+            console.error("Failed to load episodes:", error);
+            return { ok: false, error: "Failed to load episodes" };
+        }
+    },
   live: {
       async get(id) {
           return { ok: false, data: { error: "Live TV not implemented in demo" } };
