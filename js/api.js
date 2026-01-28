@@ -132,10 +132,73 @@ export const api = {
     profiles: {
         async list() {
             // Mock profiles for now since we focus on auth
-            return [
+            const profiles = [
                 { id: 'p1', name: 'Perfil Principal', avatar: 'https://occ-0-2794-2219.1.nflxso.net/dnm/api/v6/K6hjPJd6cR6FpVELC5Pd6ovHRSk/AAAABY20DrC9-11ewwAs6nfEgb1vrORxRPP9IGmlW1WtKuaLIz8CxMfZcfXj3DKj_ieZxJhWyejku5hb541z0c0.png?r=453' },
                 { id: 'p2', name: 'Kids', avatar: 'https://occ-0-2794-2219.1.nflxso.net/dnm/api/v6/K6hjPJd6cR6FpVELC5Pd6ovHRSk/AAAABf9M5_y10B8o8g5t5c6.png?r=fcd' }
             ];
+            // Check local storage for custom profiles
+            try {
+                const local = localStorage.getItem('klyx_custom_profiles');
+                if (local) {
+                    const parsed = JSON.parse(local);
+                    if (Array.isArray(parsed)) {
+                        return { ok: true, data: parsed };
+                    }
+                }
+            } catch(e) {}
+            
+            return { ok: true, data: profiles };
+        },
+        async create(profile) {
+            // Save to local storage for demo
+            try {
+                let profiles = [
+                    { id: 'p1', name: 'Perfil Principal', avatar: 'https://occ-0-2794-2219.1.nflxso.net/dnm/api/v6/K6hjPJd6cR6FpVELC5Pd6ovHRSk/AAAABY20DrC9-11ewwAs6nfEgb1vrORxRPP9IGmlW1WtKuaLIz8CxMfZcfXj3DKj_ieZxJhWyejku5hb541z0c0.png?r=453' },
+                    { id: 'p2', name: 'Kids', avatar: 'https://occ-0-2794-2219.1.nflxso.net/dnm/api/v6/K6hjPJd6cR6FpVELC5Pd6ovHRSk/AAAABf9M5_y10B8o8g5t5c6.png?r=fcd' }
+                ];
+                const local = localStorage.getItem('klyx_custom_profiles');
+                if (local) profiles = JSON.parse(local);
+                
+                profile.id = 'p' + Date.now();
+                profiles.push(profile);
+                localStorage.setItem('klyx_custom_profiles', JSON.stringify(profiles));
+                return { ok: true, data: profile };
+            } catch (e) {
+                return { ok: false, data: { error: e.message } };
+            }
+        }
+    },
+    content: {
+        async getHome() {
+            try {
+                const res = await fetch('./assets/data/home.json');
+                if (!res.ok) throw new Error("Failed to load home data");
+                const data = await res.json();
+                return { ok: true, data };
+            } catch (e) {
+                // Fallback if file missing
+                return { ok: false, data: { error: e.message } };
+            }
+        },
+        async getMovies() {
+            try {
+                const res = await fetch('./assets/data/movies.json');
+                if (!res.ok) throw new Error("Failed to load movies");
+                const data = await res.json();
+                return { ok: true, data };
+            } catch (e) {
+                return { ok: false, data: { error: e.message } };
+            }
+        },
+        async getSeries() {
+            try {
+                const res = await fetch('./assets/data/series.json');
+                if (!res.ok) throw new Error("Failed to load series");
+                const data = await res.json();
+                return { ok: true, data };
+            } catch (e) {
+                return { ok: false, data: { error: e.message } };
+            }
         }
     }
 };

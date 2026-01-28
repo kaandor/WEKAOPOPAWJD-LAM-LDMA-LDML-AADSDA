@@ -1,7 +1,27 @@
 {
   "rails": {
-    "topMovies": [],
-    "topSeries": [],
+    "topMovies": [
+      {
+        "id": "m1",
+        "title": "Exemplo Filme 1",
+        "poster": "https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg",
+        "backdrop": "https://image.tmdb.org/t/p/original/lNyLSOKMMeUPr1RsL4KcRuIXwHt.jpg"
+      },
+      {
+        "id": "m2",
+        "title": "Exemplo Filme 2",
+        "poster": "https://image.tmdb.org/t/p/w500/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg",
+        "backdrop": "https://image.tmdb.org/t/p/original/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg"
+      }
+    ],
+    "topSeries": [
+      {
+        "id": "s1",
+        "title": "Exemplo Série 1",
+        "poster": "https://image.tmdb.org/t/p/w500/u3bZgnGQ9TWA75EGyzleqwk1tF3.jpg",
+        "backdrop": "https://image.tmdb.org/t/p/original/u3bZgnGQ9TWA75EGyzleqwk1tF3.jpg"
+      }
+    ],
     "recentMovies": [],
     "nightMovies": [],
     "horrorMovies": [],
