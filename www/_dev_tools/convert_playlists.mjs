@@ -69,8 +69,8 @@ async function processPlaylist(filePath) {
     let linesProcessed = 0;
     for await (const line of rl) {
         linesProcessed++;
-        if (linesProcessed % 50000 === 0) {
-            process.stdout.write(`Processed ${linesProcessed} lines...\r`);
+        if (linesProcessed % 100000 === 0) {
+            console.log(`Processed ${linesProcessed} lines...`);
         }
         const l = line.trim();
         if (!l) continue;

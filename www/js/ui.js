@@ -1,5 +1,8 @@
 import { api } from "./api.js";
 
+// --- VERSION TRACKER ---
+console.log("%c KLYX APP v2026.01.28-Patch3-CanaisBR4 %c Updated Now ", "background: #e50914; color: white; font-weight: bold; padding: 4px;", "background: #333; color: white; padding: 4px;");
+
 // --- SUBSCRIPTION CHECKER ---
 let subStatusCache = null;
 let subStatusTime = 0;
