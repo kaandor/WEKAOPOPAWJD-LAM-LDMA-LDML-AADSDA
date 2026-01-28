@@ -963,7 +963,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                
                // Use Vercel Proxy if configured
                let finalUrl = url;
-               if (VERCEL_PROXY_URL && url.startsWith("http")) {
+               // Only proxy if not already proxied and not local
+               const isAlreadyProxied = url.includes("vercel.app") || url.includes("corsproxy") || url.includes("/stream-proxy");
+               
+               if (VERCEL_PROXY_URL && url.startsWith("http") && !isAlreadyProxied) {
                    console.log("Using Vercel Proxy for:", url);
                    // FIX: Always encodeURIComponent to preserve query parameters (tokens, etc)
                    finalUrl = VERCEL_PROXY_URL + encodeURIComponent(url); 
