@@ -1,4 +1,5 @@
 
+// Input handling module
 let isInputControl = false;
 let currentFocus = null;
 let deviceMode = null;
