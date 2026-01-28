@@ -679,6 +679,7 @@ async function request(method, path, body) {
 }
 
 export const api = {
+  isOfflineMode: () => USE_LOCAL_ONLY,
   session: {
     read: readSession,
     write: writeSession,

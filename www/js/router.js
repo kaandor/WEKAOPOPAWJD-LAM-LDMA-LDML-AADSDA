@@ -206,10 +206,17 @@ export async function mountAppShell({ currentPath }) {
           api.status.checkConnection().then(isConnected => {
               if (isConnected) {
                   connectionDot.classList.add("connected");
-                  connectionDot.title = "Connected to Database";
+                  if (api.isOfflineMode && api.isOfflineMode()) {
+                       connectionDot.title = "Modo Local Ativado (Banco de Dados Desligado)";
+                       connectionDot.style.backgroundColor = "#3b82f6"; 
+                  } else {
+                       connectionDot.title = "Connected to Database";
+                       connectionDot.style.backgroundColor = ""; // Reset
+                  }
               } else {
                   connectionDot.classList.remove("connected");
                   connectionDot.title = "Disconnected";
+                  connectionDot.style.backgroundColor = "";
               }
           });
       }, 30000);
