@@ -144,22 +144,24 @@ export async function initSeries() {
 
 export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClick }) {
     const card = document.createElement("div");
-    card.className = "movie-card focusable";
+    card.className = "card focusable";
     card.tabIndex = 0;
     
     const img = document.createElement("img");
+    img.className = "poster";
     img.src = posterUrl;
     img.alt = title;
     img.loading = "lazy";
     
     const info = document.createElement("div");
-    info.className = "movie-info";
+    info.className = "card-body";
     
     const h3 = document.createElement("h3");
+    h3.className = "card-title";
     h3.textContent = title;
     
     const meta = document.createElement("div");
-    meta.className = "meta";
+    meta.className = "card-meta";
     meta.innerHTML = `<span>${metaLeft}</span><span>${metaRight}</span>`;
     
     info.append(h3, meta);
