@@ -36,6 +36,13 @@ function clearSession() {
   localStorage.removeItem("klyx_profile_id");
 }
 
+// Helper to normalize data structure (fix poster_url -> poster)
+function normalize(item) {
+    if (!item) return item;
+    if (item.poster_url && !item.poster) item.poster = item.poster_url;
+    return item;
+}
+
 export const api = {
   session: {
     read: readSession,
@@ -134,6 +141,7 @@ export const api = {
             return { ok: false, error: "Failed to load episodes" };
         }
     },
+  },
   live: {
       async get(id) {
           return { ok: false, data: { error: "Live TV not implemented in demo" } };
