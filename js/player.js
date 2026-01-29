@@ -1,5 +1,8 @@
 
-// --- Helper Functions ---
+import { api } from "./api.js";
+
+// Helper for URL params
+const qs = (key) => new URLSearchParams(window.location.search).get(key);
 
 async function loadDetail(type, id) {
     console.log(`[loadDetail] Loading ${type} ${id}`);
@@ -16,25 +19,21 @@ async function loadDetail(type, id) {
             streamUrl: m.stream_url,
             streamUrlSub: m.sub_url,
             category: m.category,
-            // For series/episode logic compatibility (movies are standalone)
             episodes: [],
             currentEpIndex: -1
         };
     } 
     else if (type === 'series') {
-        // If loading series directly, we usually want to play the first episode or resume
-        // For now, let's fetch series info and assume we play S1E1 if not specified
         const res = await api.series.get(id);
         if (!res.ok) return { ok: false, error: res.data?.error || "Erro ao carregar série" };
         
         const s = res.data.item;
-        
-        // Fetch episodes
         const epsRes = await api.series.episodes(id);
         const episodes = epsRes.ok ? epsRes.data.episodes : [];
         
         if (episodes.length === 0) return { ok: false, error: "Nenhum episódio encontrado." };
         
+        // Default to first episode
         const firstEp = episodes[0];
         
         return {
@@ -50,17 +49,12 @@ async function loadDetail(type, id) {
         };
     }
     else if (type === 'episode') {
-        // We need the series ID to fetch the list, usually passed in query param?
-        // But here we only have 'id' which is episode ID.
-        // Wait, the URL has &seriesId=...
         const seriesId = qs("seriesId");
         if (!seriesId) return { ok: false, error: "ID da série ausente para reprodução de episódio." };
         
-        // Fetch series info for title
         const sRes = await api.series.get(seriesId);
         const sTitle = sRes.ok ? sRes.data.item.title : "Série";
         
-        // Fetch episodes
         const epsRes = await api.series.episodes(seriesId);
         const episodes = epsRes.ok ? epsRes.data.episodes : [];
         
@@ -126,10 +120,8 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         video.play().catch(e => console.warn("Auto-play blocked", e));
     }
     
-    // Subtitles (simple implementation)
-    // In a real app, we'd parse .srt/.vtt or use HLS subtitles
+    // Subtitles
     if (ui && ui.subtitleSelect) {
-        // Clear options
         ui.subtitleSelect.innerHTML = '<option value="-1">Desativado</option>';
         if (streamUrlSub) {
              const opt = document.createElement('option');
@@ -137,10 +129,8 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
              opt.text = "Português";
              ui.subtitleSelect.appendChild(opt);
              
-             // Auto-select if legendado
              if (isLegendado) {
                  ui.subtitleSelect.value = streamUrlSub;
-                 // Add track
                  const track = document.createElement('track');
                  track.kind = 'subtitles';
                  track.label = 'Português';
@@ -155,7 +145,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
 function setupAutoHide(video) {
     let timeout;
-    const controls = document.querySelector('.controls-top'); // Or other overlay elements
+    const controls = document.querySelector('.controls-top');
     const backBtn = document.getElementById('backBtn');
     
     const show = () => {
@@ -168,13 +158,12 @@ function setupAutoHide(video) {
     };
     
     const hide = () => {
-        if (video.paused) return; // Don't hide if paused
+        if (video.paused) return; 
         if (controls) controls.style.opacity = '0';
         if (backBtn) backBtn.style.opacity = '0';
         document.body.style.cursor = 'none';
     };
     
-    // Global exposure for player key handler
     window.resetControlsTimer = show;
     window.hideControlsNow = hide;
     
@@ -191,4 +180,61 @@ if (!window.Hls) {
     script.src = "https://cdn.jsdelivr.net/npm/hls.js@latest";
     script.onload = () => console.log("HLS.js loaded dynamically");
     document.head.appendChild(script);
+}
+
+function showError(msg) {
+    const overlay = document.getElementById('errorOverlay');
+    const msgEl = document.getElementById('errorMsg');
+    if (overlay && msgEl) {
+        msgEl.textContent = msg;
+        overlay.style.display = 'flex';
+    }
+}
+
+export async function initPlayer() {
+    console.log("Player Initialized");
+    
+    const type = qs('type');
+    const id = qs('id');
+    
+    if (!type || !id) {
+        showError("Parâmetros inválidos.");
+        return;
+    }
+    
+    const video = document.getElementById('video');
+    const titleEl = document.getElementById('playerTitle');
+    const metaEl = document.getElementById('playerMeta');
+    
+    // Back button logic
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) {
+        backBtn.onclick = () => window.history.back();
+    }
+    
+    try {
+        const detail = await loadDetail(type, id);
+        if (!detail.ok) {
+            showError(detail.error);
+            return;
+        }
+        
+        if (titleEl) titleEl.textContent = detail.title;
+        if (metaEl) metaEl.textContent = detail.meta;
+        
+        await attachSource({
+            video,
+            streamUrl: detail.streamUrl,
+            streamUrlSub: detail.streamUrlSub,
+            streamType: detail.streamUrl && detail.streamUrl.includes('.m3u8') ? 'hls' : 'mp4',
+            ui: { subtitleSelect: null },
+            isLegendado: false
+        });
+        
+        setupAutoHide(video);
+        
+    } catch (e) {
+        console.error("Player Error:", e);
+        showError("Erro interno no player.");
+    }
 }
