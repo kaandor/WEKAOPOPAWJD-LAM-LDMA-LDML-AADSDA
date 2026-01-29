@@ -180,7 +180,23 @@ export const api = {
   },
   profiles: {
       async list() {
-          return { ok: true, data: [{ id: "p1", name: "Perfil Demo", avatar: "" }] };
+          let profiles = [];
+          try {
+             profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          } catch(e) {}
+          
+          if (profiles.length === 0) {
+              profiles = [{ id: "p1", name: "Perfil Demo", avatar: "" }];
+              localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          }
+          return { ok: true, data: profiles };
+      },
+      async create({ name }) {
+          let profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const newProfile = { id: "p" + Date.now(), name, avatar: "" };
+          profiles.push(newProfile);
+          localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          return { ok: true, data: newProfile };
       }
   }
 };

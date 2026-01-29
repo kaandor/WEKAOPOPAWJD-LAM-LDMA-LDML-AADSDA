@@ -139,13 +139,6 @@ async function createProfile() {
 }
 
 // Helpers
-function hashStr(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-}
 
 // Event Listeners
 cancelBtn.addEventListener("click", closeCreateModal);
