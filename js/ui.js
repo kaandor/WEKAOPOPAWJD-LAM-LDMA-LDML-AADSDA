@@ -1,5 +1,59 @@
-
 import { api } from "./api.js";
+
+// Helper to proxy images via weserv.nl to fix Mixed Content (HTTP images on HTTPS site)
+function getProxiedImage(url) {
+    if (!url) return 'https://via.placeholder.com/300x450?text=No+Image';
+    // If already proxied, return as is
+    if (url.includes('images.weserv.nl')) return url;
+    // If local asset, return as is
+    if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
+    
+    // Proxy external URLs
+    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
+}
+
+// Helper for infinite scroll
+function setupInfiniteScroll(items, container, createCardFn) {
+    const BATCH_SIZE = 200;
+    let currentIndex = 0;
+    let isLoading = false;
+
+    const loadNextBatch = () => {
+        if (currentIndex >= items.length) return;
+        
+        const batch = items.slice(currentIndex, currentIndex + BATCH_SIZE);
+        const fragment = document.createDocumentFragment();
+        
+        batch.forEach(item => {
+            const card = createCardFn(item);
+            fragment.appendChild(card);
+        });
+        
+        container.appendChild(fragment);
+        currentIndex += BATCH_SIZE;
+        isLoading = false;
+    };
+
+    // Initial load
+    loadNextBatch();
+
+    // Scroll handler
+    const onScroll = () => {
+        if (isLoading) return;
+        // Check if near bottom
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+            isLoading = true;
+            loadNextBatch();
+        }
+    };
+
+    // Clean up previous listener
+    if (window._infiniteScrollHandler) {
+        window.removeEventListener('scroll', window._infiniteScrollHandler);
+    }
+    window._infiniteScrollHandler = onScroll;
+    window.addEventListener('scroll', onScroll);
+}
 
 // Redirect Live TV requests to Dashboard
 if (window.location.pathname.includes("live-tv.html")) {
@@ -93,8 +147,9 @@ export async function initMovies() {
         }
 
         container.innerHTML = "";
-        movies.forEach(movie => {
-            const card = createPosterCard({
+        
+        setupInfiniteScroll(movies, container, (movie) => {
+            return createPosterCard({
                 title: movie.title,
                 posterUrl: movie.poster,
                 metaLeft: movie.year,
@@ -103,7 +158,6 @@ export async function initMovies() {
                     window.location.href = `./player.html?type=movie&id=${encodeURIComponent(movie.id)}`;
                 }
             });
-            container.append(card);
         });
 
     } catch (e) {
@@ -130,8 +184,9 @@ export async function initSeries() {
         }
 
         container.innerHTML = "";
-        seriesList.forEach(series => {
-            const card = createPosterCard({
+        
+        setupInfiniteScroll(seriesList, container, (series) => {
+            return createPosterCard({
                 title: series.title,
                 posterUrl: series.poster,
                 metaLeft: series.year,
@@ -140,7 +195,6 @@ export async function initSeries() {
                     window.location.href = `./player.html?type=series&id=${encodeURIComponent(series.id)}`;
                 }
             });
-            container.append(card);
         });
 
     } catch (e) {
