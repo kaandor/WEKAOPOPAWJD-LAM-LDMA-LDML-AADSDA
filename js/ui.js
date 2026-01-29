@@ -162,7 +162,13 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
     
     const meta = document.createElement("div");
     meta.className = "card-meta";
-    meta.innerHTML = `<span>${metaLeft}</span><span>${metaRight}</span>`;
+    
+    // Create badge style for meta
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = `${metaLeft} | ${metaRight || 'Geral'}`;
+    
+    meta.append(badge);
     
     info.append(h3, meta);
     card.append(img, info);
