@@ -35,16 +35,23 @@ export async function initDashboard() {
         // Helper to render a rail
         const renderRail = (title, items, type = 'movie') => {
             if (!items || items.length === 0) return '';
+            const categoryLink = type === 'movie' ? './movies.html' : './series.html';
             return `
-                <div class="category-row">
-                    <h2 class="category-title">${title}</h2>
-                    <div class="movie-row">
+                <div class="section">
+                    <div class="section-head">
+                        <h2>${title}</h2>
+                        <a href="${categoryLink}">Ver mais</a>
+                    </div>
+                    <div class="rail">
                         ${items.map(item => `
-                            <div class="movie-card focusable" data-id="${item.id}" tabindex="0" 
+                            <div class="card focusable" data-id="${item.id}" tabindex="0" 
                                  onclick="window.location.href='./player.html?type=${type}&id=${encodeURIComponent(item.id)}'">
-                                <img src="${item.poster}" alt="${item.title}" loading="lazy">
-                                <div class="movie-info">
-                                    <h3>${item.title}</h3>
+                                <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=Error';">
+                                <div class="card-body">
+                                    <h3 class="card-title">${item.title}</h3>
+                                    <div class="card-meta">
+                                        <span class="badge">${type === 'movie' ? 'Filmes' : 'Séries'} | ${item.genre || 'Geral'}</span>
+                                    </div>
                                 </div>
                             </div>
                         `).join('')}
@@ -149,9 +156,10 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
     
     const img = document.createElement("img");
     img.className = "poster";
-    img.src = posterUrl;
+    img.src = getProxiedImage(posterUrl);
     img.alt = title;
     img.loading = "lazy";
+    img.onerror = () => { img.onerror = null; img.src = 'https://via.placeholder.com/300x450?text=Error'; };
     
     const info = document.createElement("div");
     info.className = "card-body";
@@ -163,10 +171,12 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
     const meta = document.createElement("div");
     meta.className = "card-meta";
     
-    // Create badge style for meta
+    // Badge style to match renderRail
     const badge = document.createElement("span");
     badge.className = "badge";
-    badge.textContent = `${metaLeft} | ${metaRight || 'Geral'}`;
+    // Construct badge text: "Year | Rating" or just "Year"
+    const badgeText = [metaLeft, metaRight].filter(Boolean).join(" | ");
+    badge.textContent = badgeText || "Geral";
     
     meta.append(badge);
     
