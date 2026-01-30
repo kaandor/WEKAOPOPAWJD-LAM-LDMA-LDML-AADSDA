@@ -43,6 +43,73 @@ function normalize(item) {
     return item;
 }
 
+// Helper to deduplicate movies (merge Dub/Sub)
+function deduplicateMovies(items) {
+    if (!items || !Array.isArray(items)) return [];
+    
+    const moviesMap = new Map();
+    
+    items.forEach(movie => {
+        let title = movie.title.trim();
+        
+        // Normalize title for checking
+        const lowerTitle = title.toLowerCase();
+        
+        // Check for various subtitle indicators
+        const isSubtitled = 
+            lowerTitle.endsWith(" [l]") || 
+            lowerTitle.endsWith(" (l)") || 
+            lowerTitle.includes("(legendado)") || 
+            lowerTitle.includes(" legendado") ||
+            lowerTitle.includes(" - legendado");
+
+        // Clean the title to get the base version
+        let baseTitle = title
+            .replace(/ \[L\]$/i, "")
+            .replace(/ \(L\)$/i, "")
+            .replace(/\(Legendado\)/i, "")
+            .replace(/ - Legendado/i, "")
+            .replace(/ Legendado/i, "")
+            .trim();
+            
+        // Also remove trailing dashes if any
+        if (baseTitle.endsWith(" -")) baseTitle = baseTitle.substring(0, baseTitle.length - 2).trim();
+        
+        if (!moviesMap.has(baseTitle)) {
+            moviesMap.set(baseTitle, { dub: null, sub: null });
+        }
+        
+        if (isSubtitled) {
+            moviesMap.get(baseTitle).sub = movie;
+        } else {
+            moviesMap.get(baseTitle).dub = movie;
+        }
+    });
+
+    const mergedMovies = [];
+    
+    moviesMap.forEach((versions, title) => {
+        // Prefer Dubbed as main, attach Subtitled stream as option
+        if (versions.dub) {
+            const mainMovie = versions.dub;
+            if (versions.sub) {
+                // Ensure we don't overwrite if it already exists (though unlikely)
+                if (!mainMovie.stream_url_subtitled_version) {
+                    mainMovie.stream_url_subtitled_version = versions.sub.stream_url;
+                }
+            }
+            mergedMovies.push(mainMovie);
+        } else if (versions.sub) {
+            // If only Subtitled exists, show it but clean the title
+            const subMovie = versions.sub;
+            subMovie.title = title; // Use the map key (baseTitle)
+            mergedMovies.push(subMovie);
+        }
+    });
+    
+    return mergedMovies;
+}
+
 export const api = {
   session: {
     read: readSession,
@@ -79,12 +146,13 @@ export const api = {
   },
   movies: {
     async get(id) {
-        const data = await getLocalData("movies.json");
-        let movie = data?.movies?.find(m => m.id === id);
+        // Use list() to ensure we get the deduplicated version with Audio 2
+        const res = await api.movies.list();
+        if (!res.ok) return { ok: false, data: { error: "Failed to load movies" } };
+        
+        let movie = res.data.find(m => m.id === id);
         if (!movie) return { ok: false, data: { error: "Movie not found" } };
         
-        movie = normalize(movie);
-
         // Ensure stream_url exists (fallback to sample if missing)
         if (!movie.stream_url) {
             movie.stream_url = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"; // Big Buck Bunny HLS
@@ -94,49 +162,12 @@ export const api = {
     async list() {
          const data = await getLocalData("movies.json");
          const rawMovies = (data?.movies || []).map(normalize);
-         
-         // Group by base title to merge Dubbed and Subtitled versions
-         const moviesMap = new Map();
-         
-         rawMovies.forEach(movie => {
-             const title = movie.title.trim();
-             const isSubtitled = title.endsWith(" [L]") || title.toLowerCase().includes("(legendado)");
-             const baseTitle = title.replace(" [L]", "").replace(/\(Legendado\)/i, "").trim();
-             
-             if (!moviesMap.has(baseTitle)) {
-                 moviesMap.set(baseTitle, { dub: null, sub: null });
-             }
-             
-             if (isSubtitled) {
-                 moviesMap.get(baseTitle).sub = movie;
-             } else {
-                 moviesMap.get(baseTitle).dub = movie;
-             }
-         });
-
-         const mergedMovies = [];
-         
-         moviesMap.forEach((versions, title) => {
-             // Prefer Dubbed as main, attach Subtitled stream as option
-             if (versions.dub) {
-                 const mainMovie = versions.dub;
-                 if (versions.sub) {
-                     mainMovie.stream_url_subtitled_version = versions.sub.stream_url;
-                 }
-                 mergedMovies.push(mainMovie);
-             } else if (versions.sub) {
-                 // If only Subtitled exists, show it but clean the title
-                 const subMovie = versions.sub;
-                 subMovie.title = title; // Use the map key (baseTitle)
-                 mergedMovies.push(subMovie);
-             }
-         });
-
-         return { ok: true, data: mergedMovies };
+         return { ok: true, data: deduplicateMovies(rawMovies) };
     },
     async categories() {
-        const data = await getLocalData("movies.json");
-        const movies = data?.movies || [];
+        // Use deduplicated list to avoid duplicates in categories from subtitled versions if they differ
+        const res = await api.movies.list();
+        const movies = res.ok ? res.data : [];
         const categories = new Set();
         movies.forEach(m => {
             if (m.category) {

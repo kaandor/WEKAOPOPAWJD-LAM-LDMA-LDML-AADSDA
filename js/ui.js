@@ -1,3 +1,4 @@
+
 import { api } from "./api.js";
 
 // Helper for Drag-to-Scroll (Mouse)
@@ -222,33 +223,78 @@ export async function initDashboard() {
 export async function initMovies() {
     console.log("Movies Initialized");
     const container = document.getElementById("moviesGrid");
+    const categorySelect = document.getElementById("movieCategory"); // Updated ID
+    const searchInput = document.getElementById("movieSearch"); // Updated ID if needed, but usually movieSearch
+
     if (!container) return;
 
     container.innerHTML = '<div class="loading-spinner">Carregando filmes...</div>';
 
     try {
-        const res = await api.content.getMovies();
-        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar filmes");
+        const [moviesRes, catsRes] = await Promise.all([
+            api.content.getMovies(),
+            api.movies.categories()
+        ]);
 
-        const movies = res.data.movies;
-        if (!movies || movies.length === 0) {
+        if (!moviesRes.ok) throw new Error(moviesRes.data?.error || "Erro ao carregar filmes");
+
+        const allMovies = moviesRes.data.movies || [];
+        
+        if (allMovies.length === 0) {
             container.innerHTML = "<p>Nenhum filme encontrado.</p>";
             return;
         }
 
-        container.innerHTML = "";
-        
-        setupInfiniteScroll(movies, container, (movie) => {
-            return createPosterCard({
-                title: movie.title,
-                posterUrl: movie.poster,
-                metaLeft: movie.year,
-                metaRight: movie.rating ? `★ ${movie.rating}` : "",
-                onClick: () => {
-                    window.location.href = `./player.html?type=movie&id=${encodeURIComponent(movie.id)}`;
-                }
+        // Populate Categories
+        if (categorySelect && catsRes.ok) {
+            // Keep first option (All)
+            const first = categorySelect.firstElementChild;
+            categorySelect.innerHTML = '';
+            if (first) categorySelect.appendChild(first);
+
+            catsRes.data.forEach(cat => {
+                const opt = document.createElement("option");
+                opt.value = cat;
+                opt.textContent = cat;
+                categorySelect.appendChild(opt);
             });
-        });
+        }
+
+        const render = () => {
+            const cat = categorySelect ? categorySelect.value : "";
+            const query = searchInput ? searchInput.value.toLowerCase() : "";
+            
+            const filtered = allMovies.filter(m => {
+                const matchesCat = !cat || (m.category && m.category.includes(cat));
+                const matchesSearch = !query || m.title.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
+            });
+            
+            container.innerHTML = "";
+            if (filtered.length === 0) {
+                container.innerHTML = "<p>Nenhum filme encontrado.</p>";
+                return;
+            }
+            
+            setupInfiniteScroll(filtered, container, (movie) => {
+                return createPosterCard({
+                    title: movie.title,
+                    posterUrl: movie.poster,
+                    metaLeft: movie.year,
+                    metaRight: movie.rating ? `★ ${movie.rating}` : "",
+                    onClick: () => {
+                        window.location.href = `./player.html?type=movie&id=${encodeURIComponent(movie.id)}`;
+                    }
+                });
+            });
+        };
+
+        // Event Listeners
+        if (categorySelect) categorySelect.onchange = render;
+        if (searchInput) searchInput.oninput = render;
+
+        // Initial Render
+        render();
 
     } catch (e) {
         console.error("Movies error:", e);
