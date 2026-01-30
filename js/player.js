@@ -90,11 +90,17 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         return;
     }
 
+    // Apply proxy if needed
+    const finalUrl = getProxiedStreamUrl(streamUrl);
+    if (finalUrl !== streamUrl) {
+        console.log(`[attachSource] Proxied URL: ${finalUrl}`);
+    }
+
     // Handle HLS
     if (streamType === 'hls' || streamUrl.includes('.m3u8')) {
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls();
-            hls.loadSource(streamUrl);
+            hls.loadSource(finalUrl);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 console.log("HLS Manifest Parsed");
@@ -103,11 +109,26 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
                     console.error("HLS Fatal Error", data);
+                    // Try to recover
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log("fatal network error encountered, try to recover");
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log("fatal media error encountered, try to recover");
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            // cannot recover
+                            hls.destroy();
+                            break;
+                    }
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             // Safari / Native HLS
-            video.src = streamUrl;
+            video.src = finalUrl;
             video.addEventListener('loadedmetadata', () => {
                 video.play().catch(e => console.warn("Auto-play blocked", e));
             });
@@ -116,7 +137,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         }
     } else {
         // Direct file (MP4/MKV)
-        video.src = streamUrl;
+        video.src = finalUrl;
         video.play().catch(e => console.warn("Auto-play blocked", e));
     }
     
@@ -215,6 +236,7 @@ export async function initPlayer() {
     try {
         const detail = await loadDetail(type, id);
         if (!detail.ok) {
+            if (window.finishLoading) window.finishLoading();
             showError(detail.error);
             return;
         }
@@ -231,10 +253,12 @@ export async function initPlayer() {
             isLegendado: false
         });
         
+        if (window.finishLoading) window.finishLoading();
         setupAutoHide(video);
         
     } catch (e) {
         console.error("Player Error:", e);
+        if (window.finishLoading) window.finishLoading();
         showError("Erro interno no player.");
     }
 }
