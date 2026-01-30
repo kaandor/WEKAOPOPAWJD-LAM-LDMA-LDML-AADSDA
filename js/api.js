@@ -266,6 +266,10 @@ export const api = {
         
         return { ok: true, data: { user: newUser } };
     },
+    async logout() {
+        clearSession();
+        return { ok: true };
+    },
     // Configuration for GitHub OAuth
     githubConfig: {
         clientId: localStorage.getItem("klyx_gh_client_id") || "",

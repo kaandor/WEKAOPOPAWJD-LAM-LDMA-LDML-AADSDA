@@ -149,8 +149,12 @@ export async function mountAppShell({ currentPath }) {
     localStorage.removeItem("klyx_profile_id");
     localStorage.removeItem("klyx_profile_name");
     localStorage.removeItem("klyx_profile_avatar");
-    await api.auth.logout();
-    window.location.href = "./login.html";
+    if (api.auth.logout) {
+        await api.auth.logout();
+    } else {
+        api.session.clear();
+    }
+    window.location.href = "./index.html";
   });
   
   const switchBtn = document.getElementById("switchProfileBtn");
