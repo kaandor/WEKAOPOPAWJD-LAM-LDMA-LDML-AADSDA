@@ -123,41 +123,27 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     
     // Fallback logic for error handling
     const handleVideoError = (e) => {
-        console.error("Video Error:", e);
         const error = video.error;
-        if (error && (error.code === 3 || error.code === 4)) { // MEDIA_ERR_DECODE or MEDIA_ERR_SRC_NOT_SUPPORTED
-            console.warn("Media not supported or decode error. Trying fallback...");
-            
-            // If we were using corsproxy.io, try codetabs as backup
-            if (finalUrl.includes('corsproxy.io')) {
-                console.log("Switching to CodeTabs proxy...");
-                // Note: CodeTabs often has better seeking support for some servers
-                finalUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(streamUrl)}`;
-                
-                // Re-attach with new URL
-                if (streamType === 'hls' || streamUrl.includes('.m3u8')) {
-                    if (window.Hls && Hls.isSupported()) {
-                        if (currentHls) currentHls.destroy();
-                        const hls = new Hls();
-                        currentHls = hls;
-                        hls.loadSource(finalUrl);
-                        hls.attachMedia(video);
-                        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                    } else {
-                        video.src = finalUrl;
-                        video.play();
-                    }
-                } else {
-                    video.src = finalUrl;
-                    video.play();
-                }
-            }
+        if (error) {
+            console.error("Video Error Code:", error.code, error.message);
+            // Don't fallback to CodeTabs automatically as it breaks seeking (Range requests)
+            // Just log it for now.
         }
     };
 
-    // Remove existing error listeners to prevent duplicates (not easily possible with anon functions, 
-    // but we can set onerror property directly for simplicity in this context)
+    // Remove existing error listeners
     video.onerror = handleVideoError;
+
+    // Safe Play Helper to prevent AbortError
+    const safePlay = async () => {
+        try {
+            await video.play();
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.warn("Play failed:", err);
+            }
+        }
+    };
 
     if (finalUrl !== streamUrl) {
         console.log(`[attachSource] Proxied URL: ${finalUrl}`);
@@ -171,10 +157,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 currentHls = hls; // Save reference
                 hls.loadSource(finalUrl);
                 hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    console.log("HLS Manifest Parsed");
-                    video.play().catch(e => console.warn("Auto-play blocked", e));
-                });
+                hls.on(Hls.Events.MANIFEST_PARSED, () => safePlay());
                 hls.on(Hls.Events.ERROR, (event, data) => {
                     if (data.fatal) {
                         console.error("HLS Fatal Error", data);
@@ -195,7 +178,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 // Safari / Native HLS
                 video.src = finalUrl;
                 video.addEventListener('loadedmetadata', () => {
-                    video.play().catch(e => console.warn("Auto-play blocked", e));
+                    safePlay();
                 });
             } else {
                 console.error("HLS not supported");
@@ -219,7 +202,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     } else {
         // Direct file (MP4/MKV)
         video.src = finalUrl;
-        video.play().catch(e => console.warn("Auto-play blocked", e));
+        safePlay();
     }
     
     // Subtitles (keep existing logic)
