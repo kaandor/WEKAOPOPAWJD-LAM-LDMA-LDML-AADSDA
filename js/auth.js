@@ -10,7 +10,7 @@ export function redirectIfAuthed() {
 export function requireAuth() {
     const sessionStr = localStorage.getItem('klyx.session');
     if (!sessionStr) {
-        window.location.href = './login.html';
+        window.location.href = './index.html';
         return null;
     }
     try {
@@ -21,7 +21,7 @@ export function requireAuth() {
         return session; 
     } catch (e) {
         console.error("Invalid user data", e);
-        window.location.href = './login.html';
+        window.location.href = './index.html';
         return null;
     }
 }
@@ -34,5 +34,5 @@ export function applyTheme() {
 export function logout() {
     localStorage.removeItem('klyx.session');
     localStorage.removeItem('klyx_profile_id');
-    window.location.href = './login.html';
+    window.location.href = './index.html';
 }
