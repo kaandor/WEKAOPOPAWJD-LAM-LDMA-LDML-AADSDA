@@ -428,3 +428,80 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
     // For now reusing similar structure
     return createPosterCard({ title, posterUrl: thumbUrl, metaLeft, metaRight, onClick });
 }
+
+export async function initSettings() {
+    console.log("Settings Initialized");
+    
+    // Parental Control Logic
+    const toggleBtn = document.getElementById("toggleParental");
+    const statusText = document.getElementById("parentalStatusText");
+    const msgEl = document.getElementById("parentalMessage");
+    
+    const updateParentalUI = () => {
+        if (!toggleBtn || !statusText) return;
+        const isActive = localStorage.getItem("klyx_parental_active") !== "false";
+        if (isActive) {
+            statusText.textContent = "Ativo (Bloqueado)";
+            statusText.style.color = "#4ade80"; // Green
+            toggleBtn.textContent = "Desativar";
+            toggleBtn.style.background = "#333";
+        } else {
+            statusText.textContent = "Inativo (Liberado)";
+            statusText.style.color = "#e50914"; // Red
+            toggleBtn.textContent = "Ativar";
+            toggleBtn.style.background = "#e50914";
+        }
+    };
+    
+    if (toggleBtn) {
+        updateParentalUI();
+        
+        toggleBtn.onclick = () => {
+            const isActive = localStorage.getItem("klyx_parental_active") !== "false";
+            if (msgEl) msgEl.textContent = "";
+            
+            if (isActive) {
+                // Deactivating
+                const pin = prompt("Digite a senha (PIN):");
+                if (pin === "0000") {
+                    localStorage.setItem("klyx_parental_active", "false");
+                    updateParentalUI();
+                    alert("Controle Parental desativado!");
+                } else {
+                    if (pin !== null) {
+                        if (msgEl) msgEl.textContent = "Senha incorreta!";
+                        else alert("Senha incorreta!");
+                    }
+                }
+            } else {
+                // Activating
+                localStorage.setItem("klyx_parental_active", "true");
+                updateParentalUI();
+            }
+        };
+    }
+
+    // Settings Saving Mock
+    const saveBtn = document.getElementById("saveSettings");
+    if (saveBtn) {
+        saveBtn.onclick = () => {
+            const saveStatus = document.getElementById("settingsStatus");
+            if (saveStatus) {
+                saveStatus.textContent = "Salvo!";
+                setTimeout(() => saveStatus.textContent = "", 2000);
+            }
+        };
+    }
+    
+    // Device Info Mock
+    const macEl = document.getElementById("deviceMac");
+    if (macEl) macEl.textContent = "00:1A:2B:3C:4D:5E";
+    const keyEl = document.getElementById("deviceKey");
+    if (keyEl) keyEl.textContent = "1234-5678";
+    const statusEl = document.getElementById("subscriptionStatus");
+    if (statusEl) {
+        statusEl.textContent = "Ativo";
+        statusEl.style.background = "#4ade80";
+        statusEl.style.color = "#000";
+    }
+}

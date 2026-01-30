@@ -43,9 +43,36 @@ function normalize(item) {
     return item;
 }
 
+// Helper to filter restricted content (Parental Control)
+function filterRestrictedContent(items) {
+    if (!items || !Array.isArray(items)) return [];
+    
+    // Check if Parental Control is active (default: true)
+    const isActive = localStorage.getItem("klyx_parental_active") !== "false";
+    if (!isActive) return items;
+    
+    const restrictedKeywords = ["xxx", "adult", "porn", "sex", "+18", "18+"];
+    
+    return items.filter(item => {
+        if (!item) return false;
+        const title = (item.title || "").toLowerCase();
+        const category = (item.category || "").toLowerCase();
+        
+        // Check title and category for keywords
+        const isRestricted = restrictedKeywords.some(kw => 
+            title.includes(kw) || category.includes(kw)
+        );
+        
+        return !isRestricted;
+    });
+}
+
 // Helper to deduplicate movies (merge Dub/Sub)
 function deduplicateMovies(items) {
     if (!items || !Array.isArray(items)) return [];
+    
+    // Apply Parental Filter first
+    items = filterRestrictedContent(items);
     
     const moviesMap = new Map();
     
@@ -235,7 +262,11 @@ export const api = {
     },
     async categories() {
         const data = await getLocalData("series.json");
-        const series = data?.series || [];
+        let series = data?.series || [];
+        
+        // Apply Parental Filter so restricted categories don't show up
+        series = filterRestrictedContent(series);
+        
         const categories = new Set();
         series.forEach(s => {
             if (s.category) {

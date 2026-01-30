@@ -71,24 +71,16 @@
 
             <div class="panel">
               <div style="font-weight: 750; margin-bottom: 12px;">Controle Parental</div>
-              <div class="subtext" style="margin-bottom: 12px;">Selecione um perfil para bloquear categorias de conteúdo impróprio.</div>
+              <div class="subtext" style="margin-bottom: 12px;">Bloquear conteúdo adulto (+18). Senha padrão: 0000.</div>
               
-              <div class="field">
-                <label class="subtext">Perfil</label>
-                <select id="parentalProfileSelect" class="select" style="margin-top: 6px; width: 100%;">
-                  <option value="" disabled selected>Carregando perfis...</option>
-                </select>
-              </div>
-
-              <div id="parentalCategoriesContainer" style="margin-top: 16px; display: none;">
-                <label class="subtext" style="display: block; margin-bottom: 8px;">Categorias Bloqueadas</label>
-                <div id="parentalCategoriesList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 200px; overflow-y: auto; padding: 8px; background: #222; border-radius: 4px;">
-                   <!-- Checkboxes injected here -->
+              <div class="field" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <label class="subtext" style="font-size: 1rem; color: #fff;">Status</label>
+                  <div id="parentalStatusText" class="subtext" style="color: #4ade80; margin-top: 4px;">Verificando...</div>
                 </div>
-                <div class="toolbar" style="margin-top: 14px">
-                    <span id="parentalStatus" class="subtext"></span>
-                </div>
+                <button id="toggleParental" class="btn" style="background: #333; min-width: 120px;">Carregando...</button>
               </div>
+              <div id="parentalMessage" class="subtext" style="margin-top: 10px; color: #e50914; min-height: 20px;"></div>
             </div>
 
             <div class="panel">
