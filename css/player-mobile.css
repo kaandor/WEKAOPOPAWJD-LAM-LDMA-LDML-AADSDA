@@ -79,7 +79,11 @@ video.video {
   opacity: 1;
   transition: opacity 0.3s ease;
   z-index: 20;
-  pointer-events: auto;
+  pointer-events: none; /* Allow clicks to pass through to video */
+}
+
+.controls > * {
+  pointer-events: auto; /* Re-enable clicks for control groups */
 }
 
 /* Top Overlay (Back & Settings) */

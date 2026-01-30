@@ -28,6 +28,7 @@ async function loadDetail(type, id) {
         if (!res.ok) return { ok: false, error: res.data?.error || "Erro ao carregar filme" };
         
         const m = res.data.item;
+        console.log(`[loadDetail] Movie: ${m.title}, Audio2: ${m.stream_url_subtitled_version}`);
         return {
             ok: true,
             title: m.title,
@@ -204,7 +205,7 @@ function setupSettingsUI(video, data) {
         btn.style.width = '100%';
         btn.style.textAlign = 'left';
         btn.style.padding = '10px';
-        btn.style.background = isActive ? 'rgba(229, 9, 20, 0.8)' : 'rgba(255,255,255,0.1)';
+        btn.style.background = isActive ? '#9333ea' : 'rgba(255,255,255,0.1)';
         btn.style.border = 'none';
         btn.style.borderRadius = '4px';
         btn.style.color = 'white';
@@ -386,6 +387,7 @@ function setupAutoHide(video) {
     document.addEventListener('mousemove', show);
     document.addEventListener('click', show);
     document.addEventListener('keydown', show);
+    document.addEventListener('touchstart', show);
     
     show();
 }

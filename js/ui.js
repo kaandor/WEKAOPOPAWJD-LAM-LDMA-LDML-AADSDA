@@ -259,33 +259,73 @@ export async function initMovies() {
 export async function initSeries() {
     console.log("Series Initialized");
     const container = document.getElementById("seriesGrid");
+    const categorySelect = document.getElementById("seriesCategory");
+    const searchInput = document.getElementById("seriesSearch");
+
     if (!container) return;
 
     container.innerHTML = '<div class="loading-spinner">Carregando séries...</div>';
 
     try {
-        const res = await api.content.getSeries();
-        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar séries");
+        const [seriesRes, catsRes] = await Promise.all([
+            api.content.getSeries(),
+            api.series.categories()
+        ]);
 
-        const seriesList = res.data.series;
-        if (!seriesList || seriesList.length === 0) {
-            container.innerHTML = "<p>Nenhuma série encontrada.</p>";
-            return;
+        if (!seriesRes.ok) throw new Error(seriesRes.data?.error || "Erro ao carregar séries");
+
+        let allSeries = seriesRes.data.series || [];
+
+        // Populate Categories
+        if (categorySelect && catsRes.ok) {
+             // Keep first option (All)
+             const first = categorySelect.firstElementChild;
+             categorySelect.innerHTML = '';
+             if (first) categorySelect.appendChild(first);
+
+            catsRes.data.forEach(cat => {
+                const opt = document.createElement("option");
+                opt.value = cat;
+                opt.textContent = cat;
+                categorySelect.appendChild(opt);
+            });
         }
 
-        container.innerHTML = "";
-        
-        setupInfiniteScroll(seriesList, container, (series) => {
-            return createPosterCard({
-                title: series.title,
-                posterUrl: series.poster,
-                metaLeft: series.year,
-                metaRight: series.rating ? `★ ${series.rating}` : "",
-                onClick: () => {
-                    window.location.href = `./player.html?type=series&id=${encodeURIComponent(series.id)}`;
-                }
+        const render = () => {
+            const cat = categorySelect ? categorySelect.value : "";
+            const query = searchInput ? searchInput.value.toLowerCase() : "";
+            
+            const filtered = allSeries.filter(s => {
+                const matchesCat = !cat || (s.category && s.category.includes(cat));
+                const matchesSearch = !query || s.title.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
             });
-        });
+            
+            container.innerHTML = "";
+            if (filtered.length === 0) {
+                container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+                return;
+            }
+            
+            setupInfiniteScroll(filtered, container, (series) => {
+                return createPosterCard({
+                    title: series.title,
+                    posterUrl: series.poster,
+                    metaLeft: series.year,
+                    metaRight: series.rating ? `★ ${series.rating}` : "",
+                    onClick: () => {
+                        window.location.href = `./player.html?type=series&id=${encodeURIComponent(series.id)}`;
+                    }
+                });
+            });
+        };
+
+        // Event Listeners
+        if (categorySelect) categorySelect.onchange = render;
+        if (searchInput) searchInput.oninput = render;
+
+        // Initial Render
+        render();
 
     } catch (e) {
         console.error("Series error:", e);

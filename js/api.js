@@ -125,12 +125,27 @@ export const api = {
                  }
                  mergedMovies.push(mainMovie);
              } else if (versions.sub) {
-                 // If only Subtitled exists, show it
-                 mergedMovies.push(versions.sub);
+                 // If only Subtitled exists, show it but clean the title
+                 const subMovie = versions.sub;
+                 subMovie.title = title; // Use the map key (baseTitle)
+                 mergedMovies.push(subMovie);
              }
          });
 
          return { ok: true, data: mergedMovies };
+    },
+    async categories() {
+        const data = await getLocalData("movies.json");
+        const movies = data?.movies || [];
+        const categories = new Set();
+        movies.forEach(m => {
+            if (m.category) {
+                // Split by " | " if exists, or just take the whole string
+                const parts = m.category.split(" | ");
+                parts.forEach(p => categories.add(p.trim()));
+            }
+        });
+        return { ok: true, data: Array.from(categories).sort() };
     }
   },
   series: {
@@ -177,6 +192,18 @@ export const api = {
             return { ok: false, error: "Failed to load episodes" };
         }
     },
+    async categories() {
+        const data = await getLocalData("series.json");
+        const series = data?.series || [];
+        const categories = new Set();
+        series.forEach(s => {
+            if (s.category) {
+                const parts = s.category.split(" | ");
+                parts.forEach(p => categories.add(p.trim()));
+            }
+        });
+        return { ok: true, data: Array.from(categories).sort() };
+    }
   },
   live: {
       async get(id) {
@@ -187,7 +214,10 @@ export const api = {
     async getProgress(id) {
         try {
             const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
-            return { ok: true, data: { progress: progress[id] || 0 } };
+            const entry = progress[id];
+            // Handle both legacy (number) and new (object) formats
+            const time = (entry && typeof entry === 'object') ? entry.time : (entry || 0);
+            return { ok: true, data: { progress: time } };
         } catch (e) {
             return { ok: false, data: { progress: 0 } };
         }
@@ -247,7 +277,11 @@ export const api = {
         if (data && data.rails) {
             for (const key in data.rails) {
                 if (Array.isArray(data.rails[key])) {
-                    data.rails[key] = data.rails[key].map(normalize);
+                    // Normalize and Deduplicate each rail
+                    const normalized = data.rails[key].map(normalize);
+                    // Only apply deduplication to Movie lists (usually key contains 'Movies' or check content)
+                    // But safe to apply generally if it groups by title
+                    data.rails[key] = deduplicateMovies(normalized);
                 }
             }
         }
