@@ -7,6 +7,7 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
+    "DIRECT_HTTPS", // Try upgrading HTTP to HTTPS first
     "https://corsproxy.io/?",
     "https://api.codetabs.com/v1/proxy?quest="
 ];
@@ -14,16 +15,25 @@ const PROXY_LIST = [
 function getProxiedStreamUrl(url, proxyIndex = 0) {
     if (!url) return '';
     
-    // If running on HTTPS and stream is HTTP, we MUST proxy
-    // Or if we are forcing a proxy (retryIndex > 0)
-    if ((window.location.protocol === 'https:' && url.startsWith('http://')) || proxyIndex > 0) {
-        const proxyBase = PROXY_LIST[proxyIndex] || PROXY_LIST[0];
-        // Avoid double proxying if URL already contains the proxy
-        if (url.includes('corsproxy.io') || url.includes('api.codetabs.com')) return url;
-        
-        return `${proxyBase}${encodeURIComponent(url)}`;
+    const strategy = PROXY_LIST[proxyIndex];
+
+    // Strategy 0: Direct HTTPS Upgrade
+    if (strategy === "DIRECT_HTTPS") {
+        if (url.startsWith('http://')) {
+            return url.replace('http://', 'https://');
+        }
+        return url;
     }
-    return url;
+    
+    // Strategy 1+: Proxies
+    // If running on HTTPS and stream is HTTP, we MUST proxy (or have used Direct HTTPS above)
+    // Or if we are forcing a proxy (proxyIndex > 0)
+    
+    const proxyBase = strategy;
+    // Avoid double proxying
+    if (url.includes('corsproxy.io') || url.includes('api.codetabs.com')) return url;
+    
+    return `${proxyBase}${encodeURIComponent(url)}`;
 }
 
 // Helper to toggle seek controls

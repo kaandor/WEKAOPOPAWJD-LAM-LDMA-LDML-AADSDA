@@ -19,8 +19,8 @@ html[data-theme="light"] {
   --border: rgba(15, 23, 42, 0.10);
   --text: #0b0e14;
   --muted: rgba(11, 14, 20, 0.70);
-  --accent: #4f46e5;
-  --accent-2: rgba(79, 70, 229, 0.14);
+  --accent: #9333ea;
+  --accent-2: rgba(147, 51, 234, 0.14);
   --danger: #dc2626;
   color-scheme: light;
 }
