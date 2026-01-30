@@ -123,6 +123,10 @@ export async function initDashboard() {
 
         content.innerHTML = html;
 
+        // Initialize drag-to-scroll on all rails
+        const rails = content.querySelectorAll('.rail');
+        rails.forEach(rail => setupDragScroll(rail));
+
     } catch (e) {
         console.error("Dashboard error:", e);
         content.innerHTML = `<p style="color:red">Erro ao carregar dashboard: ${e.message}</p>`;
