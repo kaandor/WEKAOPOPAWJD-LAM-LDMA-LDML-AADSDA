@@ -131,6 +131,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             // If we were using corsproxy.io, try codetabs as backup
             if (finalUrl.includes('corsproxy.io')) {
                 console.log("Switching to CodeTabs proxy...");
+                // Note: CodeTabs often has better seeking support for some servers
                 finalUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(streamUrl)}`;
                 
                 // Re-attach with new URL
@@ -383,16 +384,9 @@ function setupCustomControls(video) {
         }
 
         console.log(`[Seek] Button seek: ${current} -> ${target}`);
-
-        if (typeof video.fastSeek === 'function') {
-            try {
-                video.fastSeek(target);
-            } catch (e) {
-                video.currentTime = target;
-            }
-        } else {
-            video.currentTime = target;
-        }
+        
+        // Disable fastSeek here too for consistency
+        video.currentTime = target;
 
         if (window.resetControlsTimer) window.resetControlsTimer();
     };
@@ -443,12 +437,9 @@ function setupCustomControls(video) {
                 // Perform the actual seek
                 console.log(`[Seek] Committing to ${time}s`);
                 
-                // Use fastSeek if available for smoother experience
-                if (typeof video.fastSeek === 'function') {
-                    try { video.fastSeek(time); } catch(e) { video.currentTime = time; }
-                } else {
-                    video.currentTime = time;
-                }
+                // IMPORTANT: Disable fastSeek for now as it can cause "reset to start" on some proxied streams
+                // if they don't support keyframe seeking correctly.
+                video.currentTime = time;
             }
         }
         
