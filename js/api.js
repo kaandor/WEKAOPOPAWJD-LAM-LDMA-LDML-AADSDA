@@ -322,11 +322,10 @@ export const api = {
             const tokenUrl = "https://github.com/login/oauth/access_token";
             
             // Proxies that support POST and CORS
-            // Note: corsproxy.io now charges for non-localhost/dev usage, so it's moved to the end or removed.
+            // Removed corsproxy.io because it requires payment for production.
             const proxies = [
                 (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
-                (url) => `https://corsproxy.io/?${encodeURIComponent(url)}` 
+                (url) => `https://thingproxy.freeboard.io/fetch/${url}`
             ];
 
             // Prepare body as form-urlencoded (Simple Request to avoid preflight if possible)
