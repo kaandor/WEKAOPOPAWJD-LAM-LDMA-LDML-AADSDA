@@ -5,11 +5,16 @@ import { api } from "./api.js";
 const qs = (key) => new URLSearchParams(window.location.search).get(key);
 
 // Helper to proxy streams if needed (Mixed Content fix)
+const PROXY_BASE_URL = "https://api.codetabs.com/v1/proxy?quest="; // Fallback público. Se tiver seu proxy Vercel, use: "https://seu-projeto.vercel.app/api?url="
+
 function getProxiedStreamUrl(url) {
     if (!url) return '';
+    // If already proxied, return as is
+    if (url.includes(PROXY_BASE_URL) || url.includes('corsproxy.io')) return url;
+
     // If running on HTTPS and stream is HTTP, we MUST proxy to avoid Mixed Content block
     if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        return `${PROXY_BASE_URL}${encodeURIComponent(url)}`;
     }
     return url;
 }
