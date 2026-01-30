@@ -322,10 +322,11 @@ export const api = {
             const tokenUrl = "https://github.com/login/oauth/access_token";
             
             // Proxies that support POST and CORS
+            // Note: corsproxy.io now charges for non-localhost/dev usage, so it's moved to the end or removed.
             const proxies = [
-                (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+                (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+                (url) => `https://corsproxy.io/?${encodeURIComponent(url)}` 
             ];
 
             // Prepare body as form-urlencoded (Simple Request to avoid preflight if possible)
@@ -352,10 +353,23 @@ export const api = {
                     });
 
                     if (!response.ok) {
+                        // Special check for corsproxy.io 403 error (paywall)
+                        if (response.status === 403 && proxyUrl.includes('corsproxy.io')) {
+                             const errText = await response.text();
+                             // If it's the specific "free tier" error, treat as proxy failure, not GitHub error
+                             if (errText.includes('limited') || errText.includes('pricing')) {
+                                 throw new Error(`CorsProxy Paywall: ${errText}`);
+                             }
+                        }
+
                         // If 401/403, it's likely a config error (revoked secret), not a proxy error.
                         // Stop trying other proxies if we got a response from GitHub.
                         if (response.status === 401 || response.status === 403) {
                              const errText = await response.text();
+                             // Double check it's not a proxy error message in disguise
+                             if (errText.includes('corsproxy') || errText.includes('proxy')) {
+                                 throw new Error(`Proxy Blocked: ${errText}`);
+                             }
                              throw new Error(`GitHub Error ${response.status}: ${errText}`);
                         }
                         throw new Error(`Proxy status: ${response.status}`);
@@ -367,7 +381,8 @@ export const api = {
                 } catch (err) {
                     console.warn(`Proxy failed: ${proxyUrl}`, err);
                     lastError = err;
-                    // If it was a GitHub error (401), rethrow immediately
+                    // If it was a REAL GitHub error (401), rethrow immediately. 
+                    // But if it was our "Proxy Blocked" or "CorsProxy Paywall" error, we continue.
                     if (err.message.includes("GitHub Error")) throw err;
                 }
             }
