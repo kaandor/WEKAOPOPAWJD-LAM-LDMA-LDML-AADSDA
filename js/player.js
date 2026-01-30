@@ -122,43 +122,56 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
     // Handle HLS
     if (streamType === 'hls' || streamUrl.includes('.m3u8')) {
-        if (window.Hls && Hls.isSupported()) {
-            const hls = new Hls();
-            currentHls = hls; // Save reference
-            hls.loadSource(finalUrl);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                console.log("HLS Manifest Parsed");
-                video.play().catch(e => console.warn("Auto-play blocked", e));
-            });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    console.error("HLS Fatal Error", data);
-                    // Try to recover
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.log("fatal network error encountered, try to recover");
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.log("fatal media error encountered, try to recover");
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            // cannot recover
-                            hls.destroy();
-                            break;
+        const loadHls = () => {
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                currentHls = hls; // Save reference
+                hls.loadSource(finalUrl);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log("HLS Manifest Parsed");
+                    video.play().catch(e => console.warn("Auto-play blocked", e));
+                });
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error("HLS Fatal Error", data);
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                hls.destroy();
+                                break;
+                        }
                     }
-                }
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Safari / Native HLS
-            video.src = finalUrl;
-            video.addEventListener('loadedmetadata', () => {
-                video.play().catch(e => console.warn("Auto-play blocked", e));
-            });
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari / Native HLS
+                video.src = finalUrl;
+                video.addEventListener('loadedmetadata', () => {
+                    video.play().catch(e => console.warn("Auto-play blocked", e));
+                });
+            } else {
+                console.error("HLS not supported");
+                showError("Seu navegador não suporta este formato de vídeo.");
+            }
+        };
+
+        if (window.Hls) {
+            loadHls();
         } else {
-            console.error("HLS not supported");
+            // Wait for HLS to load
+            const checkHls = setInterval(() => {
+                if (window.Hls) {
+                    clearInterval(checkHls);
+                    loadHls();
+                }
+            }, 100);
+            // Timeout after 5s
+            setTimeout(() => clearInterval(checkHls), 5000);
         }
     } else {
         // Direct file (MP4/MKV)
