@@ -149,8 +149,6 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     
     // Check if we are on a "Bad Seek" proxy (CodeTabs)
     const isCodeTabs = finalUrl.includes('codetabs');
-    // We do NOT disable seek anymore, as user requested control.
-    // toggleSeekControls(!isCodeTabs); 
     
     if (isCodeTabs) {
         console.warn("Using CodeTabs proxy - Seeking might be unstable.");
@@ -171,7 +169,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 }, 1000);
             } else {
                 console.error("All proxies failed.");
-                // showError("Não foi possível carregar o vídeo. Tente novamente mais tarde.");
+                // We could show a toast here
             }
         }
     };
@@ -179,12 +177,19 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     // Remove existing error listeners
     video.onerror = handleVideoError;
 
-    // Safe Play Helper to prevent AbortError
+    // Safe Play Helper to prevent AbortError & Handle Seek
     const safePlay = async () => {
         try {
             // Restore position if startTime is provided
             if (startTime > 0) {
-                 video.currentTime = startTime;
+                 console.log(`[safePlay] Restoring time to ${startTime}`);
+                 // Ensure we can seek
+                 if (video.seekable.length > 0) {
+                     video.currentTime = startTime;
+                 } else {
+                     // Wait for seekable?
+                     video.currentTime = startTime; // Try anyway
+                 }
             }
             await video.play();
         } catch (err) {
@@ -202,7 +207,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     if (streamType === 'hls' || streamUrl.includes('.m3u8')) {
         const loadHls = () => {
             if (Hls.isSupported()) {
-                const hls = new Hls();
+                // Add timeouts to fail fast on bad proxies
+                const hls = new Hls({
+                    manifestLoadingTimeOut: 20000,
+                    fragLoadingTimeOut: 20000,
+                    levelLoadingTimeOut: 20000
+                });
                 currentHls = hls; // Save reference
                 hls.loadSource(finalUrl);
                 hls.attachMedia(video);
@@ -220,9 +230,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                 break;
                             default:
                                 hls.destroy();
-                                // Trigger video error to handle proxy switch if needed
-                                // But hls.destroy might not trigger video.onerror automatically
-                                // We manually trigger if fatal
+                                // Trigger video error to handle proxy switch
                                 if (proxyIndex < PROXY_LIST.length - 1) {
                                      attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                                 }
@@ -238,7 +246,6 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 }, { once: true });
             } else {
                 console.error("HLS not supported");
-                showError("Seu navegador não suporta este formato de vídeo.");
             }
         };
 
@@ -422,9 +429,13 @@ function setupCustomControls(video) {
 
         console.log(`[Seek] Button seek: ${current} -> ${target}`);
         
-        // Disable fastSeek here too for consistency
-        video.currentTime = target;
+        // Ensure we don't seek if the video is not ready
+        if (video.readyState < 1) {
+             console.warn("Video not ready for seek");
+             return;
+        }
 
+        video.currentTime = target;
         if (window.resetControlsTimer) window.resetControlsTimer();
     };
 
@@ -463,24 +474,22 @@ function setupCustomControls(video) {
     };
 
     const onSeekCommit = (e) => {
-        // User released the handle (MouseUp / TouchEnd / Change)
-        // We delay clearing isDragging slightly to prevent 'timeupdate' from jumping back immediately
-        
+        // User released the handle
         const pct = parseFloat(progressBar.value);
         
         if (Number.isFinite(video.duration) && video.duration > 0) {
             const time = (pct / 100) * video.duration;
             if (Number.isFinite(time)) {
-                // Perform the actual seek
                 console.log(`[Seek] Committing to ${time}s`);
                 
-                // IMPORTANT: Disable fastSeek for now as it can cause "reset to start" on some proxied streams
-                // if they don't support keyframe seeking correctly.
+                // Safety check: Don't seek if duration is infinite (Live) or 0
+                if (video.duration === Infinity) return;
+
                 video.currentTime = time;
             }
         }
         
-        // Clear dragging flag after a short delay to allow video to seek
+        // Clear dragging flag after a short delay
         clearTimeout(seekTimeout);
         seekTimeout = setTimeout(() => {
             isDragging = false;

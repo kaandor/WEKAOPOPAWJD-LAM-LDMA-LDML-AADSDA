@@ -280,7 +280,7 @@ export async function initMovies() {
                 return createPosterCard({
                     title: movie.title,
                     posterUrl: movie.poster,
-                    metaLeft: movie.year,
+                    metaLeft: "", // Year removed as requested
                     metaRight: movie.rating ? `★ ${movie.rating}` : "",
                     onClick: () => {
                         window.location.href = `./player.html?type=movie&id=${encodeURIComponent(movie.id)}`;
@@ -357,7 +357,7 @@ export async function initSeries() {
                 return createPosterCard({
                     title: series.title,
                     posterUrl: series.poster,
-                    metaLeft: series.year,
+                    metaLeft: "", // Year removed as requested
                     metaRight: series.rating ? `★ ${series.rating}` : "",
                     onClick: () => {
                         window.location.href = `./player.html?type=series&id=${encodeURIComponent(series.id)}`;
