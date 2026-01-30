@@ -9,7 +9,9 @@ let currentHls = null; // Global reference for cleanup
 const PROXY_LIST = [
     "DIRECT_HTTPS", // Try upgrading HTTP to HTTPS first
     "https://corsproxy.io/?",
-    "https://api.codetabs.com/v1/proxy?quest="
+    "https://api.codetabs.com/v1/proxy?quest=",
+    "https://api.allorigins.win/raw?url=",
+    "https://thingproxy.freeboard.io/fetch/"
 ];
 
 function getProxiedStreamUrl(url, proxyIndex = 0) {
@@ -32,8 +34,9 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     
     const proxyBase = strategy;
     // Avoid double proxying
-    if (url.includes('corsproxy.io') || url.includes('api.codetabs.com')) return url;
+    if (url.includes('corsproxy.io') || url.includes('api.codetabs.com') || url.includes('api.allorigins.win') || url.includes('thingproxy.freeboard.io')) return url;
     
+    // Special handling for corsproxy.io (sometimes prefers unencoded, but encoded is safer for params)
     return `${proxyBase}${encodeURIComponent(url)}`;
 }
 
