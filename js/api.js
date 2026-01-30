@@ -273,7 +273,7 @@ export const api = {
     // Configuration for GitHub OAuth
     githubConfig: {
         clientId: localStorage.getItem("klyx_gh_client_id") || "Ov23li81yQjUN8E4lIAa",
-        clientSecret: localStorage.getItem("klyx_gh_client_secret") || "", // Only safe for demo/local apps
+        clientSecret: localStorage.getItem("klyx_gh_client_secret") || "0c94c675f7401941e807b3f924f0892412cff82d", // Only safe for demo/local apps
         redirectUri: window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/index.html')
     },
     async setGithubKeys(clientId, clientSecret) {
