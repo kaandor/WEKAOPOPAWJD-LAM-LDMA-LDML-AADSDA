@@ -8,6 +8,7 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://corsproxy.io/?",
+    "https://api.allorigins.win/raw?url=",
     "https://thingproxy.freeboard.io/fetch/",
     "https://api.codetabs.com/v1/proxy?quest="
 ];
@@ -344,7 +345,7 @@ function setupSettingsUI(video, data) {
     
     // Option 1: Dublado (Default)
     audioOptions.appendChild(createOption(
-        "Português (Dublado)", 
+        "Áudio 1", 
         data.streamUrl, 
         currentUrl === data.streamUrl
     ));
@@ -352,7 +353,7 @@ function setupSettingsUI(video, data) {
     // Option 2: Legendado (if available)
     if (data.streamUrlAudio2) {
         audioOptions.appendChild(createOption(
-            "Português (Legendado)", 
+            "Áudio 2", 
             data.streamUrlAudio2, 
             currentUrl === data.streamUrlAudio2
         ));
