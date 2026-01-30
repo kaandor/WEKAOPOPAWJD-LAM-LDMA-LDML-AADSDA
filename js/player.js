@@ -20,7 +20,8 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     // Strategy 0: Direct HTTPS Upgrade
     if (strategy === "DIRECT_HTTPS") {
         if (url.startsWith('http://')) {
-            return url.replace('http://', 'https://');
+            // Replace http with https AND remove port 80 if present
+            return url.replace('http://', 'https://').replace(':80/', '/');
         }
         return url;
     }
