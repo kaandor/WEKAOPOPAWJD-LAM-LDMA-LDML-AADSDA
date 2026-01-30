@@ -213,18 +213,7 @@ export const api = {
             return { ok: true, data: { user: sessionUser } };
         }
 
-        // 2. Fallback for Demo User (only if email matches or empty)
-        if (email === "demo@klyx.com" && password === "demo1234") {
-             const demoUser = { 
-                id: "u1", 
-                email, 
-                name: "Demo User",
-                subscription_status: "active",
-                subscription_expires_at: new Date(Date.now() + 86400000 * 30).toISOString()
-            };
-            writeSession({ user: demoUser, tokens: { accessToken: "mock", refreshToken: "mock" } });
-            return { ok: true, data: { user: demoUser } };
-        }
+        // 2. Strict Login - No Demo Fallback
         
         return { ok: false, data: { error: "Credenciais inválidas" } };
     },
@@ -257,9 +246,21 @@ export const api = {
         users.push(newUser);
         localStorage.setItem("klyx_users", JSON.stringify(users));
         
+        // Create initial profile for the new user
+        // Note: For a multi-user local app, we might want to isolate profiles per user,
+        // but to keep it simple and compatible with existing profile-selection.js, 
+        // we'll just ensure at least one profile exists.
+        // We do NOT clear existing profiles here to avoid wiping other users' data on the same device,
+        // unless we move to user-scoped profiles. For now, we append.
+        let profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+        const initialProfile = { id: "p" + Date.now(), name: name.split(' ')[0], avatar: "" };
+        profiles.push(initialProfile);
+        localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+        
         // Auto-login
         delete newUser.password;
-        writeSession({ user: newUser, tokens: { accessToken: "mock", refreshToken: "mock" } });
+        const token = "klyx_" + Math.random().toString(36).substr(2) + Date.now().toString(36);
+        writeSession({ user: newUser, tokens: { accessToken: token, refreshToken: token + "_refresh" } });
         
         // Enforce Parental Control locally
         localStorage.setItem("klyx_parental_active", "true");

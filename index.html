@@ -207,49 +207,8 @@
               }
           });
       }
-
-      const form = document.getElementById("loginForm");
+      
       const error = document.getElementById("error");
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        error.classList.add("hidden");
-
-        try {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            const keyInput = document.getElementById("deviceKey"); // Might be missing in DOM
-            const key = keyInput ? keyInput.value : "";
-            
-            const mac = getOrGenerateMac();
-            
-            // If user didn't type key, maybe we have one generated?
-            let deviceKey = key;
-            if (!deviceKey) {
-                 deviceKey = localStorage.getItem('klyx_device_key');
-                 if (!deviceKey) {
-                     deviceKey = Math.floor(100000 + Math.random() * 900000).toString();
-                     localStorage.setItem('klyx_device_key', deviceKey);
-                 }
-            }
-
-            const res = await api.auth.login({ email, password, mac, key: deviceKey });
-            if (!res.ok) {
-              error.textContent = res.data?.error || res.data?.message || "Login failed";
-              error.classList.remove("hidden");
-              return;
-            }
-
-            if (res.data.user) {
-                 handleLoginSuccess(res.data.user);
-            }
-
-        } catch (e) {
-            console.error(e);
-            error.textContent = "Erro inesperado: " + e.message;
-            error.classList.remove("hidden");
-        }
-      });
     </script>
   </body>
 </html>
