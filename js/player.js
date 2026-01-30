@@ -6,15 +6,16 @@ const qs = (key) => new URLSearchParams(window.location.search).get(key);
 let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
-const PROXY_BASE_URL = "https://api.codetabs.com/v1/proxy?quest="; // Fallback público. Se tiver seu proxy Vercel, use: "https://seu-projeto.vercel.app/api?url="
+const PROXY_BASE_URL = "https://corsproxy.io/?"; // Fallback público mais estável para vídeo
 
 function getProxiedStreamUrl(url) {
     if (!url) return '';
     // If already proxied, return as is
-    if (url.includes(PROXY_BASE_URL) || url.includes('corsproxy.io')) return url;
+    if (url.includes('corsproxy.io') || url.includes('api.codetabs.com')) return url;
 
     // If running on HTTPS and stream is HTTP, we MUST proxy to avoid Mixed Content block
     if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+        // corsproxy.io works best with encoded component for complex URLs
         return `${PROXY_BASE_URL}${encodeURIComponent(url)}`;
     }
     return url;
@@ -327,24 +328,43 @@ function setupCustomControls(video) {
     video.addEventListener('play', updatePlayIcon);
     video.addEventListener('pause', updatePlayIcon);
     
+    // Seek Helper
+    const performSeek = (delta) => {
+        if (!Number.isFinite(video.currentTime)) return;
+        
+        const current = video.currentTime;
+        let target = current + delta;
+
+        // Constraints
+        if (target < 0) target = 0;
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+            if (target > video.duration) target = video.duration;
+        }
+
+        console.log(`[Seek] Button seek: ${current} -> ${target}`);
+
+        if (typeof video.fastSeek === 'function') {
+            try {
+                video.fastSeek(target);
+            } catch (e) {
+                video.currentTime = target;
+            }
+        } else {
+            video.currentTime = target;
+        }
+
+        if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+
     // Seek Buttons
     btnRewind.onclick = (e) => {
         e.stopPropagation();
-        if (Number.isFinite(video.currentTime)) {
-             video.currentTime = Math.max(0, video.currentTime - 10);
-        }
-        if (window.resetControlsTimer) window.resetControlsTimer();
+        performSeek(-10);
     };
     
     btnForward.onclick = (e) => {
         e.stopPropagation();
-        if (Number.isFinite(video.currentTime) && Number.isFinite(video.duration)) {
-            video.currentTime = Math.min(video.duration, video.currentTime + 10);
-        } else if (Number.isFinite(video.currentTime)) {
-            // Fallback if duration unknown (e.g. live or loading)
-            video.currentTime += 10;
-        }
-        if (window.resetControlsTimer) window.resetControlsTimer();
+        performSeek(10);
     };
 
     // Progress Bar Logic with Dragging State
