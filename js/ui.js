@@ -118,30 +118,87 @@ export async function initDashboard() {
         // Helper to render a rail
         const renderRail = (title, items, type = 'movie') => {
             if (!items || items.length === 0) return '';
-            const categoryLink = type === 'movie' ? './movies.html' : './series.html';
+            const categoryLink = type === 'series' ? './series.html' : './movies.html';
             return `
                 <div class="section">
                     <div class="section-head">
                         <h2>${title}</h2>
-                        <a href="${categoryLink}">Ver mais</a>
+                        ${type !== 'mixed' ? `<a href="${categoryLink}">Ver mais</a>` : ''}
                     </div>
                     <div class="rail">
-                        ${items.map(item => `
+                        ${items.map(item => {
+                            const itemType = item.type || type; // Use item type if mixed
+                            // If mixed and still unknown, default to movie, but try to guess
+                            const finalType = (itemType === 'mixed') ? 'movie' : itemType;
+                            
+                            return `
                             <div class="card focusable" data-id="${item.id}" tabindex="0" 
-                                 onclick="window.location.href='./player.html?type=${type}&id=${encodeURIComponent(item.id)}'">
+                                 onclick="window.location.href='./player.html?type=${finalType}&id=${encodeURIComponent(item.id)}'">
                                 <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=Error';">
                                 <div class="card-body">
                                     <h3 class="card-title">${item.title}</h3>
                                     <div class="card-meta">
-                                        <span class="badge">${type === 'movie' ? 'Filmes' : 'Séries'} | ${item.genre || 'Geral'}</span>
+                                        <span class="badge">${finalType === 'movie' ? 'Filme' : 'Série'} | ${item.genre || 'Geral'}</span>
                                     </div>
+                                    ${item.progress ? `<div style="height: 3px; background: #333; margin-top: 5px; border-radius: 2px;"><div style="width: ${item.progress}%; height: 100%; background: #e50914;"></div></div>` : ''}
                                 </div>
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 </div>
             `;
         };
+
+        // 1. Fetch Continue Watching
+        try {
+            const cwRes = await api.playback.getContinueWatching();
+            if (cwRes.ok && cwRes.data.length > 0) {
+                // Fetch all content to match IDs
+                // Optimization: In a real app, we would have an endpoint for this. 
+                // Here we load lists from cache.
+                const [moviesRes, seriesRes] = await Promise.all([
+                    api.movies.list(),
+                    api.content.getSeries()
+                ]);
+                
+                const allMovies = moviesRes.ok ? moviesRes.data : [];
+                const allSeries = seriesRes.ok ? (seriesRes.data.series || []) : [];
+                
+                const cwItems = [];
+                for (const item of cwRes.data) {
+                    let media = null;
+                    let mediaType = item.type || 'movie';
+                    
+                    if (mediaType === 'movie') media = allMovies.find(m => m.id === item.id);
+                    else if (mediaType === 'series') media = allSeries.find(s => s.id === item.id);
+                    
+                    // Fallback for legacy items without type
+                    if (!media) {
+                        media = allMovies.find(m => m.id === item.id);
+                        if (media) mediaType = 'movie';
+                        else {
+                            media = allSeries.find(s => s.id === item.id);
+                            if (media) mediaType = 'series';
+                        }
+                    }
+                    
+                    if (media) {
+                        // Clone to avoid modifying original cache
+                        const entry = { ...media, type: mediaType };
+                        if (item.duration > 0) {
+                            entry.progress = Math.min(100, Math.max(0, (item.time / item.duration) * 100));
+                        }
+                        cwItems.push(entry);
+                    }
+                }
+                
+                if (cwItems.length > 0) {
+                    html += renderRail("Continue Assistindo", cwItems, "mixed");
+                }
+            }
+        } catch (e) {
+            console.warn("Failed to load Continue Watching", e);
+        }
 
         html += renderRail("Top Filmes", data.rails.topMovies, "movie");
         html += renderRail("Top Séries", data.rails.topSeries, "series");

@@ -184,14 +184,60 @@ export const api = {
       }
   },
   playback: {
-    async getProgress() {
-        return { ok: true, data: { progress: null } };
+    async getProgress(id) {
+        try {
+            const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
+            return { ok: true, data: { progress: progress[id] || 0 } };
+        } catch (e) {
+            return { ok: false, data: { progress: 0 } };
+        }
     },
-    async saveProgress() {
-        return { ok: true };
+    async saveProgress(id, time, duration, type = 'movie') {
+        try {
+            const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
+            progress[id] = {
+                time,
+                duration,
+                timestamp: Date.now()
+            };
+            localStorage.setItem("klyx.progress", JSON.stringify(progress));
+            
+            // Also update "Continue Watching" list
+            let continueWatching = JSON.parse(localStorage.getItem("klyx.continueWatching") || "[]");
+            // Remove if exists
+            continueWatching = continueWatching.filter(i => i.id !== id);
+            // Add to top
+            continueWatching.unshift({ id, time, duration, type, timestamp: Date.now() });
+            // Limit to 20
+            if (continueWatching.length > 20) continueWatching.pop();
+            localStorage.setItem("klyx.continueWatching", JSON.stringify(continueWatching));
+            
+            return { ok: true };
+        } catch (e) {
+            return { ok: false };
+        }
     },
-    async removeProgress() {
-        return { ok: true };
+    async removeProgress(id) {
+        try {
+            const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
+            delete progress[id];
+            localStorage.setItem("klyx.progress", JSON.stringify(progress));
+            
+            let continueWatching = JSON.parse(localStorage.getItem("klyx.continueWatching") || "[]");
+            continueWatching = continueWatching.filter(i => i.id !== id);
+            localStorage.setItem("klyx.continueWatching", JSON.stringify(continueWatching));
+            return { ok: true };
+        } catch (e) {
+            return { ok: false };
+        }
+    },
+    async getContinueWatching() {
+        try {
+            const list = JSON.parse(localStorage.getItem("klyx.continueWatching") || "[]");
+            return { ok: true, data: list };
+        } catch (e) {
+            return { ok: true, data: [] };
+        }
     }
   },
   content: {
@@ -208,11 +254,8 @@ export const api = {
         return { ok: true, data }; 
     },
     async getMovies() { 
-        const data = await getLocalData("movies.json");
-        if (data && data.movies) {
-            data.movies = data.movies.map(normalize);
-        }
-        return { ok: true, data }; 
+        // Use api.movies.list() to get deduplicated list
+        return await api.movies.list();
     },
     async getSeries() { 
         const data = await getLocalData("series.json");

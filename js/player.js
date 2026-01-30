@@ -340,6 +340,22 @@ export async function initPlayer() {
         backBtn.onclick = () => window.history.back();
     }
     
+    // Save Progress Logic
+    let lastSave = 0;
+    const saveProgress = () => {
+        if (!video || !id || !video.duration) return;
+        const now = Date.now();
+        // Throttle 5s unless paused/ended
+        if (now - lastSave < 5000 && !video.paused && !video.ended) return;
+        
+        lastSave = now;
+        api.playback.saveProgress(id, video.currentTime, video.duration, type);
+    };
+    
+    video.addEventListener('timeupdate', saveProgress);
+    video.addEventListener('pause', () => saveProgress());
+    window.addEventListener('beforeunload', () => saveProgress());
+    
     try {
         const detail = await loadDetail(type, id);
         if (!detail.ok) {
@@ -362,6 +378,23 @@ export async function initPlayer() {
         
         // Initialize Settings UI
         setupSettingsUI(video, detail);
+        
+        // Restore Progress
+        const progressRes = await api.playback.getProgress(id);
+        if (progressRes.ok && progressRes.data.progress > 0) {
+            const savedTime = progressRes.data.progress;
+            const restore = () => {
+                // If saved time is valid and not practically finished (leave 2 mins buffer or 95%)
+                if (savedTime < video.duration - 60) { 
+                    video.currentTime = savedTime;
+                    // Show a toast? Optional.
+                    console.log(`Restored progress: ${savedTime}`);
+                }
+            };
+            
+            if (video.readyState >= 1) restore();
+            else video.addEventListener('loadedmetadata', restore, { once: true });
+        }
         
         if (window.finishLoading) window.finishLoading();
         setupAutoHide(video);
