@@ -6,19 +6,45 @@ const qs = (key) => new URLSearchParams(window.location.search).get(key);
 let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
-const PROXY_BASE_URL = "https://corsproxy.io/?"; // Fallback público mais estável para vídeo
+const PROXY_LIST = [
+    "https://corsproxy.io/?",
+    "https://api.codetabs.com/v1/proxy?quest="
+];
 
-function getProxiedStreamUrl(url) {
+function getProxiedStreamUrl(url, proxyIndex = 0) {
     if (!url) return '';
-    // If already proxied, return as is
-    if (url.includes('corsproxy.io') || url.includes('api.codetabs.com')) return url;
-
-    // If running on HTTPS and stream is HTTP, we MUST proxy to avoid Mixed Content block
-    if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-        // corsproxy.io works best with encoded component for complex URLs
-        return `${PROXY_BASE_URL}${encodeURIComponent(url)}`;
+    
+    // If running on HTTPS and stream is HTTP, we MUST proxy
+    // Or if we are forcing a proxy (retryIndex > 0)
+    if ((window.location.protocol === 'https:' && url.startsWith('http://')) || proxyIndex > 0) {
+        const proxyBase = PROXY_LIST[proxyIndex] || PROXY_LIST[0];
+        // Avoid double proxying if URL already contains the proxy
+        if (url.includes(proxyBase)) return url;
+        
+        return `${proxyBase}${encodeURIComponent(url)}`;
     }
     return url;
+}
+
+// Helper to toggle seek controls
+function toggleSeekControls(enable) {
+    const progressBar = document.getElementById('progressBar');
+    const btnRewind = document.getElementById('btnRewind');
+    const btnForward = document.getElementById('btnForward');
+    const titleEl = document.getElementById('playerTitle');
+    
+    if (progressBar) {
+        progressBar.disabled = !enable;
+        progressBar.style.opacity = enable ? '1' : '0.5';
+        progressBar.style.cursor = enable ? 'pointer' : 'not-allowed';
+    }
+    
+    if (btnRewind) btnRewind.style.display = enable ? 'block' : 'none';
+    if (btnForward) btnForward.style.display = enable ? 'block' : 'none';
+    
+    if (!enable && titleEl && !titleEl.textContent.includes('(Modo Compatibilidade)')) {
+        titleEl.textContent += " (Modo Compatibilidade - Seek Desativado)";
+    }
 }
 
 async function loadDetail(type, id) {
@@ -104,8 +130,8 @@ async function loadDetail(type, id) {
 // Track proxy attempts to prevent infinite loops
 let currentProxyAttempt = 0;
 
-async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }) {
-    console.log(`[attachSource] URL: ${streamUrl}, Type: ${streamType}`);
+async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex = 0) {
+    console.log(`[attachSource] URL: ${streamUrl}, Type: ${streamType}, ProxyIndex: ${proxyIndex}`);
     
     // Cleanup previous HLS instance if exists
     if (currentHls) {
@@ -119,15 +145,33 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     }
 
     // Apply proxy if needed
-    let finalUrl = getProxiedStreamUrl(streamUrl);
+    let finalUrl = getProxiedStreamUrl(streamUrl, proxyIndex);
     
+    // Check if we are on a "Bad Seek" proxy (CodeTabs)
+    const isCodeTabs = finalUrl.includes('codetabs');
+    toggleSeekControls(!isCodeTabs);
+    
+    if (isCodeTabs) {
+        console.warn("Using CodeTabs proxy - Seeking disabled to prevent reset bugs.");
+    }
+
     // Fallback logic for error handling
-    const handleVideoError = (e) => {
+    const handleVideoError = async (e) => {
         const error = video.error;
-        if (error) {
-            console.error("Video Error Code:", error.code, error.message);
-            // Don't fallback to CodeTabs automatically as it breaks seeking (Range requests)
-            // Just log it for now.
+        console.error("Video Error:", error ? error.code : 'Unknown', error ? error.message : '');
+        
+        // Try next proxy if available and error is related to source/network
+        if (error && (error.code === 3 || error.code === 4)) {
+            if (proxyIndex < PROXY_LIST.length - 1) {
+                console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
+                // Short delay to prevent rapid loops
+                setTimeout(() => {
+                    attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1);
+                }, 1000);
+            } else {
+                console.error("All proxies failed.");
+                // showError("Não foi possível carregar o vídeo. Tente novamente mais tarde.");
+            }
         }
     };
 
@@ -163,6 +207,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                         console.error("HLS Fatal Error", data);
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
+                                // Only retry load if not already switching proxies
                                 hls.startLoad();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
@@ -170,6 +215,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                 break;
                             default:
                                 hls.destroy();
+                                // Trigger video error to handle proxy switch if needed
+                                // But hls.destroy might not trigger video.onerror automatically
+                                // We manually trigger if fatal
+                                if (proxyIndex < PROXY_LIST.length - 1) {
+                                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1);
+                                }
                                 break;
                         }
                     }
