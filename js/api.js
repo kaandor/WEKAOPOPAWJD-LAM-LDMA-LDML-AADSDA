@@ -349,11 +349,14 @@ export const api = {
         if (data && data.rails) {
             for (const key in data.rails) {
                 if (Array.isArray(data.rails[key])) {
-                    // Normalize and Deduplicate each rail
-                    const normalized = data.rails[key].map(normalize);
-                    // Only apply deduplication to Movie lists (usually key contains 'Movies' or check content)
-                    // But safe to apply generally if it groups by title
-                    data.rails[key] = deduplicateMovies(normalized);
+                    // 1. Normalize
+                    let items = data.rails[key].map(normalize);
+                    
+                    // 2. FORCE FILTER explicitly (Safety check)
+                    items = filterRestrictedContent(items);
+                    
+                    // 3. Deduplicate (which also filters, but we ensure it here)
+                    data.rails[key] = deduplicateMovies(items);
                 }
             }
         }
@@ -367,7 +370,9 @@ export const api = {
     async getSeries() { 
         const data = await getLocalData("series.json");
         if (data && data.series) {
-            data.series = data.series.map(normalize);
+            // Apply Parental Filter to Series List
+            let series = filterRestrictedContent(data.series);
+            data.series = series.map(normalize);
         }
         return { ok: true, data }; 
     }
