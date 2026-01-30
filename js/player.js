@@ -3,6 +3,7 @@ import { api } from "./api.js";
 
 // Helper for URL params
 const qs = (key) => new URLSearchParams(window.location.search).get(key);
+let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_BASE_URL = "https://api.codetabs.com/v1/proxy?quest="; // Fallback público. Se tiver seu proxy Vercel, use: "https://seu-projeto.vercel.app/api?url="
