@@ -83,6 +83,22 @@
                       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                       <span style="display: none;">Áudio e Legendas</span>
                   </button>
+                  
+                  <!-- Settings Modal (Audio/Subtitle) -->
+                  <div id="settingsModal" style="display: none; position: absolute; top: 60px; right: 20px; background: rgba(0,0,0,0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; width: 280px; color: white; backdrop-filter: blur(20px); z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Configurações</h3>
+                        <button id="closeSettings" style="background: none; border: none; color: #aaa; cursor: pointer; padding: 5px;">✕</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #888; letter-spacing: 1px;">Áudio</h4>
+                        <div id="audioOptions" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Options injected via JS -->
+                            <div style="color: #666; font-size: 13px; font-style: italic;">Nenhuma opção extra</div>
+                        </div>
+                    </div>
+                  </div>
               </div>
           </div>
 

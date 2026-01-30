@@ -93,8 +93,44 @@ export const api = {
     },
     async list() {
          const data = await getLocalData("movies.json");
-         const movies = (data?.movies || []).map(normalize);
-         return { ok: true, data: movies };
+         const rawMovies = (data?.movies || []).map(normalize);
+         
+         // Group by base title to merge Dubbed and Subtitled versions
+         const moviesMap = new Map();
+         
+         rawMovies.forEach(movie => {
+             const isSubtitled = movie.title.endsWith(" [L]");
+             const baseTitle = isSubtitled ? movie.title.replace(" [L]", "").trim() : movie.title;
+             
+             if (!moviesMap.has(baseTitle)) {
+                 moviesMap.set(baseTitle, { dub: null, sub: null });
+             }
+             
+             if (isSubtitled) {
+                 moviesMap.get(baseTitle).sub = movie;
+             } else {
+                 moviesMap.get(baseTitle).dub = movie;
+             }
+         });
+
+         const mergedMovies = [];
+         
+         moviesMap.forEach((versions, title) => {
+             // Prefer Dubbed as main, attach Subtitled stream as option
+             if (versions.dub) {
+                 const mainMovie = versions.dub;
+                 if (versions.sub) {
+                     mainMovie.stream_url_subtitled_version = versions.sub.stream_url;
+                 }
+                 mergedMovies.push(mainMovie);
+             } else if (versions.sub) {
+                 // If only Subtitled exists, show it (remove [L] for cleaner UI?)
+                 // Keeping [L] might be useful to know it's subtitled only
+                 mergedMovies.push(versions.sub);
+             }
+         });
+
+         return { ok: true, data: mergedMovies };
     }
   },
   series: {
