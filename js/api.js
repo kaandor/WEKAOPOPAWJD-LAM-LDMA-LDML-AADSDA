@@ -321,7 +321,8 @@ export const api = {
             // GitHub requires POST. Direct calls fail CORS. We use a proxy chain.
             const tokenUrl = "https://github.com/login/oauth/access_token";
             
-            // Proxies configuration
+            
+                // Proxies configuration
             // We prioritize GET requests with parameters in URL because many proxies handle GET better than POST
             const proxies = [
                 {
@@ -336,13 +337,18 @@ export const api = {
                 },
                 {
                     name: "AllOrigins",
-                    url: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                    method: "GET"
+                },
+                {
+                    name: "CorsLoL",
+                    url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
                     method: "GET"
                 },
                 {
                     name: "ThingProxy",
                     url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
-                    method: "POST" // ThingProxy supports POST
+                    method: "POST"
                 }
             ];
 
@@ -385,23 +391,32 @@ export const api = {
 
                 try {
                     console.log(`Trying proxy (${proxy.name}): ${fetchUrl}`);
-                    const response = await fetch(fetchUrl, fetchOptions);
+                    
+                    // Add timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                    
+                    const response = await fetch(fetchUrl, {
+                        ...fetchOptions,
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
 
                     if (!response.ok) {
+                        const errText = await response.text().catch(() => response.statusText);
+                        console.warn(`Proxy ${proxy.name} error ${response.status}: ${errText}`);
+                        
                         // Special check for corsproxy.io 403 error (paywall)
                         if (response.status === 403 && fetchUrl.includes('corsproxy.io')) {
-                             const errText = await response.text();
-                             if (errText.includes('limited') || errText.includes('pricing')) {
-                                 throw new Error(`CorsProxy Paywall: ${errText}`);
-                             }
+                             throw new Error(`CorsProxy Paywall: ${errText}`);
                         }
 
                         // If 401/403, it's likely a config error (revoked secret), not a proxy error.
                         // Stop trying other proxies if we got a response from GitHub.
                         if (response.status === 401 || response.status === 403) {
-                             const errText = await response.text();
                              // Double check it's not a proxy error message in disguise
-                             if (errText.includes('corsproxy') || errText.includes('proxy')) {
+                             if (errText.includes('corsproxy') || errText.includes('proxy') || errText.includes('Forbidden')) {
+                                 // Continue to next proxy
                                  throw new Error(`Proxy Blocked: ${errText}`);
                              }
                              throw new Error(`GitHub Error ${response.status}: ${errText}`);
@@ -411,18 +426,23 @@ export const api = {
                     
                     data = await response.json();
                     
-                    // AllOrigins wraps response sometimes? No, /raw endpoint returns raw.
-                    // But if data contains "contents" (AllOrigins non-raw), handle it.
-                    if (data.contents && typeof data.contents === 'string') {
-                         try { data = JSON.parse(data.contents); } catch(e) {}
+                    // AllOrigins/CorsLoL sometimes wrap response
+                    if (data.contents) {
+                         // Sometimes contents is string, sometimes object
+                         if (typeof data.contents === 'string') {
+                             try { data = JSON.parse(data.contents); } catch(e) { console.error("Parse error", e); }
+                         } else {
+                             data = data.contents;
+                         }
                     }
 
-                    if (data) break; // Success
+                    if (data && !data.error) break; // Success
+                    if (data && data.error) throw new Error(`GitHub API Error: ${data.error_description || data.error}`);
 
                 } catch (err) {
                     console.warn(`Proxy failed (${proxy.name}):`, err);
                     lastError = err;
-                    if (err.message.includes("GitHub Error")) throw err;
+                    if (err.message.includes("GitHub Error") && !err.message.includes("Proxy")) throw err;
                 }
             }
 
