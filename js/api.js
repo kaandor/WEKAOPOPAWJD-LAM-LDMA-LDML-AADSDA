@@ -152,6 +152,27 @@ function deduplicateMovies(items) {
     return mergedMovies;
 }
 
+// Blocklist of common disposable email domains
+const DISPOSABLE_DOMAINS = [
+    "yopmail.com", "mailinator.com", "guerrillamail.com", "sharklasers.com",
+    "temp-mail.org", "10minutemail.com", "throwawaymail.com", "fakeinbox.com",
+    "getairmail.com", "dispostable.com"
+];
+
+function validateEmail(email) {
+    if (!email) return false;
+    
+    // Basic format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return false;
+    
+    // Check disposable domains
+    const domain = email.split('@')[1].toLowerCase();
+    if (DISPOSABLE_DOMAINS.includes(domain)) return false;
+    
+    return true;
+}
+
 export const api = {
   session: {
     read: readSession,
@@ -210,6 +231,10 @@ export const api = {
     async register({ name, email, password }) {
         await delay(500);
         
+        if (!validateEmail(email)) {
+             return { ok: false, data: { error: "E-mail inválido ou temporário não permitido." } };
+        }
+        
         const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
         
         if (users.find(u => u.email === email)) {
@@ -241,9 +266,117 @@ export const api = {
         
         return { ok: true, data: { user: newUser } };
     },
+    // Configuration for GitHub OAuth
+    githubConfig: {
+        clientId: localStorage.getItem("klyx_gh_client_id") || "",
+        clientSecret: localStorage.getItem("klyx_gh_client_secret") || "", // Only safe for demo/local apps
+        redirectUri: window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/login.html')
+    },
+    async setGithubKeys(clientId, clientSecret) {
+        this.githubConfig.clientId = clientId;
+        this.githubConfig.clientSecret = clientSecret;
+        localStorage.setItem("klyx_gh_client_id", clientId);
+        localStorage.setItem("klyx_gh_client_secret", clientSecret);
+        console.log("GitHub Keys updated");
+    },
     async loginWithGithub() {
-        await delay(500);
-        return { ok: false, data: { error: "Login com GitHub indisponível. Use E-mail/Senha." } };
+        const clientId = this.githubConfig.clientId;
+        if (!clientId) {
+            return { ok: false, data: { error: "GitHub Client ID não configurado. Por favor configure as chaves." } };
+        }
+        
+        // Generate state for security
+        const state = Math.random().toString(36).substring(7);
+        localStorage.setItem("klyx_gh_state", state);
+        
+        // Redirect to GitHub
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email&state=${state}`;
+        window.location.href = authUrl;
+        
+        // This promise will never resolve because of the redirect, which is expected
+        return new Promise(() => {});
+    },
+    async handleGithubCallback(code, state) {
+        const savedState = localStorage.getItem("klyx_gh_state");
+        if (state !== savedState) {
+            return { ok: false, data: { error: "Estado inválido (segurança)." } };
+        }
+        
+        const clientId = this.githubConfig.clientId;
+        const clientSecret = this.githubConfig.clientSecret;
+        
+        if (!clientSecret) {
+             return { ok: false, data: { error: "GitHub Client Secret faltando." } };
+        }
+        
+        try {
+            // Exchange code for token via CORS proxy (since GitHub doesn't support CORS for token endpoint)
+            // Using corsproxy.io or similar
+            const tokenUrl = "https://github.com/login/oauth/access_token";
+            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(tokenUrl);
+            
+            // Note: In production, this exchange should happen on a backend to hide Client Secret.
+            // Since this is a static client-side app (GitHub Pages), we expose the secret if we do it here.
+            // This is a known limitation for serverless static apps without Function-as-a-Service.
+            
+            const response = await fetch(proxyUrl, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    client_id: clientId,
+                    client_secret: clientSecret,
+                    code: code,
+                    redirect_uri: this.githubConfig.redirectUri
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                return { ok: false, data: { error: "Erro GitHub: " + data.error_description } };
+            }
+            
+            const accessToken = data.access_token;
+            
+            // Fetch User Data
+            const userRes = await fetch("https://api.github.com/user", {
+                headers: { "Authorization": `token ${accessToken}` }
+            });
+            const ghUser = await userRes.json();
+            
+            // Create/Link User
+            const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
+            let user = users.find(u => u.github_id === ghUser.id || u.email === ghUser.email);
+            
+            if (!user) {
+                user = {
+                    id: "u" + Date.now(),
+                    name: ghUser.name || ghUser.login,
+                    email: ghUser.email || `${ghUser.login}@github.com`, // Fallback
+                    github_id: ghUser.id,
+                    avatar: ghUser.avatar_url,
+                    subscription_status: "active",
+                    subscription_expires_at: new Date(Date.now() + 86400000 * 30).toISOString(),
+                    created_at: new Date().toISOString(),
+                    settings: { parental_active: true }
+                };
+                users.push(user);
+                localStorage.setItem("klyx_users", JSON.stringify(users));
+            }
+            
+            // Login
+            writeSession({ user, tokens: { accessToken, refreshToken: "gh-oauth" } });
+            localStorage.setItem("klyx_parental_active", "true");
+            
+            return { ok: true, data: { user } };
+            
+        } catch (e) {
+            console.error(e);
+            return { ok: false, data: { error: "Falha na conexão com GitHub." } };
+        }
     },
     async me() {
         const session = readSession();
