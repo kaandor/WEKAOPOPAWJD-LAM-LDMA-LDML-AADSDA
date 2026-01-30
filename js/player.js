@@ -234,10 +234,22 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                         console.error("HLS Fatal Error", data);
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                // Only retry load if not already switching proxies
+                                // If it's a 403/404 or manifest error, try next proxy immediately
+                                if (data.response && (data.response.code === 403 || data.response.code === 404)) {
+                                     console.warn("HLS Network Error (403/404) - Switching proxy");
+                                     hls.destroy();
+                                     if (proxyIndex < PROXY_LIST.length - 1) {
+                                         attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                                     } else {
+                                         showError("Erro: Fonte de vídeo indisponível.");
+                                     }
+                                     return;
+                                }
+                                console.log("HLS Network Error - Retrying...");
                                 hls.startLoad();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log("HLS Media Error - Recovering...");
                                 hls.recoverMediaError();
                                 break;
                             default:
@@ -247,6 +259,13 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                      attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                                 }
                                 break;
+                        }
+                    } else if (data.details === Hls.ErrorDetails.MANIFEST_PARSING_ERROR) {
+                        // Non-fatal but critical parsing error (often means proxy returned HTML)
+                        console.warn("HLS Manifest Parsing Error - Switching proxy");
+                        hls.destroy();
+                        if (proxyIndex < PROXY_LIST.length - 1) {
+                             attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                         }
                     }
                 });
@@ -450,7 +469,16 @@ function setupCustomControls(video) {
         // Set dragging true to prevent timeupdate from resetting UI immediately
         isDragging = true;
         
-        video.currentTime = target;
+        try {
+            if (Number.isFinite(video.duration) && Math.abs(target - current) > 10 && typeof video.fastSeek === 'function') {
+                video.fastSeek(target);
+            } else {
+                video.currentTime = target;
+            }
+        } catch (e) {
+            console.warn("fastSeek failed, falling back to currentTime", e);
+            video.currentTime = target;
+        }
         
         // Release dragging after a moment
         clearTimeout(seekTimeout);

@@ -100,6 +100,13 @@ function deduplicateMovies(items) {
                 if (!mainMovie.stream_url_subtitled_version) {
                     mainMovie.stream_url_subtitled_version = versions.sub.stream_url;
                 }
+                // Merge categories
+                if (versions.sub.category) {
+                    const mainCats = mainMovie.category ? mainMovie.category.split(" | ") : [];
+                    const subCats = versions.sub.category.split(" | ");
+                    const combined = new Set([...mainCats, ...subCats]);
+                    mainMovie.category = Array.from(combined).join(" | ");
+                }
             }
             mergedMovies.push(mainMovie);
         } else if (versions.sub) {
