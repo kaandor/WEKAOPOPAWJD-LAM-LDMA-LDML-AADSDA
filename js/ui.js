@@ -1,5 +1,5 @@
 
-import { api } from "./api.js";
+import { api } from "./api.js?v=20240130";
 
 // Helper for Drag-to-Scroll (Mouse)
 function setupDragScroll(slider) {

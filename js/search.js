@@ -1,4 +1,4 @@
-import { api } from "./api.js";
+import { api } from "./api.js?v=20240130";
 import { createPosterCard, createThumbCard } from "./ui.js";
 
 function debounce(fn, waitMs) {
