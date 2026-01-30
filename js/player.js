@@ -349,68 +349,95 @@ function setupCustomControls(video) {
 
     // Progress Bar Logic with Dragging State
     let isDragging = false;
+    let seekTimeout;
 
-    const startDrag = (e) => { 
-        isDragging = true; 
-        // Optional: Pause while dragging for smoother experience?
-        // video.pause(); 
-    };
-    
-    const endDrag = (e) => { 
-        isDragging = false;
-        // Ensure final value is applied
-        const pct = progressBar.value;
-        if (video.duration && Number.isFinite(video.duration)) {
-             const time = (pct / 100) * video.duration;
-             if (Number.isFinite(time)) video.currentTime = time;
-        }
-        // if (video.paused) video.play();
-    };
-
-    progressBar.addEventListener('mousedown', startDrag);
-    progressBar.addEventListener('touchstart', startDrag);
-    
-    progressBar.addEventListener('mouseup', endDrag);
-    progressBar.addEventListener('touchend', endDrag);
-    // 'change' event fires when the user commits the change (mouse up)
-    progressBar.addEventListener('change', endDrag);
-
-    video.addEventListener('timeupdate', () => {
-        // Always update text time
-        timeCurrent.textContent = formatTime(video.currentTime);
-        if (Number.isFinite(video.duration)) {
-            timeDuration.textContent = formatTime(video.duration);
-        }
-
-        // Update slider ONLY if not dragging to prevent conflict
-        if (!isDragging && Number.isFinite(video.duration) && video.duration > 0) {
-            const pct = (video.currentTime / video.duration) * 100;
-            progressBar.value = pct;
-            progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
-        }
-    });
-    
-    progressBar.addEventListener('input', (e) => {
-        // User is scrubbing
-        isDragging = true; 
-        const pct = parseFloat(e.target.value);
-        
-        // Update visual slider immediately
+    const updateSliderVisuals = (pct) => {
         progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
+    };
+
+    const onInput = (e) => {
+        // User is dragging/scrubbing
+        isDragging = true;
+        const pct = parseFloat(e.target.value);
+        updateSliderVisuals(pct);
         
+        // Update text time only (Visual feedback)
         if (Number.isFinite(video.duration) && video.duration > 0) {
             const time = (pct / 100) * video.duration;
             timeCurrent.textContent = formatTime(time);
-            
-            // Optional: seek immediately or wait for change? 
-            // Seek immediately allows preview
+        }
+        
+        if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+
+    const onSeekCommit = (e) => {
+        // User released the handle (MouseUp / TouchEnd / Change)
+        // We delay clearing isDragging slightly to prevent 'timeupdate' from jumping back immediately
+        
+        const pct = parseFloat(progressBar.value);
+        
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+            const time = (pct / 100) * video.duration;
             if (Number.isFinite(time)) {
-                video.currentTime = time;
+                // Perform the actual seek
+                console.log(`[Seek] Committing to ${time}s`);
+                
+                // Use fastSeek if available for smoother experience
+                if (typeof video.fastSeek === 'function') {
+                    try { video.fastSeek(time); } catch(e) { video.currentTime = time; }
+                } else {
+                    video.currentTime = time;
+                }
             }
         }
         
-        // Keep controls visible
+        // Clear dragging flag after a short delay to allow video to seek
+        clearTimeout(seekTimeout);
+        seekTimeout = setTimeout(() => {
+            isDragging = false;
+        }, 500);
+
         if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+
+    // Event Listeners
+    progressBar.addEventListener('input', onInput);
+    progressBar.addEventListener('change', onSeekCommit);
+    
+    // Touch/Mouse specific handling for start/end
+    const startDrag = () => { isDragging = true; };
+    const endDrag = (e) => { 
+        // We rely on 'change' for the seek, but ensure isDragging is managed
+        // If 'change' doesn't fire for some reason (e.g. strict touch), we might need to force it
+        // But usually 'change' is reliable on inputs.
+        // We just ensure visuals are kept if user holds without moving.
+        if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+
+    progressBar.addEventListener('mousedown', startDrag);
+    progressBar.addEventListener('touchstart', startDrag, { passive: true });
+    
+    // We don't strictly need mouseup/touchend if we use 'change', 
+    // but they help keep controls visible
+    progressBar.addEventListener('mouseup', endDrag);
+    progressBar.addEventListener('touchend', endDrag);
+
+    video.addEventListener('timeupdate', () => {
+        // Always update text time if NOT dragging (to avoid fighting user)
+        if (!isDragging) {
+            timeCurrent.textContent = formatTime(video.currentTime);
+            
+            if (Number.isFinite(video.duration)) {
+                timeDuration.textContent = formatTime(video.duration);
+                
+                // Update slider position
+                if (video.duration > 0) {
+                    const pct = (video.currentTime / video.duration) * 100;
+                    progressBar.value = pct;
+                    updateSliderVisuals(pct);
+                }
+            }
+        }
     });
     
     // Click on video to toggle
