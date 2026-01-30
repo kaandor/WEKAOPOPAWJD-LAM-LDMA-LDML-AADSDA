@@ -328,13 +328,12 @@ export const api = {
                 (url) => `https://thingproxy.freeboard.io/fetch/${url}`
             ];
 
-            // Prepare body
-            const params = {
-                client_id: clientId,
-                client_secret: clientSecret,
-                code: code,
-                redirect_uri: this.githubConfig.redirectUri
-            };
+            // Prepare body as form-urlencoded (Simple Request to avoid preflight if possible)
+            const params = new URLSearchParams();
+            params.append("client_id", clientId);
+            params.append("client_secret", clientSecret);
+            params.append("code", code);
+            params.append("redirect_uri", this.githubConfig.redirectUri);
 
             let data = null;
             let lastError = null;
@@ -347,9 +346,9 @@ export const api = {
                         method: "POST",
                         headers: {
                             "Accept": "application/json",
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/x-www-form-urlencoded"
                         },
-                        body: JSON.stringify(params)
+                        body: params.toString()
                     });
 
                     if (!response.ok) {
@@ -374,7 +373,9 @@ export const api = {
             }
 
             if (!data) {
-                throw lastError || new Error("Todos os proxies falharam.");
+                // If all proxies failed, show a more descriptive error
+                console.error("All proxies failed. Last error:", lastError);
+                return { ok: false, data: { error: `Falha na conexão (Proxies). Tente novamente. (${lastError?.message})` } };
             }
             
             if (data.error) {
