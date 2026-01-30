@@ -101,6 +101,9 @@ async function loadDetail(type, id) {
     return { ok: false, error: "Tipo de conteúdo desconhecido." };
 }
 
+// Track proxy attempts to prevent infinite loops
+let currentProxyAttempt = 0;
+
 async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }) {
     console.log(`[attachSource] URL: ${streamUrl}, Type: ${streamType}`);
     
@@ -116,7 +119,45 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     }
 
     // Apply proxy if needed
-    const finalUrl = getProxiedStreamUrl(streamUrl);
+    let finalUrl = getProxiedStreamUrl(streamUrl);
+    
+    // Fallback logic for error handling
+    const handleVideoError = (e) => {
+        console.error("Video Error:", e);
+        const error = video.error;
+        if (error && (error.code === 3 || error.code === 4)) { // MEDIA_ERR_DECODE or MEDIA_ERR_SRC_NOT_SUPPORTED
+            console.warn("Media not supported or decode error. Trying fallback...");
+            
+            // If we were using corsproxy.io, try codetabs as backup
+            if (finalUrl.includes('corsproxy.io')) {
+                console.log("Switching to CodeTabs proxy...");
+                finalUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(streamUrl)}`;
+                
+                // Re-attach with new URL
+                if (streamType === 'hls' || streamUrl.includes('.m3u8')) {
+                    if (window.Hls && Hls.isSupported()) {
+                        if (currentHls) currentHls.destroy();
+                        const hls = new Hls();
+                        currentHls = hls;
+                        hls.loadSource(finalUrl);
+                        hls.attachMedia(video);
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                    } else {
+                        video.src = finalUrl;
+                        video.play();
+                    }
+                } else {
+                    video.src = finalUrl;
+                    video.play();
+                }
+            }
+        }
+    };
+
+    // Remove existing error listeners to prevent duplicates (not easily possible with anon functions, 
+    // but we can set onerror property directly for simplicity in this context)
+    video.onerror = handleVideoError;
+
     if (finalUrl !== streamUrl) {
         console.log(`[attachSource] Proxied URL: ${finalUrl}`);
     }
