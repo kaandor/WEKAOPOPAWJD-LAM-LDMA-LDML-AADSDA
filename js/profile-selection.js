@@ -15,6 +15,7 @@ const modal = document.getElementById("createProfileModal");
 const nameInput = document.getElementById("profileName");
 const saveBtn = document.getElementById("saveProfileBtn");
 const cancelBtn = document.getElementById("cancelCreateBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 
 // State
 let profiles = [];
@@ -143,6 +144,16 @@ async function createProfile() {
 // Event Listeners
 cancelBtn.addEventListener("click", closeCreateModal);
 saveBtn.addEventListener("click", createProfile);
+logoutBtn?.addEventListener("click", async () => {
+    if (api.auth.logout) {
+        await api.auth.logout();
+    } else {
+        localStorage.removeItem('klyx.session');
+        localStorage.removeItem('klyx_profile_id');
+    }
+    window.location.href = "./index.html";
+});
+
 nameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") createProfile();
   if (e.key === "Escape") closeCreateModal();
