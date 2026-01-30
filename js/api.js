@@ -321,7 +321,7 @@ export const api = {
             // GitHub requires POST. Direct calls fail CORS. We use a proxy chain.
             const tokenUrl = "https://github.com/login/oauth/access_token";
             
-v           // Proxies that support POST and CORS
+            // Proxies that support POST and CORS
             // Removed corsproxy.io because it requires payment for production.
             const proxies = [
                 (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
