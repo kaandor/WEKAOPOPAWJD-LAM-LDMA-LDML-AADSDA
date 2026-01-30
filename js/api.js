@@ -99,8 +99,9 @@ export const api = {
          const moviesMap = new Map();
          
          rawMovies.forEach(movie => {
-             const isSubtitled = movie.title.endsWith(" [L]");
-             const baseTitle = isSubtitled ? movie.title.replace(" [L]", "").trim() : movie.title;
+             const title = movie.title.trim();
+             const isSubtitled = title.endsWith(" [L]") || title.toLowerCase().includes("(legendado)");
+             const baseTitle = title.replace(" [L]", "").replace(/\(Legendado\)/i, "").trim();
              
              if (!moviesMap.has(baseTitle)) {
                  moviesMap.set(baseTitle, { dub: null, sub: null });
@@ -124,8 +125,7 @@ export const api = {
                  }
                  mergedMovies.push(mainMovie);
              } else if (versions.sub) {
-                 // If only Subtitled exists, show it (remove [L] for cleaner UI?)
-                 // Keeping [L] might be useful to know it's subtitled only
+                 // If only Subtitled exists, show it
                  mergedMovies.push(versions.sub);
              }
          });
@@ -255,7 +255,8 @@ export const api = {
     },
     async getMovies() { 
         // Use api.movies.list() to get deduplicated list
-        return await api.movies.list();
+        const res = await api.movies.list();
+        return { ok: res.ok, data: { movies: res.data } };
     },
     async getSeries() { 
         const data = await getLocalData("series.json");

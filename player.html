@@ -104,9 +104,38 @@
 
           <!-- Video Player Container (Embedded 16:9) -->
           <div class="video-wrap" style="position: relative; width: 100%; padding-top: 56.25%; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #333;">
-              <!-- Native Controls Enabled -->
-              <video id="video" class="video" playsinline controls preload="auto" crossorigin="anonymous" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; outline: none;"></video>
+              <!-- Video Element (Custom Controls) -->
+              <video id="video" class="video" playsinline preload="auto" crossorigin="anonymous" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; outline: none;"></video>
               
+              <!-- Custom Controls Overlay -->
+              <div id="customControls" class="controls" style="opacity: 0; transition: opacity 0.3s;">
+                  
+                  <!-- Center Controls (Play/Pause, Seek) -->
+                  <div class="controls-center">
+                      <button id="btnRewind" class="btn-seek-big">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+                          <span>-10s</span>
+                      </button>
+                      
+                      <button id="btnPlay" class="btn-play-big">
+                          <svg id="iconPlay" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                          <svg id="iconPause" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                      </button>
+                      
+                      <button id="btnForward" class="btn-seek-big">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                          <span>+10s</span>
+                      </button>
+                  </div>
+                  
+                  <!-- Bottom Controls (Timeline) -->
+                  <div class="controls-bottom">
+                      <span id="timeCurrent" class="time-display">0:00</span>
+                      <input type="range" id="progressBar" class="range" min="0" max="100" value="0" step="0.1">
+                      <span id="timeDuration" class="time-display">0:00</span>
+                  </div>
+              </div>
+
               <!-- Clean Error Overlay -->
               <div id="errorOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
                   <div class="loading-spinner" style="border: 3px solid rgba(255,255,255,0.1); border-left-color: #e50914; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; display: none;" id="errorSpinner"></div>

@@ -266,13 +266,105 @@ function setupSettingsUI(video, data) {
     }
 }
 
+function setupCustomControls(video) {
+    const btnPlay = document.getElementById('btnPlay');
+    const iconPlay = document.getElementById('iconPlay');
+    const iconPause = document.getElementById('iconPause');
+    const btnRewind = document.getElementById('btnRewind');
+    const btnForward = document.getElementById('btnForward');
+    const progressBar = document.getElementById('progressBar');
+    const timeCurrent = document.getElementById('timeCurrent');
+    const timeDuration = document.getElementById('timeDuration');
+
+    if (!btnPlay) return;
+
+    // Helper: Format time
+    const formatTime = (seconds) => {
+        if (!seconds || isNaN(seconds)) return "0:00";
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    // Toggle Play
+    const togglePlay = () => {
+        if (video.paused) video.play();
+        else video.pause();
+    };
+
+    btnPlay.onclick = (e) => {
+        e.stopPropagation();
+        togglePlay();
+    };
+    
+    // Update Icons
+    const updatePlayIcon = () => {
+        if (video.paused) {
+            iconPlay.style.display = 'block';
+            iconPause.style.display = 'none';
+        } else {
+            iconPlay.style.display = 'none';
+            iconPause.style.display = 'block';
+        }
+    };
+    
+    video.addEventListener('play', updatePlayIcon);
+    video.addEventListener('pause', updatePlayIcon);
+    
+    // Seek Buttons
+    btnRewind.onclick = (e) => {
+        e.stopPropagation();
+        video.currentTime = Math.max(0, video.currentTime - 10);
+        if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+    
+    btnForward.onclick = (e) => {
+        e.stopPropagation();
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+
+    // Progress Bar
+    video.addEventListener('timeupdate', () => {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        progressBar.value = pct;
+        progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
+        timeCurrent.textContent = formatTime(video.currentTime);
+        timeDuration.textContent = formatTime(video.duration);
+    });
+    
+    progressBar.addEventListener('input', (e) => {
+        const pct = e.target.value;
+        const time = (pct / 100) * video.duration;
+        video.currentTime = time;
+        progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
+        timeCurrent.textContent = formatTime(time);
+    });
+    
+    // Click on video to toggle
+    video.onclick = (e) => {
+        // Only if controls are visible (or maybe always?)
+        // Better behavior: single tap shows controls, tap on center toggles play?
+        // For now, let's keep it simple: tap toggles play if controls are visible, or shows controls if hidden
+        // Actually, setupAutoHide handles showing controls on click.
+        // Let's make video click toggle play only if we are not dragging or interacting
+        togglePlay();
+        if (window.resetControlsTimer) window.resetControlsTimer();
+    };
+}
+
 function setupAutoHide(video) {
     let timeout;
     const controls = document.querySelector('.controls-top');
+    const customControls = document.getElementById('customControls');
     const backBtn = document.getElementById('backBtn');
     
     const show = () => {
         if (controls) controls.style.opacity = '1';
+        if (customControls) customControls.style.opacity = '1';
         if (backBtn) backBtn.style.opacity = '1';
         document.body.style.cursor = 'auto';
         
@@ -283,6 +375,7 @@ function setupAutoHide(video) {
     const hide = () => {
         if (video.paused) return; 
         if (controls) controls.style.opacity = '0';
+        if (customControls) customControls.style.opacity = '0';
         if (backBtn) backBtn.style.opacity = '0';
         document.body.style.cursor = 'none';
     };
@@ -378,6 +471,9 @@ export async function initPlayer() {
         
         // Initialize Settings UI
         setupSettingsUI(video, detail);
+        
+        // Initialize Custom Controls
+        setupCustomControls(video);
         
         // Restore Progress
         const progressRes = await api.playback.getProgress(id);
