@@ -293,6 +293,8 @@ export const api = {
         const state = Math.random().toString(36).substring(7);
         localStorage.setItem("klyx_gh_state", state);
         
+        console.log("GitHub Auth Redirect URI:", this.githubConfig.redirectUri);
+
         // Redirect to GitHub
         const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email&state=${state}`;
         window.location.href = authUrl;
@@ -323,21 +325,47 @@ export const api = {
             // Since this is a static client-side app (GitHub Pages), we expose the secret if we do it here.
             // This is a known limitation for serverless static apps without Function-as-a-Service.
             
-            const response = await fetch(proxyUrl, {
-                method: "POST",
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    client_id: clientId,
-                    client_secret: clientSecret,
-                    code: code,
-                    redirect_uri: this.githubConfig.redirectUri
-                })
-            });
-            
-            const data = await response.json();
+            let data;
+            try {
+                // Try primary proxy (corsproxy.io)
+                const response = await fetch(proxyUrl, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        client_secret: clientSecret,
+                        code: code,
+                        redirect_uri: this.githubConfig.redirectUri
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
+                data = await response.json();
+                
+            } catch (err1) {
+                console.warn("Primary proxy failed, trying fallback...", err1);
+                // Fallback proxy (CodeTabs)
+                const fallbackUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(tokenUrl);
+                const response = await fetch(fallbackUrl, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        client_secret: clientSecret,
+                        code: code,
+                        redirect_uri: this.githubConfig.redirectUri
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`Fallback proxy error: ${response.status}`);
+                data = await response.json();
+            }
             
             if (data.error) {
                 return { ok: false, data: { error: "Erro GitHub: " + data.error_description } };
@@ -379,7 +407,7 @@ export const api = {
             
         } catch (e) {
             console.error(e);
-            return { ok: false, data: { error: "Falha na conexão com GitHub." } };
+            return { ok: false, data: { error: `Falha na conexão com GitHub (${e.message}).` } };
         }
     },
     async me() {
