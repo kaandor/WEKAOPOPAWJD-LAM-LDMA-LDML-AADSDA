@@ -183,12 +183,24 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             // Restore position if startTime is provided
             if (startTime > 0) {
                  console.log(`[safePlay] Restoring time to ${startTime}`);
-                 // Ensure we can seek
-                 if (video.seekable.length > 0) {
+                 
+                 const attemptSeek = () => {
+                     if (video.seekable.length > 0) {
+                         video.currentTime = startTime;
+                         return true;
+                     }
+                     return false;
+                 };
+
+                 if (!attemptSeek()) {
+                     // If not seekable yet, wait for 'canplay'
+                     const onCanPlay = () => {
+                         attemptSeek();
+                         video.removeEventListener('canplay', onCanPlay);
+                     };
+                     video.addEventListener('canplay', onCanPlay);
+                     // Fallback: try setting it anyway
                      video.currentTime = startTime;
-                 } else {
-                     // Wait for seekable?
-                     video.currentTime = startTime; // Try anyway
                  }
             }
             await video.play();
@@ -435,7 +447,17 @@ function setupCustomControls(video) {
              return;
         }
 
+        // Set dragging true to prevent timeupdate from resetting UI immediately
+        isDragging = true;
+        
         video.currentTime = target;
+        
+        // Release dragging after a moment
+        clearTimeout(seekTimeout);
+        seekTimeout = setTimeout(() => {
+            isDragging = false;
+        }, 1000); // Give it 1s to settle
+
         if (window.resetControlsTimer) window.resetControlsTimer();
     };
 
@@ -484,7 +506,9 @@ function setupCustomControls(video) {
                 
                 // Safety check: Don't seek if duration is infinite (Live) or 0
                 if (video.duration === Infinity) return;
-
+                
+                // Ensure we mark as dragging until seek completes
+                isDragging = true;
                 video.currentTime = time;
             }
         }
@@ -493,7 +517,7 @@ function setupCustomControls(video) {
         clearTimeout(seekTimeout);
         seekTimeout = setTimeout(() => {
             isDragging = false;
-        }, 500);
+        }, 1000); // Increased to 1s for stability
 
         if (window.resetControlsTimer) window.resetControlsTimer();
     };
