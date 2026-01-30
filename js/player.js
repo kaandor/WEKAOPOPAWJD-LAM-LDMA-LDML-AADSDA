@@ -8,8 +8,6 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://corsproxy.io/?",
-    "https://api.allorigins.win/raw?url=",
-    "https://thingproxy.freeboard.io/fetch/",
     "https://api.codetabs.com/v1/proxy?quest="
 ];
 
@@ -21,7 +19,7 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     if ((window.location.protocol === 'https:' && url.startsWith('http://')) || proxyIndex > 0) {
         const proxyBase = PROXY_LIST[proxyIndex] || PROXY_LIST[0];
         // Avoid double proxying if URL already contains the proxy
-        if (url.includes(proxyBase)) return url;
+        if (url.includes('corsproxy.io') || url.includes('api.codetabs.com')) return url;
         
         return `${proxyBase}${encodeURIComponent(url)}`;
     }
@@ -61,7 +59,7 @@ async function loadDetail(type, id) {
         return {
             ok: true,
             title: m.title,
-            meta: `${m.year || ''} | ${m.rating ? '★ ' + m.rating : ''}`,
+            meta: `${m.rating ? '★ ' + m.rating : ''}`, // Date removed as requested
             streamUrl: m.stream_url,
             streamUrlAudio2: m.stream_url_subtitled_version, // New property for Subtitled version
             streamUrlSub: m.sub_url,
@@ -132,8 +130,8 @@ async function loadDetail(type, id) {
 // Track proxy attempts to prevent infinite loops
 let currentProxyAttempt = 0;
 
-async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex = 0) {
-    console.log(`[attachSource] URL: ${streamUrl}, Type: ${streamType}, ProxyIndex: ${proxyIndex}`);
+async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex = 0, startTime = 0) {
+    console.log(`[attachSource] URL: ${streamUrl}, Type: ${streamType}, ProxyIndex: ${proxyIndex}, StartTime: ${startTime}`);
     
     // Cleanup previous HLS instance if exists
     if (currentHls) {
@@ -169,7 +167,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
                 // Short delay to prevent rapid loops
                 setTimeout(() => {
-                    attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1);
+                    attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                 }, 1000);
             } else {
                 console.error("All proxies failed.");
@@ -184,6 +182,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     // Safe Play Helper to prevent AbortError
     const safePlay = async () => {
         try {
+            // Restore position if startTime is provided
+            if (startTime > 0) {
+                 video.currentTime = startTime;
+            }
             await video.play();
         } catch (err) {
             if (err.name !== 'AbortError') {
@@ -222,7 +224,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                 // But hls.destroy might not trigger video.onerror automatically
                                 // We manually trigger if fatal
                                 if (proxyIndex < PROXY_LIST.length - 1) {
-                                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1);
+                                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                                 }
                                 break;
                         }
@@ -233,7 +235,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 video.src = finalUrl;
                 video.addEventListener('loadedmetadata', () => {
                     safePlay();
-                });
+                }, { once: true });
             } else {
                 console.error("HLS not supported");
                 showError("Seu navegador não suporta este formato de vídeo.");
@@ -256,7 +258,9 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     } else {
         // Direct file (MP4/MKV)
         video.src = finalUrl;
-        safePlay();
+        video.addEventListener('loadedmetadata', () => {
+            safePlay();
+        }, { once: true });
     }
     
     // Subtitles (keep existing logic)
@@ -328,11 +332,7 @@ function setupSettingsUI(video, data) {
                 streamType: url.includes('.m3u8') ? 'hls' : 'mp4',
                 ui: { subtitleSelect: null },
                 isLegendado: false
-            });
-            
-            // Restore position
-            video.currentTime = currentTime;
-            if (wasPlaying) video.play().catch(() => {});
+            }, 0, currentTime); // Pass currentTime to restore
             
             settingsModal.style.display = 'none';
         };
