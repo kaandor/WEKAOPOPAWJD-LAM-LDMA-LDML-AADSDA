@@ -169,7 +169,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 }, 1000);
             } else {
                 console.error("All proxies failed.");
-                // We could show a toast here
+                showError("Erro: Fonte de vídeo não suportada ou indisponível.");
             }
         }
     };
