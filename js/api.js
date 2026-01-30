@@ -321,14 +321,27 @@ export const api = {
             // GitHub requires POST. Direct calls fail CORS. We use a proxy chain.
             const tokenUrl = "https://github.com/login/oauth/access_token";
             
-            // Proxies that support POST and CORS
-            // Removed corsproxy.io because it requires payment for production.
+            // Proxies configuration
+            // We prioritize GET requests with parameters in URL because many proxies handle GET better than POST
             const proxies = [
-                (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+                {
+                    name: "CodeTabs",
+                    url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                    method: "GET"
+                },
+                {
+                    name: "AllOrigins",
+                    url: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    method: "GET"
+                },
+                {
+                    name: "ThingProxy",
+                    url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+                    method: "POST" // ThingProxy supports POST
+                }
             ];
 
-            // Prepare body as form-urlencoded (Simple Request to avoid preflight if possible)
+            // Prepare parameters
             const params = new URLSearchParams();
             params.append("client_id", clientId);
             params.append("client_secret", clientSecret);
@@ -338,24 +351,41 @@ export const api = {
             let data = null;
             let lastError = null;
 
-            for (const proxyGen of proxies) {
-                const proxyUrl = proxyGen(tokenUrl);
-                try {
-                    console.log(`Trying proxy: ${proxyUrl}`);
-                    const response = await fetch(proxyUrl, {
+            for (const proxy of proxies) {
+                let fetchUrl;
+                let fetchOptions;
+
+                if (proxy.method === "GET") {
+                    // For GET proxies, append params to GitHub URL, then encode
+                    const fullGithubUrl = `${tokenUrl}?${params.toString()}`;
+                    fetchUrl = proxy.url(fullGithubUrl);
+                    fetchOptions = {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        }
+                    };
+                } else {
+                    // For POST proxies
+                    fetchUrl = proxy.url(tokenUrl);
+                    fetchOptions = {
                         method: "POST",
                         headers: {
                             "Accept": "application/json",
                             "Content-Type": "application/x-www-form-urlencoded"
                         },
                         body: params.toString()
-                    });
+                    };
+                }
+
+                try {
+                    console.log(`Trying proxy (${proxy.name}): ${fetchUrl}`);
+                    const response = await fetch(fetchUrl, fetchOptions);
 
                     if (!response.ok) {
                         // Special check for corsproxy.io 403 error (paywall)
-                        if (response.status === 403 && proxyUrl.includes('corsproxy.io')) {
+                        if (response.status === 403 && fetchUrl.includes('corsproxy.io')) {
                              const errText = await response.text();
-                             // If it's the specific "free tier" error, treat as proxy failure, not GitHub error
                              if (errText.includes('limited') || errText.includes('pricing')) {
                                  throw new Error(`CorsProxy Paywall: ${errText}`);
                              }
@@ -375,13 +405,18 @@ export const api = {
                     }
                     
                     data = await response.json();
+                    
+                    // AllOrigins wraps response sometimes? No, /raw endpoint returns raw.
+                    // But if data contains "contents" (AllOrigins non-raw), handle it.
+                    if (data.contents && typeof data.contents === 'string') {
+                         try { data = JSON.parse(data.contents); } catch(e) {}
+                    }
+
                     if (data) break; // Success
 
                 } catch (err) {
-                    console.warn(`Proxy failed: ${proxyUrl}`, err);
+                    console.warn(`Proxy failed (${proxy.name}):`, err);
                     lastError = err;
-                    // If it was a REAL GitHub error (401), rethrow immediately. 
-                    // But if it was our "Proxy Blocked" or "CorsProxy Paywall" error, we continue.
                     if (err.message.includes("GitHub Error")) throw err;
                 }
             }
