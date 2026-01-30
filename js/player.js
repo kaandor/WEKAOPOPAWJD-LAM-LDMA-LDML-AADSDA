@@ -4,6 +4,16 @@ import { api } from "./api.js";
 // Helper for URL params
 const qs = (key) => new URLSearchParams(window.location.search).get(key);
 
+// Helper to proxy streams if needed (Mixed Content fix)
+function getProxiedStreamUrl(url) {
+    if (!url) return '';
+    // If running on HTTPS and stream is HTTP, we MUST proxy to avoid Mixed Content block
+    if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    }
+    return url;
+}
+
 async function loadDetail(type, id) {
     console.log(`[loadDetail] Loading ${type} ${id}`);
     
