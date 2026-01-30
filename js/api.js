@@ -319,13 +319,18 @@ export const api = {
         try {
             // Exchange code for token via CORS proxy (since GitHub doesn't support CORS for token endpoint)
             // Using corsproxy.io or similar
+            // WE MUST USE "Simple Request" (no preflight) to avoid CORS errors.
+            // This means Content-Type must be application/x-www-form-urlencoded, NOT application/json.
             const tokenUrl = "https://github.com/login/oauth/access_token";
             const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(tokenUrl);
             
-            // Note: In production, this exchange should happen on a backend to hide Client Secret.
-            // Since this is a static client-side app (GitHub Pages), we expose the secret if we do it here.
-            // This is a known limitation for serverless static apps without Function-as-a-Service.
-            
+            // Prepare body as form-urlencoded
+            const params = new URLSearchParams();
+            params.append("client_id", clientId);
+            params.append("client_secret", clientSecret);
+            params.append("code", code);
+            params.append("redirect_uri", this.githubConfig.redirectUri);
+
             let data;
             try {
                 // Try primary proxy (corsproxy.io)
@@ -333,14 +338,9 @@ export const api = {
                     method: "POST",
                     headers: {
                         "Accept": "application/json",
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/x-www-form-urlencoded"
                     },
-                    body: JSON.stringify({
-                        client_id: clientId,
-                        client_secret: clientSecret,
-                        code: code,
-                        redirect_uri: this.githubConfig.redirectUri
-                    })
+                    body: params.toString()
                 });
                 
                 if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
@@ -354,14 +354,9 @@ export const api = {
                     method: "POST",
                     headers: {
                         "Accept": "application/json",
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/x-www-form-urlencoded"
                     },
-                    body: JSON.stringify({
-                        client_id: clientId,
-                        client_secret: clientSecret,
-                        code: code,
-                        redirect_uri: this.githubConfig.redirectUri
-                    })
+                    body: params.toString()
                 });
                 
                 if (!response.ok) throw new Error(`Fallback proxy error: ${response.status}`);
