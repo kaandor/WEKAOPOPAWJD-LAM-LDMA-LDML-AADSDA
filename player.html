@@ -173,6 +173,7 @@
       }
 
       try {
+          console.log("Player starting...");
           const v = Date.now();
           const { mountAppShell } = await import(`./js/router.js?v=${v}`);
           const { initPlayer } = await import(`./js/player.js?v=${v}`);
@@ -180,7 +181,7 @@
           await mountAppShell({ currentPath: "" });
           await initPlayer();
       } catch (e) {
-          console.error(e);
+          console.error("Critical Player Error:", e);
           const loader = document.getElementById("loading-overlay");
           if (loader) {
               if (window.finishLoading) window.finishLoading();
