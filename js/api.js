@@ -317,50 +317,64 @@ export const api = {
         }
         
         try {
-            // Exchange code for token via CORS proxy (since GitHub doesn't support CORS for token endpoint)
-            // Using corsproxy.io or similar
-            // WE MUST USE "Simple Request" (no preflight) to avoid CORS errors.
-            // This means Content-Type must be application/x-www-form-urlencoded, NOT application/json.
+            // Exchange code for token via CORS proxy
+            // GitHub requires POST. Direct calls fail CORS. We use a proxy chain.
             const tokenUrl = "https://github.com/login/oauth/access_token";
-            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(tokenUrl);
             
-            // Prepare body as form-urlencoded
-            const params = new URLSearchParams();
-            params.append("client_id", clientId);
-            params.append("client_secret", clientSecret);
-            params.append("code", code);
-            params.append("redirect_uri", this.githubConfig.redirectUri);
+            // Proxies that support POST and CORS
+            const proxies = [
+                (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+            ];
 
-            let data;
-            try {
-                // Try primary proxy (corsproxy.io)
-                const response = await fetch(proxyUrl, {
-                    method: "POST",
-                    headers: {
-                        "Accept": "application/json",
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: params.toString()
-                });
-                
-                if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
-                data = await response.json();
-                
-            } catch (err1) {
-                console.warn("Primary proxy failed, trying fallback...", err1);
-                // Fallback proxy (CodeTabs)
-                const fallbackUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(tokenUrl);
-                const response = await fetch(fallbackUrl, {
-                    method: "POST",
-                    headers: {
-                        "Accept": "application/json",
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: params.toString()
-                });
-                
-                if (!response.ok) throw new Error(`Fallback proxy error: ${response.status}`);
-                data = await response.json();
+            // Prepare body
+            const params = {
+                client_id: clientId,
+                client_secret: clientSecret,
+                code: code,
+                redirect_uri: this.githubConfig.redirectUri
+            };
+
+            let data = null;
+            let lastError = null;
+
+            for (const proxyGen of proxies) {
+                const proxyUrl = proxyGen(tokenUrl);
+                try {
+                    console.log(`Trying proxy: ${proxyUrl}`);
+                    const response = await fetch(proxyUrl, {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(params)
+                    });
+
+                    if (!response.ok) {
+                        // If 401/403, it's likely a config error (revoked secret), not a proxy error.
+                        // Stop trying other proxies if we got a response from GitHub.
+                        if (response.status === 401 || response.status === 403) {
+                             const errText = await response.text();
+                             throw new Error(`GitHub Error ${response.status}: ${errText}`);
+                        }
+                        throw new Error(`Proxy status: ${response.status}`);
+                    }
+                    
+                    data = await response.json();
+                    if (data) break; // Success
+
+                } catch (err) {
+                    console.warn(`Proxy failed: ${proxyUrl}`, err);
+                    lastError = err;
+                    // If it was a GitHub error (401), rethrow immediately
+                    if (err.message.includes("GitHub Error")) throw err;
+                }
+            }
+
+            if (!data) {
+                throw lastError || new Error("Todos os proxies falharam.");
             }
             
             if (data.error) {
