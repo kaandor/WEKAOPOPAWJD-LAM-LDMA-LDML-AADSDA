@@ -223,7 +223,12 @@ function showError(msg) {
 }
 
 export async function initPlayer() {
-    console.log("Player Initialized");
+    console.log("Player Initialized v2 - Debug Check");
+    if (typeof getProxiedStreamUrl !== 'function') {
+        console.error("CRITICAL: getProxiedStreamUrl is NOT defined!");
+    } else {
+        console.log("getProxiedStreamUrl is defined and ready.");
+    }
     
     const type = qs('type');
     const id = qs('id');
