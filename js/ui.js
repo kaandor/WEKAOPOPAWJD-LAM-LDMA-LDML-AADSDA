@@ -493,11 +493,15 @@ export async function initSettings() {
         };
     }
     
-    // Device Info Mock
+    // Device Info from LocalStorage
     const macEl = document.getElementById("deviceMac");
-    if (macEl) macEl.textContent = "00:1A:2B:3C:4D:5E";
+    if (macEl) {
+        macEl.textContent = localStorage.getItem('klyx_device_mac') || "00:1A:2B:3C:4D:5E";
+    }
     const keyEl = document.getElementById("deviceKey");
-    if (keyEl) keyEl.textContent = "1234-5678";
+    if (keyEl) {
+        keyEl.textContent = localStorage.getItem('klyx_device_key') || "1234-5678";
+    }
     const statusEl = document.getElementById("subscriptionStatus");
     if (statusEl) {
         statusEl.textContent = "Ativo";

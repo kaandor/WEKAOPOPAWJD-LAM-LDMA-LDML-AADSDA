@@ -1,7 +1,7 @@
 
 export function redirectIfAuthed() {
-    const user = localStorage.getItem('klyx_user');
-    if (user) {
+    const session = localStorage.getItem('klyx.session');
+    if (session) {
         // If user is logged in, redirect to profiles or dashboard
         window.location.href = './profile-selection.html'; 
     }

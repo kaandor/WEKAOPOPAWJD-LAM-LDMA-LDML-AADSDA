@@ -51,7 +51,12 @@ function filterRestrictedContent(items) {
     const isActive = localStorage.getItem("klyx_parental_active") !== "false";
     if (!isActive) return items;
     
-    const restrictedKeywords = ["xxx", "adult", "porn", "sex", "+18", "18+"];
+    // Expanded keywords list
+    const restrictedKeywords = [
+        "xxx", "adult", "porn", "sex", "+18", "18+", 
+        "brazzers", "vivthomas", "hentai", "erotic",
+        "[xxx]", "(xxx)", "uncensored", "sexo", "nude"
+    ];
     
     return items.filter(item => {
         if (!item) return false;
@@ -160,17 +165,85 @@ export const api = {
   },
   auth: {
     async login({ email, password }) {
-        // Mock login
+        // Mock delay
         await delay(500);
-        const user = { 
-            id: "u1", 
-            email, 
-            name: "Demo User",
+        
+        // 1. Check LocalStorage Users
+        const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
+        const user = users.find(u => u.email === email && u.password === password);
+        
+        if (user) {
+            // Update last login
+            user.last_login = new Date().toISOString();
+            localStorage.setItem("klyx_users", JSON.stringify(users));
+            
+            // Sync Parental Control Preference
+            if (user.settings && user.settings.parental_active !== undefined) {
+                localStorage.setItem("klyx_parental_active", user.settings.parental_active.toString());
+            } else {
+                // Default to true for existing users without setting
+                localStorage.setItem("klyx_parental_active", "true");
+            }
+            
+            // Create session
+            const sessionUser = { ...user };
+            delete sessionUser.password; // Don't keep password in session
+            writeSession({ user: sessionUser, tokens: { accessToken: "mock", refreshToken: "mock" } });
+            return { ok: true, data: { user: sessionUser } };
+        }
+
+        // 2. Fallback for Demo User (only if email matches or empty)
+        if (email === "demo@klyx.com" && password === "demo1234") {
+             const demoUser = { 
+                id: "u1", 
+                email, 
+                name: "Demo User",
+                subscription_status: "active",
+                subscription_expires_at: new Date(Date.now() + 86400000 * 30).toISOString()
+            };
+            writeSession({ user: demoUser, tokens: { accessToken: "mock", refreshToken: "mock" } });
+            return { ok: true, data: { user: demoUser } };
+        }
+        
+        return { ok: false, data: { error: "Credenciais inválidas" } };
+    },
+    async register({ name, email, password }) {
+        await delay(500);
+        
+        const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
+        
+        if (users.find(u => u.email === email)) {
+            return { ok: false, data: { error: "E-mail já cadastrado" } };
+        }
+        
+        const newUser = {
+            id: "u" + Date.now(),
+            name,
+            email,
+            password, // In a real app, hash this!
             subscription_status: "active",
-            subscription_expires_at: new Date(Date.now() + 86400000 * 30).toISOString()
+            subscription_expires_at: new Date(Date.now() + 86400000 * 30).toISOString(),
+            created_at: new Date().toISOString(),
+            settings: {
+                parental_active: true // Default: Block adult content
+            }
         };
-        writeSession({ user, tokens: { accessToken: "mock", refreshToken: "mock" } });
-        return { ok: true, data: { user } };
+        
+        users.push(newUser);
+        localStorage.setItem("klyx_users", JSON.stringify(users));
+        
+        // Auto-login
+        delete newUser.password;
+        writeSession({ user: newUser, tokens: { accessToken: "mock", refreshToken: "mock" } });
+        
+        // Enforce Parental Control locally
+        localStorage.setItem("klyx_parental_active", "true");
+        
+        return { ok: true, data: { user: newUser } };
+    },
+    async loginWithGithub() {
+        await delay(500);
+        return { ok: false, data: { error: "Login com GitHub indisponível. Use E-mail/Senha." } };
     },
     async me() {
         const session = readSession();
