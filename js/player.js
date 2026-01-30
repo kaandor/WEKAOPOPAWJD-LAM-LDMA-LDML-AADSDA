@@ -8,6 +8,7 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://corsproxy.io/?",
+    "https://thingproxy.freeboard.io/fetch/",
     "https://api.codetabs.com/v1/proxy?quest="
 ];
 
@@ -149,10 +150,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     
     // Check if we are on a "Bad Seek" proxy (CodeTabs)
     const isCodeTabs = finalUrl.includes('codetabs');
-    toggleSeekControls(!isCodeTabs);
+    // We do NOT disable seek anymore, as user requested control.
+    // toggleSeekControls(!isCodeTabs); 
     
     if (isCodeTabs) {
-        console.warn("Using CodeTabs proxy - Seeking disabled to prevent reset bugs.");
+        console.warn("Using CodeTabs proxy - Seeking might be unstable.");
     }
 
     // Fallback logic for error handling
