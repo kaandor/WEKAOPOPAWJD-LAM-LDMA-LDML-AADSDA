@@ -1,5 +1,34 @@
 import { api } from "./api.js";
 
+// Helper for Drag-to-Scroll (Mouse)
+function setupDragScroll(slider) {
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        slider.classList.add('active');
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+    });
+    slider.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.classList.remove('active');
+    });
+    slider.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.classList.remove('active');
+    });
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 2; // scroll-fast
+        slider.scrollLeft = scrollLeft - walk;
+    });
+}
+
 // Helper to proxy images via weserv.nl to fix Mixed Content (HTTP images on HTTPS site)
 function getProxiedImage(url) {
     if (!url) return 'https://via.placeholder.com/300x450?text=No+Image';
