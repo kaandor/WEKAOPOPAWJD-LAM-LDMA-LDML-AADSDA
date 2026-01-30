@@ -50,6 +50,7 @@ function deduplicateMovies(items) {
     const moviesMap = new Map();
     
     items.forEach(movie => {
+        if (!movie || !movie.title) return;
         let title = movie.title.trim();
         
         // Normalize title for checking
@@ -60,6 +61,7 @@ function deduplicateMovies(items) {
             lowerTitle.endsWith(" [l]") || 
             lowerTitle.endsWith(" (l)") || 
             lowerTitle.includes("(legendado)") || 
+            lowerTitle.includes("[legendado]") ||
             lowerTitle.includes(" legendado") ||
             lowerTitle.includes(" - legendado");
 
@@ -68,6 +70,7 @@ function deduplicateMovies(items) {
             .replace(/ \[L\]$/i, "")
             .replace(/ \(L\)$/i, "")
             .replace(/\(Legendado\)/i, "")
+            .replace(/\[Legendado\]/i, "")
             .replace(/ - Legendado/i, "")
             .replace(/ Legendado/i, "")
             .trim();

@@ -317,32 +317,87 @@ function setupCustomControls(video) {
     // Seek Buttons
     btnRewind.onclick = (e) => {
         e.stopPropagation();
-        video.currentTime = Math.max(0, video.currentTime - 10);
+        if (Number.isFinite(video.currentTime)) {
+             video.currentTime = Math.max(0, video.currentTime - 10);
+        }
         if (window.resetControlsTimer) window.resetControlsTimer();
     };
     
     btnForward.onclick = (e) => {
         e.stopPropagation();
-        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        if (Number.isFinite(video.currentTime) && Number.isFinite(video.duration)) {
+            video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        } else if (Number.isFinite(video.currentTime)) {
+            // Fallback if duration unknown (e.g. live or loading)
+            video.currentTime += 10;
+        }
         if (window.resetControlsTimer) window.resetControlsTimer();
     };
 
-    // Progress Bar
+    // Progress Bar Logic with Dragging State
+    let isDragging = false;
+
+    const startDrag = (e) => { 
+        isDragging = true; 
+        // Optional: Pause while dragging for smoother experience?
+        // video.pause(); 
+    };
+    
+    const endDrag = (e) => { 
+        isDragging = false;
+        // Ensure final value is applied
+        const pct = progressBar.value;
+        if (video.duration && Number.isFinite(video.duration)) {
+             const time = (pct / 100) * video.duration;
+             if (Number.isFinite(time)) video.currentTime = time;
+        }
+        // if (video.paused) video.play();
+    };
+
+    progressBar.addEventListener('mousedown', startDrag);
+    progressBar.addEventListener('touchstart', startDrag);
+    
+    progressBar.addEventListener('mouseup', endDrag);
+    progressBar.addEventListener('touchend', endDrag);
+    // 'change' event fires when the user commits the change (mouse up)
+    progressBar.addEventListener('change', endDrag);
+
     video.addEventListener('timeupdate', () => {
-        if (!video.duration) return;
-        const pct = (video.currentTime / video.duration) * 100;
-        progressBar.value = pct;
-        progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
+        // Always update text time
         timeCurrent.textContent = formatTime(video.currentTime);
-        timeDuration.textContent = formatTime(video.duration);
+        if (Number.isFinite(video.duration)) {
+            timeDuration.textContent = formatTime(video.duration);
+        }
+
+        // Update slider ONLY if not dragging to prevent conflict
+        if (!isDragging && Number.isFinite(video.duration) && video.duration > 0) {
+            const pct = (video.currentTime / video.duration) * 100;
+            progressBar.value = pct;
+            progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
+        }
     });
     
     progressBar.addEventListener('input', (e) => {
-        const pct = e.target.value;
-        const time = (pct / 100) * video.duration;
-        video.currentTime = time;
+        // User is scrubbing
+        isDragging = true; 
+        const pct = parseFloat(e.target.value);
+        
+        // Update visual slider immediately
         progressBar.style.background = `linear-gradient(to right, #9333ea ${pct}%, rgba(255,255,255,0.3) ${pct}%)`;
-        timeCurrent.textContent = formatTime(time);
+        
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+            const time = (pct / 100) * video.duration;
+            timeCurrent.textContent = formatTime(time);
+            
+            // Optional: seek immediately or wait for change? 
+            // Seek immediately allows preview
+            if (Number.isFinite(time)) {
+                video.currentTime = time;
+            }
+        }
+        
+        // Keep controls visible
+        if (window.resetControlsTimer) window.resetControlsTimer();
     });
     
     // Click on video to toggle
