@@ -831,6 +831,11 @@ export const api = {
             // We prioritize GET requests with parameters in URL because many proxies handle GET better than POST
             const proxies = [
                 {
+                    name: "AllOriginsRaw",
+                    url: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    method: "GET"
+                },
+                {
                     name: "VercelAuth",
                     url: () => `https://klyx-api.vercel.app/api/token`,
                     method: "POST"
@@ -838,11 +843,6 @@ export const api = {
                 {
                     name: "CodeTabs",
                     url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                    method: "GET"
-                },
-                {
-                    name: "AllOrigins",
-                    url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
                     method: "GET"
                 },
                 {
