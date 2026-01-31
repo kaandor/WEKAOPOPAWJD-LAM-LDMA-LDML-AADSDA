@@ -8,9 +8,10 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://api.codetabs.com/v1/proxy?quest=",
+    "https://api.cors.lol/?url=", // Added as reliable backup
     "https://corsproxy.io/?", // Worth retrying as fallback
-    "https://api.allorigins.win/raw?url=",
     "https://thingproxy.freeboard.io/fetch/",
+    "https://api.allorigins.win/raw?url=",
     "DIRECT_HTTPS" // Moved to end: Only try direct upgrade if proxies fail
 ];
 
