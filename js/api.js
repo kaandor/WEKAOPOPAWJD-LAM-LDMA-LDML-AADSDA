@@ -398,7 +398,14 @@ export const api = {
             // Also reset Device Identity so it can be re-synced or re-generated
             localStorage.removeItem('klyx_device_mac');
             localStorage.removeItem('klyx_device_key');
-            // Keep the session active, but clear data
+            
+            // 3. NUCLEAR WIPE (Requested by User)
+            // Remove local user database and auth states to ensure 100% fresh start
+            localStorage.removeItem("klyx_users");
+            localStorage.removeItem("klyx_gh_state");
+            localStorage.removeItem("klyx_parental_active");
+            
+            // Keep the session active only long enough to finish this call, then ui.js clears it
         }
 
         console.log("🔥 RESET COMPLETE");
