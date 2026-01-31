@@ -277,81 +277,146 @@ export const api = {
         }
     },
 
-    // 3. Update existing Gist
+    // 3. Update existing Gist -> NOW REPLACED WITH REPO DB WRITE
     async _updateGist(token, gistId, data) {
+        // Fallback or Migration
+        console.warn("Using Legacy Gist Sync");
+    },
+    
+    // --- REPO DB IMPLEMENTATION ---
+    async _getRepoFile(token, userEmail) {
+        if (!userEmail) return null;
+        const owner = api.auth.githubConfig.repoOwner;
+        const repo = api.auth.githubConfig.repoName;
+        // Sanitized filename from email or ID
+        const filename = `banco_de_dados/user_${userEmail.replace(/[@.]/g, '_')}.json`;
+        
         try {
-            await fetch(`https://api.github.com/gists/${gistId}`, {
-                method: "PATCH",
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
+            // Add timestamp to bypass cache
+            const res = await fetch(url + `?t=${Date.now()}`, {
+                 headers: { 
+                     "Authorization": `token ${token}`,
+                     "Accept": "application/vnd.github.v3+json"
+                 }
+            });
+            
+            if (res.status === 404) return null; // File doesn't exist yet
+            if (!res.ok) throw new Error(`Repo Read Error ${res.status}`);
+            
+            const json = await res.json();
+            // Decode Base64 content
+            const content = decodeURIComponent(escape(atob(json.content)));
+            return {
+                sha: json.sha,
+                data: JSON.parse(content)
+            };
+        } catch (e) {
+            console.error("Repo DB Read Error", e);
+            return null;
+        }
+    },
+    
+    async _writeRepoFile(token, userEmail, data, sha = null) {
+        if (!userEmail) return;
+        const owner = api.auth.githubConfig.repoOwner;
+        const repo = api.auth.githubConfig.repoName;
+        const filename = `banco_de_dados/user_${userEmail.replace(/[@.]/g, '_')}.json`;
+        
+        try {
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
+            
+            // Encode content to Base64 (UTF-8 safe)
+            const contentStr = JSON.stringify(data, null, 2);
+            const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
+            
+            const body = {
+                message: `update: sync user data for ${userEmail}`,
+                content: contentBase64,
+                sha: sha // Required if updating existing file
+            };
+            
+            const res = await fetch(url, {
+                method: "PUT",
                 headers: { 
                     "Authorization": `token ${token}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Accept": "application/vnd.github.v3+json"
                 },
-                body: JSON.stringify({
-                    files: {
-                        [this.GIST_FILENAME]: {
-                            content: JSON.stringify(data, null, 2)
-                        }
-                    }
-                })
+                body: JSON.stringify(body)
             });
+            
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Repo Write Error ${res.status}: ${errText}`);
+            }
+            
+            return await res.json();
         } catch (e) {
-            console.error("Gist Update Error", e);
+            console.error("Repo DB Write Error", e);
+            throw e;
         }
     },
 
-    // SYNC DOWN: Cloud -> Local
+    // SYNC DOWN: Cloud -> Local (Updated for Repo DB)
     async syncDown() {
         const token = this._getToken();
-        if (!token || token.startsWith("klyx_")) return; // Skip if no token or demo token
+        if (!token || token.startsWith("klyx_")) return;
 
-        console.log("☁️ Syncing Down from GitHub...");
-        const gist = await this._findGist(token);
+        console.log("☁️ Syncing Down from Repo DB...");
         
-        if (gist) {
-            const file = gist.files[this.GIST_FILENAME];
-            if (file && file.raw_url) {
-                // FORCE NO-CACHE: Add timestamp to URL to bypass GitHub raw file caching
-                const noCacheUrl = file.raw_url + (file.raw_url.includes('?') ? '&' : '?') + 't=' + Date.now();
-                const res = await fetch(noCacheUrl);
-                const cloudData = await res.json();
-                
-                // Restore to LocalStorage
-                const user = readSession().user;
-                if (user) {
-                    // Force overwrite from cloud - Hive Mind Authority
-                    const profiles = cloudData.profiles || [];
-                    const progress = cloudData.progress || {};
-                    
-                    localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(profiles));
-                    localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(progress));
-                    
-                    // Sync Account-Bound Device Identity (MAC/Key)
-                    // If Cloud has Identity, Enforce it.
-                    if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
-                        localStorage.setItem('klyx_device_mac', cloudData.deviceIdentity.mac);
-                        localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
-                    } else {
-                        // If Cloud has NO Identity (e.g. fresh account or reset),
-                        // and we have one locally, we should probably keep it and let syncUp push it later.
-                        // BUT, if we just reset, we want to clear it?
-                        // Actually, reset() handles clearing. 
-                        // If we are here, it's a normal sync.
-                    }
-                    
-                    console.log("☁️ Sync Down Complete (Hive Mind Active)");
-                }
+        // We need user email to find the file
+        // If not in session, fetch from GitHub
+        let user = readSession().user;
+        if (!user || !user.email) {
+             try {
+                 const userRes = await fetch("https://api.github.com/user", {
+                    headers: { "Authorization": `token ${token}` }
+                 });
+                 if (userRes.ok) {
+                     const ghUser = await userRes.json();
+                     // Temporary user obj if not fully logged in
+                     user = { email: ghUser.email || ghUser.login + "@github.com", id: "u" + ghUser.id };
+                 }
+             } catch(e) { console.warn("Failed to fetch user for sync", e); return; }
+        }
+        
+        if (!user) return;
+
+        const repoFile = await this._getRepoFile(token, user.email);
+        
+        if (repoFile) {
+            const cloudData = repoFile.data;
+            
+            // Store SHA for next update
+            localStorage.setItem(`klyx_repodb_sha_${user.id}`, repoFile.sha);
+            
+            // Restore to LocalStorage
+            // Force overwrite from cloud - Hive Mind Authority
+            const profiles = cloudData.profiles || [];
+            const progress = cloudData.progress || {};
+            
+            localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(profiles));
+            localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(progress));
+            
+            // Sync Account-Bound Device Identity
+            if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
+                localStorage.setItem('klyx_device_mac', cloudData.deviceIdentity.mac);
+                localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
             }
+            
+            console.log("☁️ Sync Down Complete (Repo DB Active)");
         } else {
-            console.log("☁️ No Gist found. Will create on first save.");
+            console.log("☁️ No Repo DB file found. Will create on first save.");
         }
     },
 
-    // SYNC UP: Local -> Cloud
+    // SYNC UP: Local -> Cloud (Updated for Repo DB)
     async syncUp() {
         const token = this._getToken();
         if (!token || token.startsWith("klyx_")) return;
 
-        console.log("☁️ Syncing Up to GitHub...");
+        console.log("☁️ Syncing Up to Repo DB...");
         const user = readSession().user;
         if (!user) return;
 
@@ -359,7 +424,6 @@ export const api = {
         const profiles = JSON.parse(localStorage.getItem(`klyx.profiles.${user.id}`) || "[]");
         const progress = JSON.parse(localStorage.getItem(`klyx_progress_${user.id}`) || "{}");
         
-        // Gather Device Identity (Account Bound)
         const deviceIdentity = {
             mac: localStorage.getItem('klyx_device_mac'),
             key: localStorage.getItem('klyx_device_key')
@@ -372,13 +436,27 @@ export const api = {
             deviceIdentity
         };
 
-        const gist = await this._findGist(token);
-        if (gist) {
-            await this._updateGist(token, gist.id, data);
-        } else {
-            await this._createGist(token, data);
+        // Try to get SHA first (optimistic locking)
+        let sha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
+        
+        // If no SHA, check if file exists to get it
+        if (!sha) {
+            const existing = await this._getRepoFile(token, user.email);
+            if (existing) sha = existing.sha;
         }
-        console.log("☁️ Sync Up Complete");
+
+        try {
+            const res = await this._writeRepoFile(token, user.email, data, sha);
+            // Update SHA
+            if (res && res.content && res.content.sha) {
+                localStorage.setItem(`klyx_repodb_sha_${user.id}`, res.content.sha);
+            }
+            console.log("☁️ Sync Up Complete (Saved to Repo DB)");
+        } catch (e) {
+            console.error("Sync Up Failed", e);
+            // If conflict (409), we should syncDown first?
+            // For now, simple error logging.
+        }
     },
 
     // Debounced Sync Up
@@ -526,7 +604,9 @@ export const api = {
     githubConfig: {
         clientId: localStorage.getItem("klyx_gh_client_id") || "Ov23li81yQjUN8E4lIAa",
         clientSecret: localStorage.getItem("klyx_gh_client_secret") || "0c94c675f7401941e807b3f924f0892412cff82d", // Only safe for demo/local apps
-        redirectUri: window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/index.html')
+        redirectUri: window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/index.html'),
+        repoOwner: "kaandor",
+        repoName: "WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA"
     },
     async setGithubKeys(clientId, clientSecret) {
         this.githubConfig.clientId = clientId;
@@ -548,7 +628,8 @@ export const api = {
         console.log("GitHub Auth Redirect URI:", this.githubConfig.redirectUri);
 
         // Redirect to GitHub
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email,gist&state=${state}`;
+        // Request 'public_repo' scope to allow writing to the database folder
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email,public_repo&state=${state}`;
         window.location.href = authUrl;
         
         // This promise will never resolve because of the redirect, which is expected
