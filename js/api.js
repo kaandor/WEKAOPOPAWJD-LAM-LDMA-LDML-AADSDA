@@ -283,6 +283,76 @@ export const api = {
         console.warn("Using Legacy Gist Sync");
     },
     
+    // --- CRYPTO HELPER (Web Crypto API) ---
+    async _deriveKey(userEmail) {
+        const enc = new TextEncoder();
+        const baseKey = await crypto.subtle.importKey(
+            "raw",
+            enc.encode("KLYX_HIVE_MIND_SECRET_SALT_v1_" + userEmail),
+            { name: "PBKDF2" },
+            false,
+            ["deriveKey"]
+        );
+        return await crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: enc.encode("KLYX_SALT"),
+                iterations: 100000,
+                hash: "SHA-256"
+            },
+            baseKey,
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+        );
+    },
+
+    async _encryptData(data, userEmail) {
+        try {
+            const key = await this._deriveKey(userEmail);
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const enc = new TextEncoder();
+            const encodedData = enc.encode(JSON.stringify(data));
+            
+            const ciphertext = await crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: iv },
+                key,
+                encodedData
+            );
+            
+            // Return as base64 string: "iv_base64:ciphertext_base64"
+            const ivStr = btoa(String.fromCharCode(...iv));
+            const cipherStr = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
+            return `${ivStr}:${cipherStr}`;
+        } catch (e) {
+            console.error("Encryption Failed", e);
+            throw e;
+        }
+    },
+
+    async _decryptData(encryptedStr, userEmail) {
+        try {
+            if (!encryptedStr || !encryptedStr.includes(":")) return null;
+            
+            const [ivStr, cipherStr] = encryptedStr.split(":");
+            const iv = new Uint8Array(atob(ivStr).split("").map(c => c.charCodeAt(0)));
+            const ciphertext = new Uint8Array(atob(cipherStr).split("").map(c => c.charCodeAt(0)));
+            const key = await this._deriveKey(userEmail);
+            
+            const decrypted = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: iv },
+                key,
+                ciphertext
+            );
+            
+            const dec = new TextDecoder();
+            return JSON.parse(dec.decode(decrypted));
+        } catch (e) {
+            console.error("Decryption Failed", e);
+            return null;
+        }
+    },
+
     // --- REPO DB IMPLEMENTATION ---
     async _getRepoFile(token, userEmail) {
         if (!userEmail) return null;
@@ -305,11 +375,35 @@ export const api = {
             if (!res.ok) throw new Error(`Repo Read Error ${res.status}`);
             
             const json = await res.json();
-            // Decode Base64 content
-            const content = decodeURIComponent(escape(atob(json.content)));
+            // Decode Base64 content wrapper (GitHub API format)
+            const contentRaw = decodeURIComponent(escape(atob(json.content)));
+            
+            // Try to parse as JSON first (Legacy support or new format container)
+            let parsed;
+            try {
+                parsed = JSON.parse(contentRaw);
+            } catch {
+                parsed = contentRaw;
+            }
+
+            // Check if it's our new encrypted format (has 'encryptedPayload')
+            let finalData = parsed;
+            if (parsed && parsed.encryptedPayload) {
+                console.log("🔐 Decrypting Cloud Data...");
+                const decrypted = await this._decryptData(parsed.encryptedPayload, userEmail);
+                if (decrypted) {
+                    finalData = decrypted;
+                } else {
+                    console.error("Failed to decrypt data!");
+                    // Fallback to empty or raw to avoid crash, but warn user
+                }
+            } else {
+                console.log("⚠️ Legacy Data Detected (Unencrypted). will migrate on next save.");
+            }
+
             return {
                 sha: json.sha,
-                data: JSON.parse(content)
+                data: finalData
             };
         } catch (e) {
             console.error("Repo DB Read Error", e);
@@ -324,14 +418,26 @@ export const api = {
         const filename = `banco_de_dados/user_${userEmail.replace(/[@.]/g, '_')}.json`;
         
         try {
+            // ENCRYPT DATA BEFORE SENDING
+            console.log("🔒 Encrypting Data before Sync...");
+            const encryptedPayload = await this._encryptData(data, userEmail);
+            
+            // Wrap in a container
+            const container = {
+                version: "2.0-encrypted",
+                updatedAt: new Date().toISOString(),
+                userEmail: userEmail, // Public metadata
+                encryptedPayload: encryptedPayload // THE SECRET SAUCE
+            };
+
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
             
-            // Encode content to Base64 (UTF-8 safe)
-            const contentStr = JSON.stringify(data, null, 2);
+            // Encode content to Base64 (UTF-8 safe) for GitHub API
+            const contentStr = JSON.stringify(container, null, 2);
             const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
             
             const body = {
-                message: `update: sync user data for ${userEmail}`,
+                message: `update: sync user data (encrypted) for ${userEmail}`,
                 content: contentBase64
             };
             
@@ -361,7 +467,7 @@ export const api = {
         }
     },
 
-    // SYNC DOWN: Cloud -> Local (Updated for Repo DB)
+    // SYNC DOWN: Cloud -> Local (Updated for Repo DB + Encryption)
     async syncDown() {
         const token = this._getToken();
         if (!token || token.startsWith("klyx_")) return;
@@ -370,7 +476,6 @@ export const api = {
         window.dispatchEvent(new CustomEvent('klyx-sync-start'));
 
         // We need user email to find the file
-        // If not in session, fetch from GitHub
         let user = readSession().user;
         if (!user || !user.email) {
              try {
@@ -379,7 +484,6 @@ export const api = {
                  });
                  if (userRes.ok) {
                      const ghUser = await userRes.json();
-                     // Temporary user obj if not fully logged in
                      user = { email: ghUser.email || ghUser.login + "@github.com", id: "u" + ghUser.id };
                  }
              } catch(e) { console.warn("Failed to fetch user for sync", e); return; }
@@ -397,7 +501,6 @@ export const api = {
             const lastSha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
             if (lastSha === repoFile.sha) {
                 // No changes on cloud
-                // console.log("☁️ Cloud Data is unchanged (SHA match)");
                 window.dispatchEvent(new CustomEvent('klyx-sync-end'));
                 return;
             }
@@ -407,13 +510,22 @@ export const api = {
             // Store SHA for next update
             localStorage.setItem(`klyx_repodb_sha_${user.id}`, repoFile.sha);
             
-            // Restore to LocalStorage
-            // Force overwrite from cloud - Hive Mind Authority
+            // Restore to LocalStorage (Expanded Data)
             const profiles = cloudData.profiles || [];
             const progress = cloudData.progress || {};
+            const activityLog = cloudData.activityLog || [];
+            const favorites = cloudData.favorites || [];
+            const supportStats = cloudData.supportStats || {tickets:0, lastContact:null};
+            const subscription = cloudData.subscription || {plan:"free", status:"active"};
+            const accountStatus = cloudData.accountStatus || "active";
             
             localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(profiles));
             localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(progress));
+            localStorage.setItem(`klyx_activity_log_${user.id}`, JSON.stringify(activityLog));
+            localStorage.setItem(`klyx_favorites_${user.id}`, JSON.stringify(favorites));
+            localStorage.setItem(`klyx_support_stats_${user.id}`, JSON.stringify(supportStats));
+            localStorage.setItem(`klyx_subscription_${user.id}`, JSON.stringify(subscription));
+            localStorage.setItem(`klyx_account_status_${user.id}`, accountStatus);
             
             // Sync Account-Bound Device Identity
             if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
@@ -421,12 +533,14 @@ export const api = {
                 localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
             }
             
-            console.log("☁️ Sync Down Complete (New Data Received)");
+            console.log("☁️ Sync Down Complete (New Encrypted Data Received)");
             
             // Dispatch Event: Data Updated (UI should reload if needed)
             window.dispatchEvent(new CustomEvent('klyx-data-updated'));
         } else {
-            console.log("☁️ No Repo DB file found. Will create on first save.");
+            console.log("☁️ No Repo DB file found. Creating INITIAL encrypted file...");
+            // Immediately trigger syncUp to create the file
+            await this.syncUp();
         }
         
         window.dispatchEvent(new CustomEvent('klyx-sync-end'));
@@ -451,19 +565,24 @@ export const api = {
         this._syncTimer = null;
     },
 
-    // SYNC UP: Local -> Cloud (Updated for Repo DB)
+    // SYNC UP: Local -> Cloud (Updated for Repo DB + Encryption)
     async syncUp() {
         const token = this._getToken();
         if (!token || token.startsWith("klyx_")) return;
 
         window.dispatchEvent(new CustomEvent('klyx-sync-start'));
-        console.log("☁️ Syncing Up to Repo DB...");
+        console.log("☁️ Syncing Up to Repo DB (Encrypted)...");
         const user = readSession().user;
         if (!user) return;
 
-        // Gather Local Data
+        // Gather Local Data (Expanded)
         const profiles = JSON.parse(localStorage.getItem(`klyx.profiles.${user.id}`) || "[]");
         const progress = JSON.parse(localStorage.getItem(`klyx_progress_${user.id}`) || "{}");
+        const activityLog = JSON.parse(localStorage.getItem(`klyx_activity_log_${user.id}`) || "[]");
+        const favorites = JSON.parse(localStorage.getItem(`klyx_favorites_${user.id}`) || "[]");
+        const supportStats = JSON.parse(localStorage.getItem(`klyx_support_stats_${user.id}`) || '{"tickets":0,"lastContact":null}');
+        const subscription = JSON.parse(localStorage.getItem(`klyx_subscription_${user.id}`) || '{"plan":"free","status":"active"}');
+        const accountStatus = localStorage.getItem(`klyx_account_status_${user.id}`) || "active";
         
         const deviceIdentity = {
             mac: localStorage.getItem('klyx_device_mac'),
@@ -472,8 +591,14 @@ export const api = {
         
         const data = {
             updatedAt: new Date().toISOString(),
+            githubUser: user, // Include GitHub User Data snapshot
             profiles,
             progress,
+            activityLog,
+            favorites,
+            supportStats,
+            subscription,
+            accountStatus,
             deviceIdentity
         };
 
@@ -492,14 +617,13 @@ export const api = {
             if (res && res.content && res.content.sha) {
                 localStorage.setItem(`klyx_repodb_sha_${user.id}`, res.content.sha);
             }
-            console.log("☁️ Sync Up Complete (Saved to Repo DB)");
+            console.log("☁️ Sync Up Complete (Saved Encrypted to Repo DB)");
         } catch (e) {
             console.error("Sync Up Failed", e);
             if (e.message.includes("403") || e.message.includes("404")) {
-                 alert("⚠️ Erro de Permissão: O GitHub não permitiu salvar os dados.\n\nPor favor, faça LOGOUT e LOGIN novamente para autorizar o acesso ao Repositório.");
+                 // alert("⚠️ Erro de Permissão: O GitHub não permitiu salvar os dados.");
+                 console.warn("Write permission denied or repo not found");
             }
-            // If conflict (409), we should syncDown first?
-            // For now, simple error logging.
         }
         window.dispatchEvent(new CustomEvent('klyx-sync-end'));
     },

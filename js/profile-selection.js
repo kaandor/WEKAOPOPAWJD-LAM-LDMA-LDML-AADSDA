@@ -326,14 +326,21 @@ async function saveProfile() {
             if (currentEditingProfileId) {
                 // Update
                 res = await api.profiles.update(currentEditingProfileId, profileData);
+                if (res.ok && api.activity) api.activity.log("PROFILE_UPDATE", { name: profileData.name });
             } else {
                 // Create
                 res = await api.profiles.create(profileData);
+                if (res.ok && api.activity) api.activity.log("PROFILE_CREATE", { name: profileData.name });
             }
             
             if (res.ok) {
                 closeModal();
                 await loadProfiles();
+                // FORCE INSTANT SYNC (Bypass Debounce)
+                if (api.cloud && api.cloud.syncUp) {
+                    console.log("⚡ Forcing Instant Cloud Sync...");
+                    await api.cloud.syncUp();
+                }
             } else {
                 alert(res.data?.error || "Erro ao salvar perfil");
             }
@@ -370,8 +377,14 @@ async function deleteProfile() {
     try {
         const res = await api.profiles.delete(currentEditingProfileId);
         if (res.ok) {
+            if (api.activity) api.activity.log("PROFILE_DELETE", { id: currentEditingProfileId });
             closeModal();
             await loadProfiles();
+            // FORCE INSTANT SYNC
+            if (api.cloud && api.cloud.syncUp) {
+                console.log("⚡ Forcing Instant Cloud Sync (Delete)...");
+                await api.cloud.syncUp();
+            }
         } else {
             alert(res.data?.error || "Erro ao excluir perfil");
         }

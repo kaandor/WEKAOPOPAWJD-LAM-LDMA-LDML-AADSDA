@@ -556,6 +556,7 @@ export async function initSettings() {
                 resetBtn.disabled = true;
                 
                 try {
+                    if (api.activity) api.activity.log("DATA_RESET", { confirmed: true });
                     await api.cloud.reset();
                     alert("Dados apagados com sucesso! O aplicativo será reiniciado.");
                     // Force logout/reload
