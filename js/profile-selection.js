@@ -31,15 +31,28 @@ const saveProfileBtn = document.getElementById("saveProfileBtn");
 // PIN Verification Modal (Created dynamically)
 let pinVerificationCallback = null;
 const pinModal = document.createElement("div");
-pinModal.className = "fixed inset-0 bg-black/90 flex items-center justify-center hidden z-[60]";
+pinModal.id = "pinVerificationModal";
+// Use inline styles to guarantee centering regardless of Tailwind issues
+pinModal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+`;
 pinModal.innerHTML = `
-    <div class="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-sm border border-gray-800 text-center">
-        <h3 class="text-xl font-bold text-white mb-4">Digite o PIN do Perfil</h3>
-        <p class="text-gray-400 text-sm mb-6">Este perfil é protegido.</p>
+    <div class="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-sm border border-gray-800 text-center relative">
+        <h3 class="text-xl font-bold text-white mb-4">Digite o Código de Segurança</h3>
+        <p class="text-gray-400 text-sm mb-6">Esta ação requer autorização.</p>
         <input type="password" id="verificationPin" maxlength="4" class="w-full bg-gray-800 text-white text-center text-3xl tracking-[0.5em] rounded p-4 mb-6 focus:outline-none focus:ring-2 focus:ring-purple-600" placeholder="0000">
         <div class="flex gap-3">
             <button id="cancelPinBtn" class="flex-1 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">Cancelar</button>
-            <button id="submitPinBtn" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Entrar</button>
+            <button id="submitPinBtn" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Confirmar</button>
         </div>
     </div>
 `;
@@ -47,7 +60,7 @@ document.body.appendChild(pinModal);
 
 const verificationPinInput = pinModal.querySelector("#verificationPin");
 pinModal.querySelector("#cancelPinBtn").onclick = () => {
-    pinModal.classList.add("hidden");
+    pinModal.style.display = "none";
     verificationPinInput.value = "";
     pinVerificationCallback = null;
 };
@@ -135,24 +148,28 @@ function render() {
         
         card.addEventListener("click", () => {
             if (isManageMode) {
-                openEditModal(p);
+                // Editing a profile
+                if (p.allowExplicit) {
+                     promptPinVerification("Digite o código (0000) para editar este perfil.", (pin) => {
+                         if (pin === "0000") {
+                             openEditModal(p);
+                         } else {
+                             alert("Código incorreto.");
+                         }
+                     });
+                } else {
+                    openEditModal(p);
+                }
             } else {
-                // Check if profile is locked (Explicit Content enabled)
-                if (p.allowExplicit && p.pin) {
-                    verificationPinInput.value = "";
-                    pinModal.classList.remove("hidden");
-                    verificationPinInput.focus();
-                    
-                    pinVerificationCallback = (pin) => {
-                        if (pin === p.pin) {
-                            pinModal.classList.add("hidden");
+                // Accessing profile
+                if (p.allowExplicit) {
+                    promptPinVerification("Perfil Protegido. Digite o código (0000).", (pin) => {
+                        if (pin === "0000") {
                             selectProfile(p);
                         } else {
-                            alert("PIN incorreto.");
-                            verificationPinInput.value = "";
-                            verificationPinInput.focus();
+                            alert("Código incorreto.");
                         }
-                    };
+                    });
                 } else {
                     selectProfile(p);
                 }
@@ -177,12 +194,7 @@ function render() {
         
         addCard.append(addAvatar, addName);
         addCard.addEventListener("click", () => {
-            if (isManageMode) {
-                // If in manage mode, maybe still allow adding? Yes.
-                openCreateModal();
-            } else {
-                openCreateModal();
-            }
+             openCreateModal();
         });
         
         grid.append(addCard);
@@ -196,6 +208,18 @@ function render() {
         manageBtn.textContent = "Gerenciar Perfis";
         manageBtn.classList.remove("active");
     }
+}
+
+function promptPinVerification(title, callback) {
+    verificationPinInput.value = "";
+    pinModal.querySelector("h3").textContent = title || "Digite o PIN";
+    pinModal.style.display = "flex";
+    verificationPinInput.focus();
+    
+    pinVerificationCallback = (pin) => {
+        pinModal.style.display = "none";
+        callback(pin);
+    };
 }
 
 function selectProfile(profile) {
@@ -216,10 +240,12 @@ function openCreateModal() {
     profileAgeInput.value = "18"; // Default
     
     // Reset adult content fields
-    adultContentSection.classList.remove("hidden"); // Show by default if 18, check logic below
+    adultContentSection.classList.remove("hidden"); 
     profileAllowExplicit.checked = false;
-    pinSection.classList.add("hidden");
-    profilePinInput.value = "";
+    
+    // Hide manual PIN input
+    pinSection.classList.add("hidden"); 
+    profilePinInput.value = ""; 
     
     // Trigger age change to set visibility
     profileAgeInput.dispatchEvent(new Event('change'));
@@ -242,12 +268,15 @@ function openEditModal(profile) {
     
     // Set adult content fields
     profileAllowExplicit.checked = !!profile.allowExplicit;
-    profilePinInput.value = profile.pin || "";
+    
+    // Hide manual PIN input
+    pinSection.classList.add("hidden");
+    profilePinInput.value = ""; 
     
     // Trigger age change to set visibility of section
     profileAgeInput.dispatchEvent(new Event('change'));
     
-    // Trigger check change to set visibility of PIN
+    // Trigger check change 
     profileAllowExplicit.dispatchEvent(new Event('change'));
     
     selectedAvatarUrl = profile.avatar;
@@ -267,50 +296,62 @@ async function saveProfile() {
     
     const age = parseInt(profileAgeInput.value);
     const allowExplicit = profileAllowExplicit.checked;
-    const pin = profilePinInput.value.trim();
     
-    if (allowExplicit && (!pin || pin.length !== 4)) {
-        alert("Para ativar conteúdo adulto, você deve definir um PIN de 4 dígitos.");
-        return;
+    // Determine PIN
+    let pin = "";
+    if (allowExplicit) {
+        // Enforce 0000 for +18
+        pin = "0000";
     }
-    
-    saveProfileBtn.disabled = true;
-    saveProfileBtn.textContent = "Salvando...";
-    
-    try {
-        let res;
-        if (currentEditingProfileId) {
-            // Update
-            res = await api.profiles.update(currentEditingProfileId, {
-                name,
-                age,
-                avatar: selectedAvatarUrl,
-                allowExplicit,
-                pin
-            });
-        } else {
-            // Create
-            res = await api.profiles.create({
-                name,
-                age,
-                avatar: selectedAvatarUrl,
-                allowExplicit,
-                pin
-            });
-        }
+
+    const performSave = async () => {
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.textContent = "Salvando...";
         
-        if (res.ok) {
-            closeModal();
-            await loadProfiles();
-        } else {
-            alert(res.data?.error || "Erro ao salvar perfil");
+        try {
+            let res;
+            const profileData = {
+                name,
+                age,
+                avatar: selectedAvatarUrl,
+                allowExplicit,
+                pin
+            };
+
+            if (currentEditingProfileId) {
+                // Update
+                res = await api.profiles.update(currentEditingProfileId, profileData);
+            } else {
+                // Create
+                res = await api.profiles.create(profileData);
+            }
+            
+            if (res.ok) {
+                closeModal();
+                await loadProfiles();
+            } else {
+                alert(res.data?.error || "Erro ao salvar perfil");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao salvar perfil");
+        } finally {
+            saveProfileBtn.disabled = false;
+            saveProfileBtn.textContent = "Salvar";
         }
-    } catch (e) {
-        console.error(e);
-        alert("Erro ao salvar perfil");
-    } finally {
-        saveProfileBtn.disabled = false;
-        saveProfileBtn.textContent = "Salvar";
+    };
+
+    if (allowExplicit) {
+        // Require Master PIN to enable +18
+        promptPinVerification("Digite o código mestre (0000) para permitir conteúdo +18", (inputPin) => {
+            if (inputPin === "0000") {
+                performSave();
+            } else {
+                alert("Código mestre incorreto. Permissão negada.");
+            }
+        });
+    } else {
+        performSave();
     }
 }
 
@@ -391,19 +432,15 @@ function setupEventListeners() {
             adultContentSection.classList.remove("hidden");
         } else {
             adultContentSection.classList.add("hidden");
-            profileAllowExplicit.checked = false; // Auto uncheck if under 18
+            profileAllowExplicit.checked = false; 
             pinSection.classList.add("hidden");
-            profilePinInput.value = "";
         }
     });
     
     // Explicit toggle logic
     profileAllowExplicit.addEventListener("change", (e) => {
-        if (e.target.checked) {
-            pinSection.classList.remove("hidden");
-        } else {
-            pinSection.classList.add("hidden");
-        }
+        // Keep pin section hidden always, handled by prompt
+        pinSection.classList.add("hidden");
     });
 }
 

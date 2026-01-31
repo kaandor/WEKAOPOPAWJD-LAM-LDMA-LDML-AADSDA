@@ -272,15 +272,19 @@ export const api = {
         localStorage.setItem("klyx_users", JSON.stringify(users));
         
         // Create initial profile for the new user
-        // Note: For a multi-user local app, we might want to isolate profiles per user,
-        // but to keep it simple and compatible with existing profile-selection.js, 
-        // we'll just ensure at least one profile exists.
-        // We do NOT clear existing profiles here to avoid wiping other users' data on the same device,
-        // unless we move to user-scoped profiles. For now, we append.
-        let profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
-        const initialProfile = { id: "p" + Date.now(), name: name.split(' ')[0], avatar: "" };
+        // Scoped to user ID
+        const profileKey = `klyx.profiles.${newUser.id}`;
+        let profiles = []; 
+        const initialProfile = { 
+            id: "p" + Date.now(), 
+            name: name.split(' ')[0], 
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.split(' ')[0]}`,
+            age: 18,
+            isKid: false,
+            created_at: new Date().toISOString()
+        };
         profiles.push(initialProfile);
-        localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+        localStorage.setItem(profileKey, JSON.stringify(profiles));
         
         // Auto-login
         delete newUser.password;
@@ -634,7 +638,10 @@ export const api = {
   playback: {
     async getProgress(id) {
         try {
-            const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
+            const profileId = localStorage.getItem("klyx_profile_id");
+            if (!profileId) return { ok: false, data: { progress: 0 } };
+
+            const progress = JSON.parse(localStorage.getItem(`klyx.progress.${profileId}`) || "{}");
             const entry = progress[id];
             // Handle both legacy (number) and new (object) formats
             const time = (entry && typeof entry === 'object') ? entry.time : (entry || 0);
@@ -645,23 +652,26 @@ export const api = {
     },
     async saveProgress(id, time, duration, type = 'movie') {
         try {
-            const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
+            const profileId = localStorage.getItem("klyx_profile_id");
+            if (!profileId) return { ok: false };
+
+            const progress = JSON.parse(localStorage.getItem(`klyx.progress.${profileId}`) || "{}");
             progress[id] = {
                 time,
                 duration,
                 timestamp: Date.now()
             };
-            localStorage.setItem("klyx.progress", JSON.stringify(progress));
+            localStorage.setItem(`klyx.progress.${profileId}`, JSON.stringify(progress));
             
             // Also update "Continue Watching" list
-            let continueWatching = JSON.parse(localStorage.getItem("klyx.continueWatching") || "[]");
+            let continueWatching = JSON.parse(localStorage.getItem(`klyx.continueWatching.${profileId}`) || "[]");
             // Remove if exists
             continueWatching = continueWatching.filter(i => i.id !== id);
             // Add to top
             continueWatching.unshift({ id, time, duration, type, timestamp: Date.now() });
             // Limit to 20
             if (continueWatching.length > 20) continueWatching.pop();
-            localStorage.setItem("klyx.continueWatching", JSON.stringify(continueWatching));
+            localStorage.setItem(`klyx.continueWatching.${profileId}`, JSON.stringify(continueWatching));
             
             return { ok: true };
         } catch (e) {
@@ -670,13 +680,16 @@ export const api = {
     },
     async removeProgress(id) {
         try {
-            const progress = JSON.parse(localStorage.getItem("klyx.progress") || "{}");
+            const profileId = localStorage.getItem("klyx_profile_id");
+            if (!profileId) return { ok: false };
+
+            const progress = JSON.parse(localStorage.getItem(`klyx.progress.${profileId}`) || "{}");
             delete progress[id];
-            localStorage.setItem("klyx.progress", JSON.stringify(progress));
+            localStorage.setItem(`klyx.progress.${profileId}`, JSON.stringify(progress));
             
-            let continueWatching = JSON.parse(localStorage.getItem("klyx.continueWatching") || "[]");
+            let continueWatching = JSON.parse(localStorage.getItem(`klyx.continueWatching.${profileId}`) || "[]");
             continueWatching = continueWatching.filter(i => i.id !== id);
-            localStorage.setItem("klyx.continueWatching", JSON.stringify(continueWatching));
+            localStorage.setItem(`klyx.continueWatching.${profileId}`, JSON.stringify(continueWatching));
             return { ok: true };
         } catch (e) {
             return { ok: false };
@@ -684,7 +697,10 @@ export const api = {
     },
     async getContinueWatching() {
         try {
-            const list = JSON.parse(localStorage.getItem("klyx.continueWatching") || "[]");
+            const profileId = localStorage.getItem("klyx_profile_id");
+            if (!profileId) return { ok: true, data: [] };
+            
+            const list = JSON.parse(localStorage.getItem(`klyx.continueWatching.${profileId}`) || "[]");
             return { ok: true, data: list };
         } catch (e) {
             return { ok: true, data: [] };
@@ -758,14 +774,20 @@ export const api = {
       }
   },
   profiles: {
+      _getUserProfilesKey() {
+          const user = JSON.parse(localStorage.getItem("klyx.session") || "{}").user;
+          return user ? `klyx.profiles.${user.id}` : "klyx.profiles";
+      },
       list() {
-          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const key = this._getUserProfilesKey();
+          const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           return { ok: true, data: profiles };
       },
       create(data) {
           // Check plan limits
           const user = JSON.parse(localStorage.getItem("klyx.session") || "{}").user;
-          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const key = this._getUserProfilesKey();
+          const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           
           // Default plan limits (Mock)
           // Individual: 1 profile (owner)
@@ -783,40 +805,44 @@ export const api = {
               avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name}`,
               age: parseInt(data.age) || 18,
               isKid: (parseInt(data.age) || 18) <= 12,
+              allowExplicit: data.allowExplicit, // Store explicit permission
               pin: data.pin || null, // For adult profiles if needed
               created_at: new Date().toISOString()
           };
 
           profiles.push(newProfile);
-          localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          localStorage.setItem(key, JSON.stringify(profiles));
           return { ok: true, data: newProfile };
       },
       update(id, data) {
-          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const key = this._getUserProfilesKey();
+          const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           const index = profiles.findIndex(p => p.id === id);
           
           if (index === -1) return { ok: false, data: { error: "Perfil não encontrado" } };
           
           profiles[index] = { ...profiles[index], ...data };
-          localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          localStorage.setItem(key, JSON.stringify(profiles));
           return { ok: true, data: profiles[index] };
       },
       delete(id) {
-          let profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const key = this._getUserProfilesKey();
+          let profiles = JSON.parse(localStorage.getItem(key) || "[]");
           // Prevent deleting the last profile
           if (profiles.length <= 1) {
               return { ok: false, data: { error: "Você não pode excluir o último perfil." } };
           }
           
           profiles = profiles.filter(p => p.id !== id);
-          localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          localStorage.setItem(key, JSON.stringify(profiles));
           return { ok: true };
       },
       setCurrent(id) {
           localStorage.setItem("klyx_profile_id", id);
           
           // Apply Age Restrictions based on profile
-          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const key = this._getUserProfilesKey();
+          const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           const profile = profiles.find(p => p.id === id);
           
           if (profile) {
@@ -847,7 +873,8 @@ export const api = {
       },
       getCurrent() {
           const id = localStorage.getItem("klyx_profile_id");
-          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const key = this._getUserProfilesKey();
+          const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           return profiles.find(p => p.id === id) || profiles[0];
       }
   }

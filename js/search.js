@@ -54,6 +54,7 @@ export function initSearch() {
               metaRight: r.rating ? `★ ${Number(r.rating).toFixed(1)}` : r.category || "",
               onClick: () => {
                 if (r.type === "movie") window.location.href = `./player.html?type=movie&id=${encodeURIComponent(r.id)}`;
+                else if (window.showSeriesModal) window.showSeriesModal(r.id);
                 else window.location.href = `./series.html?seriesId=${encodeURIComponent(r.id)}`;
               },
             });

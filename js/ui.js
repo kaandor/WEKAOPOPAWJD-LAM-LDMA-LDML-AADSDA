@@ -1,4 +1,3 @@
-
 import { api } from "./api.js?v=20240130";
 
 // Helper for Drag-to-Scroll (Mouse)
@@ -132,9 +131,14 @@ export async function initDashboard() {
                             // If mixed and still unknown, default to movie, but try to guess
                             const finalType = (itemType === 'mixed') ? 'movie' : itemType;
                             
+                            const isSeries = finalType === 'series';
+                            const clickAction = isSeries 
+                                ? `window.showSeriesModal('${item.id}')` 
+                                : `window.location.href='./player.html?type=${finalType}&id=${encodeURIComponent(item.id)}'`;
+
                             return `
                             <div class="card focusable" data-id="${item.id}" tabindex="0" 
-                                 onclick="window.location.href='./player.html?type=${finalType}&id=${encodeURIComponent(item.id)}'">
+                                 onclick="${clickAction}">
                                 <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=Error';">
                                 <div class="card-body">
                                     <h3 class="card-title">${item.title}</h3>
@@ -432,55 +436,6 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
 export async function initSettings() {
     console.log("Settings Initialized");
     
-    // Parental Control Logic
-    const toggleBtn = document.getElementById("toggleParental");
-    const statusText = document.getElementById("parentalStatusText");
-    const msgEl = document.getElementById("parentalMessage");
-    
-    const updateParentalUI = () => {
-        if (!toggleBtn || !statusText) return;
-        const isActive = localStorage.getItem("klyx_parental_active") !== "false";
-        if (isActive) {
-            statusText.textContent = "Ativo (Bloqueado)";
-            statusText.style.color = "#4ade80"; // Green
-            toggleBtn.textContent = "Desativar";
-            toggleBtn.style.background = "#333";
-        } else {
-            statusText.textContent = "Inativo (Liberado)";
-            statusText.style.color = "#e50914"; // Red
-            toggleBtn.textContent = "Ativar";
-            toggleBtn.style.background = "#e50914";
-        }
-    };
-    
-    if (toggleBtn) {
-        updateParentalUI();
-        
-        toggleBtn.onclick = () => {
-            const isActive = localStorage.getItem("klyx_parental_active") !== "false";
-            if (msgEl) msgEl.textContent = "";
-            
-            if (isActive) {
-                // Deactivating
-                const pin = prompt("Digite a senha (PIN):");
-                if (pin === "0000") {
-                    localStorage.setItem("klyx_parental_active", "false");
-                    updateParentalUI();
-                    alert("Controle Parental desativado!");
-                } else {
-                    if (pin !== null) {
-                        if (msgEl) msgEl.textContent = "Senha incorreta!";
-                        else alert("Senha incorreta!");
-                    }
-                }
-            } else {
-                // Activating
-                localStorage.setItem("klyx_parental_active", "true");
-                updateParentalUI();
-            }
-        };
-    }
-
     // Settings Saving Mock
     const saveBtn = document.getElementById("saveSettings");
     if (saveBtn) {
@@ -509,3 +464,145 @@ export async function initSettings() {
         statusEl.style.color = "#000";
     }
 }
+
+// Global Series Modal Handler
+window.showSeriesModal = async function(seriesId) {
+    // 1. Create Backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop active'; 
+    
+    // 2. Create Modal Structure
+    backdrop.innerHTML = `
+        <div class="series-modal">
+            <div class="series-modal-header">
+                <h2 class="series-modal-title">Carregando...</h2>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="series-modal-body">
+                <div style="display:flex; justify-content:center; padding: 40px;">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(backdrop);
+    
+    const closeBtn = backdrop.querySelector('.close-modal-btn');
+    const close = () => {
+        backdrop.classList.remove('active');
+        setTimeout(() => backdrop.remove(), 300);
+    };
+    
+    closeBtn.onclick = close;
+    backdrop.onclick = (e) => {
+        if (e.target === backdrop) close();
+    };
+    
+    // 3. Fetch Data
+    try {
+        const [detailsRes, episodesRes] = await Promise.all([
+            api.series.get(seriesId),
+            api.series.episodes(seriesId)
+        ]);
+        
+        if (!detailsRes.ok) throw new Error(detailsRes.data?.error || "Erro ao carregar série");
+        
+        const series = detailsRes.data.item;
+        const episodes = episodesRes.ok ? episodesRes.data.episodes : [];
+        
+        // Group episodes by season
+        const seasons = {};
+        episodes.forEach(ep => {
+            const s = ep.season_number || 1;
+            if (!seasons[s]) seasons[s] = [];
+            seasons[s].push(ep);
+        });
+        
+        // Sort episodes in each season
+        Object.keys(seasons).forEach(s => {
+            seasons[s].sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+        });
+        
+        const seasonNumbers = Object.keys(seasons).sort((a, b) => a - b);
+        
+        // Update Modal Content
+        const titleEl = backdrop.querySelector('.series-modal-title');
+        const bodyEl = backdrop.querySelector('.series-modal-body');
+        
+        titleEl.textContent = series.title;
+        
+        // Render Body
+        bodyEl.innerHTML = `
+            <div class="series-info">
+                <img class="series-poster" src="${getProxiedImage(series.poster)}" alt="${series.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Poster'">
+                <div class="series-details">
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 10px;">
+                        <span class="badge">Série</span>
+                        <span class="badge">★ ${series.rating || 'N/A'}</span>
+                        <span style="color:var(--muted)">${series.genre || ''}</span>
+                    </div>
+                    <div class="series-desc">${series.description || 'Sem descrição.'}</div>
+                </div>
+            </div>
+            
+            <div class="season-selector">
+                ${seasonNumbers.map((s, i) => `
+                    <button class="season-tab ${i === 0 ? 'active' : ''}" data-season="${s}">
+                        Temporada ${s}
+                    </button>
+                `).join('')}
+            </div>
+            
+            <div class="episodes-list">
+                <!-- Episodes will be injected here -->
+            </div>
+        `;
+        
+        const listEl = bodyEl.querySelector('.episodes-list');
+        const tabs = bodyEl.querySelectorAll('.season-tab');
+        
+        const renderEpisodes = (season) => {
+            const seasonEps = seasons[season] || [];
+            if (seasonEps.length === 0) {
+                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted)">Nenhum episódio encontrado.</div>';
+                return;
+            }
+            
+            listEl.innerHTML = seasonEps.map(ep => `
+                <div class="episode-item" onclick="window.location.href='./player.html?type=series&id=${encodeURIComponent(series.id)}&s=${ep.season_number}&e=${ep.episode_number}'">
+                    <div class="episode-number">${ep.episode_number}</div>
+                    <div class="episode-info">
+                        <span class="episode-title">${ep.title || `Episódio ${ep.episode_number}`}</span>
+                        <span class="episode-meta">${ep.duration ? Math.round(ep.duration / 60) + ' min' : ''}</span>
+                    </div>
+                    <div class="play-icon">▶</div>
+                </div>
+            `).join('');
+        };
+        
+        // Initial Render (First Season)
+        if (seasonNumbers.length > 0) {
+            renderEpisodes(seasonNumbers[0]);
+        } else {
+            listEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted)">Nenhum episódio disponível.</div>';
+        }
+        
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.onclick = () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderEpisodes(tab.dataset.season);
+            };
+        });
+        
+    } catch (e) {
+        console.error(e);
+        backdrop.querySelector('.series-modal-body').innerHTML = `
+            <div style="padding: 20px; color: #ff4444; text-align: center;">
+                Erro ao carregar detalhes: ${e.message}
+            </div>
+        `;
+    }
+};
