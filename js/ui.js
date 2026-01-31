@@ -1,4 +1,57 @@
-import { api } from "./api.js?v=20260131-killswitch";
+import { api } from "./api.js?v=20260131-realtime";
+
+// --- GLOBAL SYNC INDICATOR & POLLING ---
+// Initialize polling if user is logged in
+if (api.session.read()?.user) {
+    api.cloud.startPolling();
+}
+
+// Create Sync Indicator Element
+const syncIndicator = document.createElement('div');
+syncIndicator.id = 'klyx-sync-indicator';
+syncIndicator.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.8); padding: 8px 12px; border-radius: 20px; border: 1px solid #333;">
+        <div class="spinner" style="width: 12px; height: 12px; border: 2px solid #9333ea; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <span style="font-size: 12px; color: #ccc;">Sincronizando...</span>
+    </div>
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #klyx-sync-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        #klyx-sync-indicator.visible {
+            opacity: 1;
+        }
+    </style>
+`;
+document.body.appendChild(syncIndicator);
+
+// Listen for Sync Events
+window.addEventListener('klyx-sync-start', () => {
+    syncIndicator.classList.add('visible');
+});
+
+window.addEventListener('klyx-sync-end', () => {
+    setTimeout(() => {
+        syncIndicator.classList.remove('visible');
+    }, 1000); // Keep visible for 1s to show activity
+});
+
+window.addEventListener('klyx-data-updated', () => {
+    // Optional: Show toast "Dados Atualizados"
+    console.log("UI: Data Updated from Cloud");
+    // If on profile selection, reload to show new profiles
+    if (window.location.pathname.includes("profile-selection.html")) {
+        window.location.reload();
+    }
+});
+// ----------------------------------------
 
 // Helper for Drag-to-Scroll (Mouse)
 function setupDragScroll(slider) {

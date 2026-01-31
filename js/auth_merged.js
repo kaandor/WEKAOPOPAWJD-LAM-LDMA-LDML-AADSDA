@@ -1,4 +1,4 @@
-import { api } from "./api.js";
+import { api } from "./api.js?v=20260131-realtime";
 import "./pwa.js";
 
 export function getSession() {

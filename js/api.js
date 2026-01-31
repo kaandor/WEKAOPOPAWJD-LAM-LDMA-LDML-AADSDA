@@ -332,9 +332,12 @@ export const api = {
             
             const body = {
                 message: `update: sync user data for ${userEmail}`,
-                content: contentBase64,
-                sha: sha // Required if updating existing file
+                content: contentBase64
             };
+            
+            if (sha) {
+                body.sha = sha;
+            }
             
             const res = await fetch(url, {
                 method: "PUT",
@@ -363,8 +366,9 @@ export const api = {
         const token = this._getToken();
         if (!token || token.startsWith("klyx_")) return;
 
-        console.log("☁️ Syncing Down from Repo DB...");
-        
+        // Dispatch Event: Sync Start
+        window.dispatchEvent(new CustomEvent('klyx-sync-start'));
+
         // We need user email to find the file
         // If not in session, fetch from GitHub
         let user = readSession().user;
@@ -381,11 +385,23 @@ export const api = {
              } catch(e) { console.warn("Failed to fetch user for sync", e); return; }
         }
         
-        if (!user) return;
+        if (!user) {
+            window.dispatchEvent(new CustomEvent('klyx-sync-end'));
+            return;
+        }
 
         const repoFile = await this._getRepoFile(token, user.email);
         
         if (repoFile) {
+            // Check SHA to avoid unnecessary overwrites (Optimistic Sync)
+            const lastSha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
+            if (lastSha === repoFile.sha) {
+                // No changes on cloud
+                // console.log("☁️ Cloud Data is unchanged (SHA match)");
+                window.dispatchEvent(new CustomEvent('klyx-sync-end'));
+                return;
+            }
+
             const cloudData = repoFile.data;
             
             // Store SHA for next update
@@ -405,10 +421,34 @@ export const api = {
                 localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
             }
             
-            console.log("☁️ Sync Down Complete (Repo DB Active)");
+            console.log("☁️ Sync Down Complete (New Data Received)");
+            
+            // Dispatch Event: Data Updated (UI should reload if needed)
+            window.dispatchEvent(new CustomEvent('klyx-data-updated'));
         } else {
             console.log("☁️ No Repo DB file found. Will create on first save.");
         }
+        
+        window.dispatchEvent(new CustomEvent('klyx-sync-end'));
+    },
+
+    // Auto-Polling for Real-Time Sync
+    startPolling() {
+        if (this._syncTimer) clearInterval(this._syncTimer);
+        console.log("🔄 Starting Real-Time Sync Polling (2s)");
+        
+        // Initial Sync
+        this.syncDown();
+        
+        // Poll every 2 seconds
+        this._syncTimer = setInterval(() => {
+            this.syncDown();
+        }, 2000);
+    },
+    
+    stopPolling() {
+        if (this._syncTimer) clearInterval(this._syncTimer);
+        this._syncTimer = null;
     },
 
     // SYNC UP: Local -> Cloud (Updated for Repo DB)
@@ -416,6 +456,7 @@ export const api = {
         const token = this._getToken();
         if (!token || token.startsWith("klyx_")) return;
 
+        window.dispatchEvent(new CustomEvent('klyx-sync-start'));
         console.log("☁️ Syncing Up to Repo DB...");
         const user = readSession().user;
         if (!user) return;
@@ -454,17 +495,22 @@ export const api = {
             console.log("☁️ Sync Up Complete (Saved to Repo DB)");
         } catch (e) {
             console.error("Sync Up Failed", e);
+            if (e.message.includes("403") || e.message.includes("404")) {
+                 alert("⚠️ Erro de Permissão: O GitHub não permitiu salvar os dados.\n\nPor favor, faça LOGOUT e LOGIN novamente para autorizar o acesso ao Repositório.");
+            }
             // If conflict (409), we should syncDown first?
             // For now, simple error logging.
         }
+        window.dispatchEvent(new CustomEvent('klyx-sync-end'));
     },
 
     // Debounced Sync Up
     scheduleSyncUp() {
-        if (this._syncTimer) clearTimeout(this._syncTimer);
-        this._syncTimer = setTimeout(() => {
+        // Use a separate timer for debounce to avoid conflicting with polling
+        if (window._debounceTimer) clearTimeout(window._debounceTimer);
+        window._debounceTimer = setTimeout(() => {
             this.syncUp();
-        }, 1000); // Wait 1 second (faster sync)
+        }, 2000); // Wait 2 seconds
     },
 
     // 4. RESET / WIPE CLOUD DATA
@@ -593,6 +639,9 @@ export const api = {
         // Enforce Parental Control locally
         localStorage.setItem("klyx_parental_active", "true");
         
+        // Sync new user data to Cloud immediately
+        setTimeout(() => api.cloud.syncUp(), 100);
+
         return { ok: true, data: { user: newUser } };
     },
     async logout() {

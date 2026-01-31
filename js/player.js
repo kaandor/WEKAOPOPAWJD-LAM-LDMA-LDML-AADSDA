@@ -1,5 +1,5 @@
 
-import { api } from "./api.js?v=20240130";
+import { api } from "./api.js?v=20260131-realtime";
 
 // Helper for URL params
 const qs = (key) => new URLSearchParams(window.location.search).get(key);
