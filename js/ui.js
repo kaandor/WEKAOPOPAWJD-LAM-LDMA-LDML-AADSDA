@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-reset-final";
+import { api } from "./api.js?v=20260131-killswitch";
 
 // Helper for Drag-to-Scroll (Mouse)
 function setupDragScroll(slider) {

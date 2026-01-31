@@ -5,6 +5,22 @@ const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
 // Helper to simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// --- EMERGENCY KILL SWITCH FOR BUGGED ACCOUNTS ---
+// Detects specific bugged MAC address or corrupted state and forces a wipe
+try {
+    const buggedMac = "32:b6:78:63:78:8d";
+    const currentMac = localStorage.getItem("klyx_device_mac");
+    if (currentMac === buggedMac) {
+        console.warn("⚠️ DETECTED BUGGED DEVICE IDENTITY. INITIATING EMERGENCY WIPE.");
+        localStorage.clear(); // NUKE EVERYTHING
+        sessionStorage.clear();
+        window.location.reload(); // Reload to start fresh
+    }
+} catch (e) {
+    console.error("Kill switch error", e);
+}
+// ------------------------------------------------
+
 // Mock Data Loaders
 async function getLocalData(file) {
     try {
@@ -373,42 +389,41 @@ export const api = {
 
     // 4. RESET / WIPE CLOUD DATA
     async reset() {
-        const token = this._getToken();
-        if (!token) return { ok: false, error: "Not logged in" };
-
-        console.log("🔥 RESETTING CLOUD DATA...");
+        console.log("🔥 INITIATING NUCLEAR RESET...");
         
-        // 1. Wipe Cloud Gist
-        const gist = await this._findGist(token);
-        if (gist) {
-            // Write empty structure with explicit NULL identity
-            await this._updateGist(token, gist.id, {
-                updatedAt: new Date().toISOString(),
-                profiles: [], // Empty profiles
-                progress: {}, // Empty progress
-                deviceIdentity: { mac: null, key: null } // Wipe identity
-            });
+        try {
+            const token = this._getToken();
+            
+            // 1. Try to Wipe Cloud (Best Effort)
+            if (token) {
+                try {
+                    const gist = await this._findGist(token);
+                    if (gist) {
+                         // Overwrite with empty data and explicitly NULL identity
+                        await this._updateGist(token, gist.id, {
+                            updatedAt: new Date().toISOString(),
+                            profiles: [],
+                            progress: {},
+                            deviceIdentity: { mac: null, key: null }
+                        });
+                        console.log("☁️ Cloud Data Wiped");
+                    }
+                } catch (cloudError) {
+                    console.warn("⚠️ Cloud wipe failed (network/auth issue?), proceeding with local wipe anyway.", cloudError);
+                }
+            }
+        } catch (e) {
+            console.warn("Reset preparation error", e);
         }
 
-        // 2. Wipe Local Data
-        const user = readSession().user;
-        if (user) {
-            localStorage.removeItem(`klyx.profiles.${user.id}`);
-            localStorage.removeItem(`klyx_progress_${user.id}`);
-            // Also reset Device Identity so it can be re-synced or re-generated
-            localStorage.removeItem('klyx_device_mac');
-            localStorage.removeItem('klyx_device_key');
-            
-            // 3. NUCLEAR WIPE (Requested by User)
-            // Remove local user database and auth states to ensure 100% fresh start
-            localStorage.removeItem("klyx_users");
-            localStorage.removeItem("klyx_gh_state");
-            localStorage.removeItem("klyx_parental_active");
-            
-            // Keep the session active only long enough to finish this call, then ui.js clears it
-        }
-
-        console.log("🔥 RESET COMPLETE");
+        // 2. NUCLEAR LOCAL WIPE (Unconditional)
+        console.log("🗑️ Wiping Local Storage...");
+        localStorage.clear(); // Delete EVERYTHING: users, settings, profiles, mac, key, tokens
+        sessionStorage.clear();
+        
+        // 3. Force reload to clear memory state
+        console.log("🔥 RESET COMPLETE. RELOADING.");
+        window.location.href = "./index.html";
         return { ok: true };
     }
   },
