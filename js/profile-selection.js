@@ -16,7 +16,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 const profileModal = document.getElementById("profileModal");
 const modalTitle = document.getElementById("modalTitle");
 const profileNameInput = document.getElementById("profileName");
-const profileAgeInput = document.getElementById("profileAge");
+// Age input removed
 const adultContentSection = document.getElementById("adultContentSection");
 const profileAllowExplicit = document.getElementById("profileAllowExplicit");
 const pinSection = document.getElementById("pinSection");
@@ -237,7 +237,7 @@ function openCreateModal() {
     currentEditingProfileId = null;
     modalTitle.textContent = "Adicionar Perfil";
     profileNameInput.value = "";
-    profileAgeInput.value = "18"; // Default
+    // Age removed
     
     // Reset adult content fields
     adultContentSection.classList.remove("hidden"); 
@@ -247,9 +247,6 @@ function openCreateModal() {
     pinSection.classList.add("hidden"); 
     profilePinInput.value = ""; 
     
-    // Trigger age change to set visibility
-    profileAgeInput.dispatchEvent(new Event('change'));
-
     // Random default avatar
     const randomIcon = AVAILABLE_ICONS[Math.floor(Math.random() * AVAILABLE_ICONS.length)];
     selectedAvatarUrl = randomIcon;
@@ -264,7 +261,7 @@ function openEditModal(profile) {
     currentEditingProfileId = profile.id;
     modalTitle.textContent = "Editar Perfil";
     profileNameInput.value = profile.name;
-    profileAgeInput.value = profile.age || "18";
+    // Age removed
     
     // Set adult content fields
     profileAllowExplicit.checked = !!profile.allowExplicit;
@@ -272,9 +269,6 @@ function openEditModal(profile) {
     // Hide manual PIN input
     pinSection.classList.add("hidden");
     profilePinInput.value = ""; 
-    
-    // Trigger age change to set visibility of section
-    profileAgeInput.dispatchEvent(new Event('change'));
     
     // Trigger check change 
     profileAllowExplicit.dispatchEvent(new Event('change'));
@@ -312,7 +306,7 @@ async function saveProfile() {
             let res;
             const profileData = {
                 name,
-                age,
+                // Age removed
                 avatar: selectedAvatarUrl,
                 allowExplicit,
                 pin
@@ -425,7 +419,8 @@ function setupEventListeners() {
         if (e.key === "Enter") saveProfile();
     });
     
-    // Age change logic
+    // Age change logic REMOVED
+    /*
     profileAgeInput.addEventListener("change", (e) => {
         const age = parseInt(e.target.value);
         if (age >= 18) {
@@ -436,6 +431,7 @@ function setupEventListeners() {
             pinSection.classList.add("hidden");
         }
     });
+    */
     
     // Explicit toggle logic
     profileAllowExplicit.addEventListener("change", (e) => {

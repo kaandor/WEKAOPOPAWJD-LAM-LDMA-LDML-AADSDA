@@ -48,55 +48,41 @@ function filterRestrictedContent(items) {
     if (!items || !Array.isArray(items)) return [];
     
     // Check Content Rating Limit (set by profile)
-    // Default to 18 (unrestricted) if not set
-    const ratingLimit = parseInt(localStorage.getItem("klyx_content_rating_limit") || "18");
+    // NEW SIMPLIFIED LOGIC: Adult Content Toggle (Boolean)
+    const isAdultEnabled = localStorage.getItem("klyx_adult_content_enabled") === "true";
     
-    // Keywords for rating classification (Simple Heuristic)
+    // Keywords for rating classification
     // Explicit Adult Content (Requires specific permission + PIN)
-    // Expanded list to catch more variations
-    const keywordsExplicit = ["xxx", "porn", "porno", "hentai", "adultos", "adults", "adult", "erotic", "nude", "sexo", "sex", "18+ explicit", "hardcore", "playboy", "erotico", "erótica", "erotica", "sexul"];
+    // Using Regex for word boundaries to avoid false positives (e.g. "Essex" matching "sex")
+    const keywordsExplicit = [
+        /\bxxx\b/, /\bporn\b/, /\bporno\b/, /\bhentai\b/, /\badultos\b/, /\badults\b/, /\badult\b/, 
+        /\berotic\b/, /\bnude\b/, /\bsexo\b/, /\bsex\b/, /18\+\s*explicit/, /\bhardcore\b/, 
+        /\bplayboy\b/, /\berotico\b/, /\berótica\b/, /\berotica\b/, /\bsexul\b/
+    ];
     
-    // Standard 18+ Content (Horror, Thriller, Strong Violence, but not necessarily Porn)
-    // Moved "adult", "sex" to Explicit
-    const keywords18 = ["+18", "18+", "horror", "terror", "hot", "violencia extrema", "gore", "thriller", "suspense pesado", "morte"];
+    // Standard 18+ Content (Horror, Thriller, Strong Violence)
+    const keywords18 = [
+        /\+18/, /18\+/, /\bhorror\b/, /\bterror\b/, /\bhot\b/, /\bviolencia\s*extrema\b/, 
+        /\bgore\b/, /\bthriller\b/, /\bsuspense\s*pesado\b/, /\bmorte\b/
+    ];
     
-    const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato", "misterio", "investigacao"];
-    const keywords14 = ["action", "fight", "14+", "acao", "luta", "guerra", "tiro"];
-    const keywords12 = ["adventure", "drama", "12+", "aventura", "suspense", "romance"];
-    const keywords10 = ["comedy", "10+", "comedia"];
-    const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
-    
-    // Get profile permissions
-    const isExplicitAllowed = localStorage.getItem("klyx_profile_explicit_allowed") === "true";
-
     return items.filter(item => {
         if (!item) return false;
         const title = (item.title || "").toLowerCase();
         const category = (item.category || "").toLowerCase();
         const combined = title + " " + category;
         
-        // 1. Check for Explicit Content FIRST
-        if (keywordsExplicit.some(kw => combined.includes(kw))) {
-            // Only show if explicit content is allowed AND user is 18+
-            return ratingLimit >= 18 && isExplicitAllowed;
+        // Check for Adult Content (Explicit or 18+)
+        const isAdult = keywordsExplicit.some(pattern => pattern.test(combined)) || 
+                        keywords18.some(pattern => pattern.test(combined));
+        
+        // If Adult Content is NOT enabled, hide it
+        if (isAdult && !isAdultEnabled) {
+            return false;
         }
-
-        // Determine approximate rating of content
-        // Default: 12 (Teen) - Safer fallback for unknown content
-        let contentRating = 12; 
         
-        if (keywords18.some(kw => combined.includes(kw))) contentRating = 18;
-        else if (keywords16.some(kw => combined.includes(kw))) contentRating = 16;
-        // Safe check moved UP to override Action/Adventure/Comedy for Animations (fix for Kids profile)
-        // Must be checked BEFORE 14+ (Action) and 12+ (Adventure) to ensure Kids content isn't hidden
-        else if (keywordsSafe.some(kw => combined.includes(kw))) contentRating = 0; // Livre
-        
-        else if (keywords14.some(kw => combined.includes(kw))) contentRating = 14;
-        else if (keywords12.some(kw => combined.includes(kw))) contentRating = 12;
-        else if (keywords10.some(kw => combined.includes(kw))) contentRating = 10;
-        
-        // Filter out if content rating exceeds profile limit
-        return contentRating <= ratingLimit;
+        // Otherwise show everything (Simpler logic as requested)
+        return true;
     });
 }
 
@@ -292,8 +278,9 @@ export const api = {
             id: "p" + Date.now(), 
             name: name.split(' ')[0], 
             avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.split(' ')[0]}`,
-            age: 18,
+            // age: 18, // Removed
             isKid: false,
+            allowExplicit: false, // Default to Safe
             created_at: new Date().toISOString()
         };
         profiles.push(initialProfile);

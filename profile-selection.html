@@ -510,21 +510,10 @@
               <input type="text" id="profileName" placeholder="Nome do perfil" maxlength="20" />
             </div>
             
-            <!-- Age Selection -->
-            <div class="form-group">
-                <label for="profileAge">Idade</label>
-                <select id="profileAge">
-                    <option value="18">18+ (Sem restrições)</option>
-                    <option value="16">16+ (Não recomendado para menores de 16)</option>
-                    <option value="14">14+ (Não recomendado para menores de 14)</option>
-                    <option value="12">12+ (Não recomendado para menores de 12)</option>
-                    <option value="10">10+ (Crianças mais velhas)</option>
-                    <option value="0">Livre (Crianças)</option>
-                </select>
-            </div>
-
-            <!-- Adult Content Toggle (Hidden by default, shown only for 18+) -->
-            <div id="adultContentSection" class="adult-section hidden">
+            <!-- Age Selection REMOVED -->
+            
+            <!-- Adult Content Toggle -->
+            <div id="adultContentSection" class="adult-section">
                 <div class="toggle-container">
                     <div style="margin-right: 15px;">
                         <label style="display: block; color: #f87171; font-weight: 500; margin-bottom: 2px;">Ativar conteúdo adulto (XXX)?</label>
@@ -568,6 +557,6 @@
       </div>
     </div>
 
-    <script type="module" src="./js/profile-selection.js"></script>
+    <script type="module" src="./js/profile-selection.js?v=9"></script>
   </body>
 </html>
