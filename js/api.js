@@ -63,8 +63,8 @@ function filterRestrictedContent(items) {
     const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato", "misterio", "investigacao"];
     const keywords14 = ["action", "fight", "14+", "acao", "luta", "guerra", "tiro"];
     const keywords12 = ["adventure", "drama", "12+", "aventura", "suspense", "romance"];
-    const keywords10 = ["comedy", "family", "10+", "comedia", "familia"];
-    const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar"];
+    const keywords10 = ["comedy", "10+", "comedia"];
+    const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
     
     // Get profile permissions
     const isExplicitAllowed = localStorage.getItem("klyx_profile_explicit_allowed") === "true";
@@ -88,9 +88,10 @@ function filterRestrictedContent(items) {
         if (keywords18.some(kw => combined.includes(kw))) contentRating = 18;
         else if (keywords16.some(kw => combined.includes(kw))) contentRating = 16;
         else if (keywords14.some(kw => combined.includes(kw))) contentRating = 14;
+        // Safe check moved UP to override Adventure/Comedy for Animations (fix for Kids profile)
+        else if (keywordsSafe.some(kw => combined.includes(kw))) contentRating = 0; // Livre
         else if (keywords12.some(kw => combined.includes(kw))) contentRating = 12;
         else if (keywords10.some(kw => combined.includes(kw))) contentRating = 10;
-        else if (keywordsSafe.some(kw => combined.includes(kw))) contentRating = 0; // Livre
         
         // Filter out if content rating exceeds profile limit
         return contentRating <= ratingLimit;
@@ -112,6 +113,16 @@ function deduplicateMovies(items) {
         
         // Normalize title for checking
         const lowerTitle = title.toLowerCase();
+        
+        // Enrich Category for Smart Categorization (Kids/Criança)
+        // This ensures "Criança" appears in the category dropdown if the movie matches safe keywords
+        const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+        const combinedForCat = (title + " " + (movie.category || "")).toLowerCase();
+        if (keywordsSafe.some(kw => combinedForCat.includes(kw))) {
+             if (movie.category && !movie.category.includes("Criança")) {
+                 movie.category += " | Criança";
+             }
+        }
         
         // Check for various subtitle indicators
         const isSubtitled = 
@@ -668,11 +679,8 @@ export const api = {
         }
     },
     async categories() {
-        const data = await getLocalData("series.json");
-        let series = data?.series || [];
-        
-        // Apply Parental Filter so restricted categories don't show up
-        series = filterRestrictedContent(series);
+        const res = await api.content.getSeries();
+        const series = res.ok ? (res.data.series || []) : [];
         
         const categories = new Set();
         series.forEach(s => {
@@ -791,7 +799,18 @@ export const api = {
         if (data && data.series) {
             // Apply Parental Filter to Series List
             let series = filterRestrictedContent(data.series);
-            data.series = series.map(normalize);
+            data.series = series.map(s => {
+                s = normalize(s);
+                // Enrich Category for Smart Categorization
+                const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+                const combinedForCat = (s.title + " " + (s.category || "")).toLowerCase();
+                if (keywordsSafe.some(kw => combinedForCat.includes(kw))) {
+                     if (s.category && !s.category.includes("Criança")) {
+                         s.category += " | Criança";
+                     }
+                }
+                return s;
+            });
         }
         return { ok: true, data }; 
     }

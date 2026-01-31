@@ -206,8 +206,8 @@ http.createServer((req, res) => {
   }
 
   const cleanUrl = reqUrl.pathname;
-  // Serve files from the 'www' directory
-  let filePath = './www' + cleanUrl;
+  // Serve files from the current directory
+  let filePath = '.' + cleanUrl;
   if (filePath.endsWith('/')) filePath += 'index.html';
 
   const extname = path.extname(filePath);
