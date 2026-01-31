@@ -220,7 +220,8 @@
 
       try {
           console.log("Player starting...");
-          const v = Date.now();
+          // Force new version for cache busting
+          const v = "20260131-fixproxy3";
           const { mountAppShell } = await import(`./js/router.js?v=${v}`);
           const { initPlayer } = await import(`./js/player.js?v=${v}`);
 
