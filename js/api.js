@@ -534,6 +534,97 @@ export const api = {
         return { ok: true, data: { active: true } };
     }
   },
+  playback: {
+      async saveProgress(contentId, currentTime, duration, type) {
+          const session = readSession();
+          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          
+          const userId = session.user.id;
+          const progressData = {
+              progress: Math.floor(currentTime),
+              duration: Math.floor(duration),
+              updatedAt: new Date().toISOString(),
+              type: type || 'movie'
+          };
+          
+          try {
+              // Save to LocalStorage (Immediate / Offline)
+              const localKey = `klyx_progress_${userId}`;
+              const localData = JSON.parse(localStorage.getItem(localKey) || "{}");
+              localData[contentId] = progressData;
+              localStorage.setItem(localKey, JSON.stringify(localData));
+              
+              // Save to Firebase (Async / Cross-Device)
+              const url = `${FIREBASE_DB_URL}/users/${userId}/playback/${contentId}.json`;
+              fetch(url, {
+                  method: 'PUT',
+                  body: JSON.stringify(progressData)
+              }).catch(e => console.warn("Firebase save failed (background)", e));
+              
+              return { ok: true };
+          } catch (e) {
+              console.error("Save Progress Error", e);
+              return { ok: false, error: e.message };
+          }
+      },
+      
+      async getProgress(contentId) {
+          const session = readSession();
+          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          
+          const userId = session.user.id;
+          
+          try {
+              // Try Firebase first for cross-device sync
+              const url = `${FIREBASE_DB_URL}/users/${userId}/playback/${contentId}.json`;
+              const res = await fetch(url);
+              if (res.ok) {
+                  const data = await res.json();
+                  if (data) return { ok: true, data };
+              }
+              
+              // Fallback to LocalStorage
+              const localKey = `klyx_progress_${userId}`;
+              const localData = JSON.parse(localStorage.getItem(localKey) || "{}");
+              if (localData[contentId]) {
+                  return { ok: true, data: localData[contentId] };
+              }
+              
+              return { ok: true, data: { progress: 0 } };
+          } catch (e) {
+              console.error("Get Progress Error", e);
+              // Fallback to LocalStorage on error
+              const localKey = `klyx_progress_${userId}`;
+              const localData = JSON.parse(localStorage.getItem(localKey) || "{}");
+              if (localData[contentId]) {
+                  return { ok: true, data: localData[contentId] };
+              }
+              return { ok: false, error: e.message };
+          }
+      },
+      
+      async getAllProgress() {
+          const session = readSession();
+          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          
+          const userId = session.user.id;
+          
+          try {
+               const url = `${FIREBASE_DB_URL}/users/${userId}/playback.json`;
+               const res = await fetch(url);
+               if (res.ok) {
+                   const data = await res.json();
+                   return { ok: true, data: data || {} };
+               }
+          } catch (e) {
+              console.warn("Firebase list failed", e);
+          }
+          
+          // Fallback
+          const localKey = `klyx_progress_${userId}`;
+          return { ok: true, data: JSON.parse(localStorage.getItem(localKey) || "{}") };
+      }
+  },
   movies: {
     async get(id) {
         // Fetch raw data to find any movie, even if hidden by deduplication

@@ -8,7 +8,6 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "DIRECT_HTTPS", // Try upgrading HTTP to HTTPS first
-    "https://corsproxy.io/?",
     "https://api.codetabs.com/v1/proxy?quest=",
     "https://api.allorigins.win/raw?url=",
     "https://thingproxy.freeboard.io/fetch/"
@@ -587,18 +586,28 @@ function setupCustomControls(video) {
         // User released the handle
         const pct = parseFloat(progressBar.value);
         
-        if (Number.isFinite(video.duration) && video.duration > 0) {
+        // Strict check for duration
+        if (Number.isFinite(video.duration) && video.duration > 1) {
             const time = (pct / 100) * video.duration;
             if (Number.isFinite(time)) {
                 console.log(`[Seek] Committing to ${time}s`);
                 
-                // Safety check: Don't seek if duration is infinite (Live) or 0
+                // Safety check: Don't seek if duration is infinite (Live)
                 if (video.duration === Infinity) return;
                 
                 // Ensure we mark as dragging until seek completes
                 isDragging = true;
                 video.currentTime = time;
             }
+        } else {
+             console.warn("Seek ignored: Invalid duration", video.duration);
+             // Revert slider to 0 or current valid time if possible
+             if (video.currentTime) {
+                 const pct = (video.currentTime / video.duration) * 100;
+                 if (Number.isFinite(pct)) progressBar.value = pct;
+             } else {
+                 progressBar.value = 0;
+             }
         }
         
         // Clear dragging flag after a short delay
@@ -905,6 +914,86 @@ export async function initPlayer() {
         
         if (titleEl) titleEl.textContent = detail.title;
         if (metaEl) metaEl.textContent = detail.meta;
+        
+        // iOS Audio Selection Prompt (User Request)
+        // If on iOS and multiple audio tracks exist, ask user BEFORE playing (native player takes over)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS && detail.streamUrlAudio2) {
+            // Force show settings modal or a custom one
+            // We'll reuse settings UI but with a specific flow
+            console.log("iOS detected with multiple audio tracks - showing prompt");
+            
+            if (window.finishLoading) window.finishLoading(); // Hide loading spinner so user can see prompt
+            
+            // Create a dedicated overlay for clarity
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.background = 'rgba(0,0,0,0.9)';
+            overlay.style.zIndex = '9999';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.innerHTML = `
+                <div style="background: #1f1f1f; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; text-align: center; border: 1px solid #333;">
+                    <h3 style="color: white; margin-bottom: 20px;">Selecione o Áudio</h3>
+                    <div id="iosAudioOptions" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            const optsContainer = overlay.querySelector('#iosAudioOptions');
+            
+            const startWith = async (url) => {
+                overlay.remove();
+                // Proceed with playback
+                await attachSource({
+                    video,
+                    streamUrl: url,
+                    streamUrlSub: detail.streamUrlSub,
+                    streamType: url.includes('.m3u8') ? 'hls' : 'mp4',
+                    ui: { subtitleSelect: null },
+                    isLegendado: false
+                });
+                // Initialize other controls
+                setupSettingsUI(video, { ...detail, currentStreamUrl: url });
+                if (detail.episodes && detail.episodes.length > 0) setupSeriesControls(detail, video);
+                setupCustomControls(video);
+                setupAutoHide(video);
+            };
+            
+            // Option 1
+            const btn1 = document.createElement('button');
+            btn1.textContent = "Áudio 1 (Dublado)";
+            btn1.className = "btn-primary"; // Assuming global css has this, or style manually
+            btn1.style.padding = "12px";
+            btn1.style.background = "#9333ea";
+            btn1.style.border = "none";
+            btn1.style.borderRadius = "8px";
+            btn1.style.color = "white";
+            btn1.style.fontWeight = "bold";
+            btn1.onclick = () => startWith(detail.streamUrl);
+            optsContainer.appendChild(btn1);
+            
+            // Option 2
+            const btn2 = document.createElement('button');
+            btn2.textContent = "Áudio 2 (Legendado/Original)";
+            btn2.style.padding = "12px";
+            btn2.style.background = "rgba(255,255,255,0.1)";
+            btn2.style.border = "1px solid rgba(255,255,255,0.2)";
+            btn2.style.borderRadius = "8px";
+            btn2.style.color = "white";
+            btn2.style.fontWeight = "bold";
+            btn2.onclick = () => startWith(detail.streamUrlAudio2);
+            optsContainer.appendChild(btn2);
+            
+            return; // Stop execution here, wait for callback
+        }
         
         await attachSource({
             video,
