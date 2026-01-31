@@ -100,48 +100,7 @@
   white-space: nowrap;
 }
 
-/* Season Selector (Horizontal Scroll) */
-.season-selector {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding: 10px 0;
-  margin-bottom: 20px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-  cursor: grab; /* Suggest drag */
-  min-height: 50px; /* Ensure visibility */
-  width: 100%;
-  box-sizing: border-box;
-}
-.season-selector::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
-.season-selector:active {
-  cursor: grabbing;
-}
 
-.season-tab {
-  flex: 0 0 auto; /* Prevent shrinking */
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.season-tab.active {
-  background: #fff;
-  color: #000;
-  font-weight: bold;
-}
-
-.season-tab:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.2);
-}
 
 .card-meta {
   margin-top: 6px;
@@ -454,35 +413,63 @@
   overflow-y: auto;
 }
 
+/* Enhanced Season Selector */
 .season-selector {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding: 12px 4px; /* Add horizontal padding for shadow/focus */
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  
+  /* Scroll & Layout */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  cursor: grab;
+  width: 100%;
+  min-height: 60px; /* Force height */
+  flex-wrap: nowrap; /* Prevent wrapping */
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.season-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.season-selector:active {
+  cursor: grabbing;
 }
 
 .season-tab {
-  padding: 8px 16px;
-  background: transparent;
-  border: none;
+  flex: 0 0 auto; /* CRITICAL: Prevent shrinking */
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   color: var(--muted);
   cursor: pointer;
   white-space: nowrap;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
-  transition: all 0.2s;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  min-width: 110px;
+  text-align: center;
 }
 
 .season-tab:hover {
   color: var(--text);
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--text);
+  transform: translateY(-1px);
 }
 
 .season-tab.active {
   color: white;
   background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3); /* Purple glow */
 }
 
 .episodes-list {
