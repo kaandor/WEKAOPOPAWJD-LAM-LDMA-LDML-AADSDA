@@ -109,6 +109,59 @@ video.video {
 
 /* Adjust floating controls for mobile */
 @media (max-width: 768px) {
+    .controls-center {
+        gap: 20px !important; /* Reduce gap */
+    }
+
+    .btn-play-big {
+        width: 56px !important; /* Smaller play button */
+        height: 56px !important;
+        font-size: 20px !important;
+    }
+    
+    .btn-play-big svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .btn-seek-big {
+        width: 40px !important; /* Smaller seek buttons */
+        height: 40px !important;
+    }
+    
+    .btn-seek-big svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    
+    .btn-seek-big span {
+        font-size: 9px !important;
+    }
+
+    /* Fix overlapping: move bottom controls lower and reduce padding */
+    .controls-bottom {
+        bottom: 10px !important; /* Move closer to bottom */
+        margin-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+        padding: 8px 12px !important; /* Slimmer padding */
+        width: 95% !important; /* Wider on mobile */
+        gap: 10px !important;
+    }
+    
+    .time-display {
+        font-size: 11px !important; /* Smaller font */
+        min-width: 30px !important;
+    }
+    
+    /* Ensure range slider is not too "tall"/thick */
+    .range {
+        height: 3px !important;
+    }
+    
+    .range::-webkit-slider-thumb {
+        width: 12px !important;
+        height: 12px !important;
+    }
+
     #floating-controls {
         top: max(10px, env(safe-area-inset-top) + 10px) !important;
         right: max(10px, env(safe-area-inset-right) + 10px) !important;

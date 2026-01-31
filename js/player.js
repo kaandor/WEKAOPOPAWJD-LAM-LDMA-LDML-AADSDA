@@ -321,13 +321,22 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // Safari / Native HLS
+                // Native HLS Support (iOS / Safari)
+                console.log("Using Native HLS Support");
                 video.src = finalUrl;
                 video.addEventListener('loadedmetadata', () => {
                     safePlay();
-                }, { once: true });
+                });
+                video.addEventListener('error', (e) => {
+                     console.error("Native HLS Error", video.error);
+                     if (proxyIndex < PROXY_LIST.length - 1) {
+                        attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                     } else {
+                        showError("Erro: Fonte de vídeo não suportada (Native HLS).");
+                     }
+                });
             } else {
-                console.error("HLS not supported");
+                showError("Seu navegador não suporta HLS.");
             }
         };
 
