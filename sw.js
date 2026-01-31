@@ -1,12 +1,22 @@
+const CACHE_NAME = 'klyx-cache-v4';
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+           return caches.delete(cacheName);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass through all requests
+  // Pass through all requests, no caching
   event.respondWith(fetch(event.request));
 });

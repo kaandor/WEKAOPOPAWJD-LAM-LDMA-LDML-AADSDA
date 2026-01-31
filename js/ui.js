@@ -561,6 +561,10 @@ window.showSeriesModal = async function(seriesId) {
         
         const listEl = bodyEl.querySelector('.episodes-list');
         const tabs = bodyEl.querySelectorAll('.season-tab');
+        const seasonSelector = bodyEl.querySelector('.season-selector');
+
+        // Enable Drag-to-Scroll for Season Selector
+        if (seasonSelector) setupDragScroll(seasonSelector);
         
         const renderEpisodes = (season) => {
             const seasonEps = seasons[season] || [];

@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Search</title>
-    <link rel="stylesheet" href="./css/global.css" />
-    <link rel="stylesheet" href="./css/netflix-ui.css" />
+    <link rel="stylesheet" href="./css/global.css?v=4" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=4" />
   </head>
   <body>
     <div class="app-shell">
@@ -39,7 +39,7 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js";
+      import { mountAppShell } from "./js/router.js?v=4";
       import { initSearch } from "./js/search.js";
       await mountAppShell({ currentPath: "/search" });
       initSearch();

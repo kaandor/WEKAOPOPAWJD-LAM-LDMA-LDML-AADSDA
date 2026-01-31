@@ -12,6 +12,7 @@ function icon() {
 }
 
 export async function mountAppShell({ currentPath }) {
+  console.log('Klyx Router v3 Loaded - Profile Button Removed');
   initInput(); // Initialize TV Navigation globally
   const session = await requireAuth();
   if (!session) return;

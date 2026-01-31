@@ -100,6 +100,49 @@
   white-space: nowrap;
 }
 
+/* Season Selector (Horizontal Scroll) */
+.season-selector {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  cursor: grab; /* Suggest drag */
+  min-height: 50px; /* Ensure visibility */
+  width: 100%;
+  box-sizing: border-box;
+}
+.season-selector::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+.season-selector:active {
+  cursor: grabbing;
+}
+
+.season-tab {
+  flex: 0 0 auto; /* Prevent shrinking */
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.season-tab.active {
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+}
+
+.season-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .card-meta {
   margin-top: 6px;
   display: flex;
