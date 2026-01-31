@@ -288,7 +288,7 @@ async function saveProfile() {
     const name = profileNameInput.value.trim();
     if (!name) return;
     
-    const age = parseInt(profileAgeInput.value);
+    // const age = parseInt(profileAgeInput.value); // Removed
     const allowExplicit = profileAllowExplicit.checked;
     
     // Determine PIN
