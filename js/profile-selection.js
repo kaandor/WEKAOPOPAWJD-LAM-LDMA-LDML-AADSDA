@@ -105,6 +105,17 @@ async function init() {
 
 async function loadProfiles() {
     try {
+        // Force Cloud Sync (Hive Mind)
+        const loadingDiv = document.createElement("div");
+        loadingDiv.id = "sync-loading";
+        loadingDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#9333ea;color:white;padding:5px 10px;border-radius:4px;z-index:9999;font-size:12px;";
+        loadingDiv.textContent = "☁️ Sincronizando...";
+        document.body.appendChild(loadingDiv);
+        
+        await api.cloud.syncDown();
+        
+        if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+
         const res = await api.profiles.list();
         if (res.ok) {
             profiles = res.data;
