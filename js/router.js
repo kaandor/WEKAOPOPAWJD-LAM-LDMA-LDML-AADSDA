@@ -93,10 +93,6 @@ export async function mountAppShell({ currentPath }) {
           <div class="profile-dropdown-container">
             <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
             <div id="profileDropdown" class="profile-dropdown hidden">
-              <a href="./profile.html" class="dropdown-item focusable">
-                <span class="dropdown-icon">${icons.profile}</span>
-                Perfil
-              </a>
               <a href="./settings.html" class="dropdown-item focusable">
                 <span class="dropdown-icon">${icons.settings}</span>
                 Configurações
