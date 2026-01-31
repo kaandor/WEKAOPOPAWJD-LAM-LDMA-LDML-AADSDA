@@ -51,17 +51,14 @@ function filterRestrictedContent(items) {
     // Default to 18 (unrestricted) if not set
     const ratingLimit = parseInt(localStorage.getItem("klyx_content_rating_limit") || "18");
     
-    // Check if Parental Control is active (legacy flag)
-    const isParentalActive = localStorage.getItem("klyx_parental_active") !== "false";
-    
-    // If unrestricted (18+) and parental control off, return all
-    if (ratingLimit >= 18 && !isParentalActive) return items;
-    
     // Keywords for rating classification (Simple Heuristic)
     // Explicit Adult Content (Requires specific permission + PIN)
-    const keywordsExplicit = ["xxx", "porn", "hentai", "adultos", "erotic", "nude", "sexo explicito"];
-    // Standard 18+ Content (Horror, Thriller, Strong Violence)
-    const keywords18 = ["adult", "sex", "+18", "18+", "horror", "terror", "hot", "sexo", "violencia extrema", "gore"];
+    // Expanded list to catch more variations
+    const keywordsExplicit = ["xxx", "porn", "porno", "hentai", "adultos", "adults", "adult", "erotic", "nude", "sexo", "sex", "18+ explicit", "hardcore"];
+    
+    // Standard 18+ Content (Horror, Thriller, Strong Violence, but not necessarily Porn)
+    // Moved "adult", "sex" to Explicit
+    const keywords18 = ["+18", "18+", "horror", "terror", "hot", "violencia extrema", "gore", "thriller"];
     
     const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato"];
     const keywords14 = ["action", "fight", "14+", "acao", "luta", "guerra", "tiro"];

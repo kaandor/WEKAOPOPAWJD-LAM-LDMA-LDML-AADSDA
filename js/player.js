@@ -91,20 +91,35 @@ async function loadDetail(type, id) {
         const episodes = epsRes.ok ? epsRes.data.episodes : [];
         
         if (episodes.length === 0) return { ok: false, error: "Nenhum episódio encontrado." };
+
+        // Ensure episodes are sorted by Season then Episode
+        episodes.sort((a, b) => {
+            if (a.season_number !== b.season_number) return (a.season_number || 0) - (b.season_number || 0);
+            return (a.episode_number || 0) - (b.episode_number || 0);
+        });
         
-        // Default to first episode
-        const firstEp = episodes[0];
+        // Determine episode to play
+        let epIndex = 0;
+        const seasonParam = parseInt(qs('s'));
+        const episodeParam = parseInt(qs('e'));
+        
+        if (!isNaN(seasonParam) && !isNaN(episodeParam)) {
+            const foundIndex = episodes.findIndex(ep => ep.season_number === seasonParam && ep.episode_number === episodeParam);
+            if (foundIndex !== -1) epIndex = foundIndex;
+        }
+        
+        const ep = episodes[epIndex];
         
         return {
             ok: true,
-            title: `${s.title} - S${firstEp.season_number}:E${firstEp.episode_number} ${firstEp.title}`,
+            title: `${s.title} - S${ep.season_number}:E${ep.episode_number} ${ep.title}`,
             meta: s.title,
-            streamUrl: firstEp.stream_url,
-            streamUrlSub: firstEp.sub_url,
+            streamUrl: ep.stream_url,
+            streamUrlSub: ep.sub_url,
             category: s.category,
             seriesId: id,
             episodes: episodes,
-            currentEpIndex: 0
+            currentEpIndex: epIndex
         };
     }
     else if (type === 'episode') {
@@ -668,6 +683,145 @@ function showError(msg) {
     }
 }
 
+// Series Navigation Logic
+function setupSeriesControls(detail, video) {
+    const btnNextEp = document.getElementById('btnNextEp');
+    const btnEpList = document.getElementById('btnEpList');
+    const epListModal = document.getElementById('epListModal');
+    const epListContent = document.getElementById('epListContent');
+    const closeEpListModal = document.getElementById('closeEpListModal');
+    const nextEpOverlay = document.getElementById('nextEpOverlay');
+    const nextEpTitle = document.getElementById('nextEpTitle');
+    const nextEpProgress = document.getElementById('nextEpProgress');
+    const btnPlayNextNow = document.getElementById('btnPlayNextNow');
+    const btnCancelNext = document.getElementById('btnCancelNext');
+    
+    let { episodes, currentEpIndex, seriesId } = detail;
+    let nextEpTimer = null;
+    let isNextOverlayShown = false;
+
+    // Helper to find next episode
+    const hasNext = () => currentEpIndex < episodes.length - 1;
+    const getNextEp = () => hasNext() ? episodes[currentEpIndex + 1] : null;
+
+    // UI Updates
+    const updateButtons = () => {
+        if (btnNextEp) btnNextEp.style.display = hasNext() ? 'flex' : 'none';
+        if (btnEpList) btnEpList.style.display = 'flex';
+    };
+
+    // Play Next Episode Logic
+    const playNext = async () => {
+        if (!hasNext()) return;
+        
+        const nextEp = getNextEp();
+        
+        // Update URL and Reload
+        const newUrl = `./player.html?type=series&id=${seriesId}&s=${nextEp.season_number}&e=${nextEp.episode_number}`;
+        window.location.href = newUrl;
+    };
+
+    // Wire up buttons
+    if (btnNextEp) btnNextEp.onclick = (e) => {
+        e.stopPropagation();
+        playNext();
+    };
+    
+    if (btnEpList) {
+        btnEpList.onclick = (e) => {
+            e.stopPropagation();
+            // Populate list
+            epListContent.innerHTML = '';
+            
+            // Group by season
+            const seasons = {};
+            episodes.forEach(ep => {
+                const s = ep.season_number || 1;
+                if (!seasons[s]) seasons[s] = [];
+                seasons[s].push(ep);
+            });
+            
+            const seasonKeys = Object.keys(seasons).sort((a,b) => a-b);
+            
+            seasonKeys.forEach(s => {
+                const sTitle = document.createElement('div');
+                sTitle.textContent = `Temporada ${s}`;
+                sTitle.style.color = '#fff';
+                sTitle.style.fontWeight = 'bold';
+                sTitle.style.padding = '10px 5px';
+                sTitle.style.marginTop = '10px';
+                sTitle.style.borderBottom = '1px solid #333';
+                epListContent.appendChild(sTitle);
+                
+                seasons[s].forEach(ep => {
+                    const el = document.createElement('div');
+                    const isCurrent = (ep.season_number === episodes[currentEpIndex].season_number && ep.episode_number === episodes[currentEpIndex].episode_number);
+                    
+                    el.style.padding = '10px';
+                    el.style.cursor = 'pointer';
+                    el.style.color = isCurrent ? '#9333ea' : '#aaa';
+                    el.style.background = isCurrent ? 'rgba(147, 51, 234, 0.1)' : 'transparent';
+                    el.style.borderBottom = '1px solid #333';
+                    el.innerHTML = `<span style="font-weight:bold">${ep.episode_number}.</span> ${ep.title}`;
+                    
+                    el.onmouseover = () => { if(!isCurrent) el.style.background = 'rgba(255,255,255,0.05)'; };
+                    el.onmouseout = () => { if(!isCurrent) el.style.background = 'transparent'; };
+                    
+                    el.onclick = () => {
+                        window.location.href = `./player.html?type=series&id=${seriesId}&s=${ep.season_number}&e=${ep.episode_number}`;
+                    };
+                    
+                    epListContent.appendChild(el);
+                });
+            });
+            
+            epListModal.style.display = 'flex';
+        };
+    }
+    
+    if (closeEpListModal) closeEpListModal.onclick = () => epListModal.style.display = 'none';
+    if (epListModal) epListModal.onclick = (e) => { if (e.target === epListModal) epListModal.style.display = 'none'; };
+
+    // Next Episode Overlay Logic
+    if (btnPlayNextNow) btnPlayNextNow.onclick = playNext;
+    if (btnCancelNext) btnCancelNext.onclick = () => {
+        nextEpOverlay.style.display = 'none';
+        isNextOverlayShown = true; // Prevent showing again for this playback
+    };
+
+    // Auto-play listener
+    video.addEventListener('timeupdate', () => {
+        if (!hasNext() || isNextOverlayShown) return;
+        
+        if (video.duration > 0 && (video.duration - video.currentTime <= 10)) {
+            // Show overlay
+            isNextOverlayShown = true;
+            nextEpOverlay.style.display = 'block';
+            
+            const nextEp = getNextEp();
+            nextEpTitle.textContent = `S${nextEp.season_number}:E${nextEp.episode_number} - ${nextEp.title}`;
+            
+            nextEpProgress.style.transition = 'none';
+            nextEpProgress.style.width = '100%';
+            
+            // Force reflow
+            void nextEpProgress.offsetWidth;
+            
+            const remaining = video.duration - video.currentTime;
+            nextEpProgress.style.transition = `width ${remaining}s linear`;
+            nextEpProgress.style.width = '0%';
+        }
+    });
+    
+    video.addEventListener('ended', () => {
+        if (hasNext()) {
+            playNext();
+        }
+    });
+    
+    updateButtons();
+}
+
 export async function initPlayer() {
     console.log("Player Initialized v2 - Debug Check");
     if (typeof getProxiedStreamUrl !== 'function') {
@@ -732,6 +886,11 @@ export async function initPlayer() {
         
         // Initialize Settings UI
         setupSettingsUI(video, detail);
+
+        // Initialize Series Controls
+        if (detail.episodes && detail.episodes.length > 0) {
+            setupSeriesControls(detail, video);
+        }
         
         // Initialize Custom Controls
         setupCustomControls(video);

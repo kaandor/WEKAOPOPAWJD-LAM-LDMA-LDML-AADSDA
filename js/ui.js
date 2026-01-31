@@ -360,7 +360,7 @@ export async function initSeries() {
                     metaLeft: "", // Year removed as requested
                     metaRight: series.rating ? `★ ${series.rating}` : "",
                     onClick: () => {
-                        window.location.href = `./player.html?type=series&id=${encodeURIComponent(series.id)}`;
+                        window.showSeriesModal(series.id);
                     }
                 });
             });
