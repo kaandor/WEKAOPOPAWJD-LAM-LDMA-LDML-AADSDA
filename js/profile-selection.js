@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20240130";
+import { api } from "./api.js?v=20260131";
 import { requireAuth } from "./auth.js";
 
 // Ensure user is logged in
