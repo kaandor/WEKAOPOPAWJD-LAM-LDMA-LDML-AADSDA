@@ -87,9 +87,11 @@ function filterRestrictedContent(items) {
         
         if (keywords18.some(kw => combined.includes(kw))) contentRating = 18;
         else if (keywords16.some(kw => combined.includes(kw))) contentRating = 16;
-        else if (keywords14.some(kw => combined.includes(kw))) contentRating = 14;
-        // Safe check moved UP to override Adventure/Comedy for Animations (fix for Kids profile)
+        // Safe check moved UP to override Action/Adventure/Comedy for Animations (fix for Kids profile)
+        // Must be checked BEFORE 14+ (Action) and 12+ (Adventure) to ensure Kids content isn't hidden
         else if (keywordsSafe.some(kw => combined.includes(kw))) contentRating = 0; // Livre
+        
+        else if (keywords14.some(kw => combined.includes(kw))) contentRating = 14;
         else if (keywords12.some(kw => combined.includes(kw))) contentRating = 12;
         else if (keywords10.some(kw => combined.includes(kw))) contentRating = 10;
         
