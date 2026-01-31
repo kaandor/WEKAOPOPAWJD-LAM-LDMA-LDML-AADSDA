@@ -384,7 +384,7 @@ export const api = {
         if (this._syncTimer) clearTimeout(this._syncTimer);
         this._syncTimer = setTimeout(() => {
             this.syncUp();
-        }, 5000); // Wait 5 seconds after last change
+        }, 1000); // Wait 1 second (faster sync)
     },
 
     // 4. RESET / WIPE CLOUD DATA
@@ -1140,7 +1140,7 @@ export const api = {
           const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           return { ok: true, data: profiles };
       },
-      create(data) {
+      async create(data) {
           // Check plan limits
           const user = JSON.parse(localStorage.getItem("klyx.session") || "{}").user;
           const key = this._getUserProfilesKey();
@@ -1169,10 +1169,14 @@ export const api = {
 
           profiles.push(newProfile);
           localStorage.setItem(key, JSON.stringify(profiles));
-          api.cloud.scheduleSyncUp();
+          
+          // Force Immediate Sync for Critical Data
+          console.log("Creating Profile - Forcing Immediate Sync");
+          await api.cloud.syncUp();
+          
           return { ok: true, data: newProfile };
       },
-      update(id, data) {
+      async update(id, data) {
           const key = this._getUserProfilesKey();
           const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           const index = profiles.findIndex(p => p.id === id);
@@ -1181,10 +1185,13 @@ export const api = {
           
           profiles[index] = { ...profiles[index], ...data };
           localStorage.setItem(key, JSON.stringify(profiles));
-          api.cloud.scheduleSyncUp();
+          
+          // Force Immediate Sync for Critical Data
+          await api.cloud.syncUp();
+          
           return { ok: true, data: profiles[index] };
       },
-      delete(id) {
+      async delete(id) {
           const key = this._getUserProfilesKey();
           let profiles = JSON.parse(localStorage.getItem(key) || "[]");
           // Prevent deleting the last profile
@@ -1194,7 +1201,10 @@ export const api = {
           
           profiles = profiles.filter(p => p.id !== id);
           localStorage.setItem(key, JSON.stringify(profiles));
-          api.cloud.scheduleSyncUp();
+          
+          // Force Immediate Sync for Critical Data
+          await api.cloud.syncUp();
+          
           return { ok: true };
       },
       setCurrent(id) {
