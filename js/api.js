@@ -47,28 +47,40 @@ function normalize(item) {
 function filterRestrictedContent(items) {
     if (!items || !Array.isArray(items)) return [];
     
-    // Check if Parental Control is active (default: true)
-    const isActive = localStorage.getItem("klyx_parental_active") !== "false";
-    if (!isActive) return items;
+    // Check Content Rating Limit (set by profile)
+    // Default to 18 (unrestricted) if not set
+    const ratingLimit = parseInt(localStorage.getItem("klyx_content_rating_limit") || "18");
     
-    // Expanded keywords list
-    const restrictedKeywords = [
-        "xxx", "adult", "porn", "sex", "+18", "18+", 
-        "brazzers", "vivthomas", "hentai", "erotic",
-        "[xxx]", "(xxx)", "uncensored", "sexo", "nude"
-    ];
+    // Check if Parental Control is active (legacy flag)
+    const isParentalActive = localStorage.getItem("klyx_parental_active") !== "false";
+    
+    // If unrestricted (18+) and parental control off, return all
+    if (ratingLimit >= 18 && !isParentalActive) return items;
+    
+    // Keywords for rating classification (Simple Heuristic)
+    const keywords18 = ["xxx", "adult", "porn", "sex", "+18", "18+", "erotic", "nude", "horror", "terror"];
+    const keywords16 = ["violence", "crime", "drug", "16+"];
+    const keywords14 = ["action", "fight", "14+"];
+    const keywords12 = ["adventure", "drama", "12+"];
+    const keywords10 = ["comedy", "family", "10+"];
     
     return items.filter(item => {
         if (!item) return false;
         const title = (item.title || "").toLowerCase();
         const category = (item.category || "").toLowerCase();
+        const combined = title + " " + category;
         
-        // Check title and category for keywords
-        const isRestricted = restrictedKeywords.some(kw => 
-            title.includes(kw) || category.includes(kw)
-        );
+        // Determine approximate rating of content
+        let contentRating = 0; // Default: Safe for all (G)
         
-        return !isRestricted;
+        if (keywords18.some(kw => combined.includes(kw))) contentRating = 18;
+        else if (keywords16.some(kw => combined.includes(kw))) contentRating = 16;
+        else if (keywords14.some(kw => combined.includes(kw))) contentRating = 14;
+        else if (keywords12.some(kw => combined.includes(kw))) contentRating = 12;
+        else if (keywords10.some(kw => combined.includes(kw))) contentRating = 10;
+        
+        // Filter out if content rating exceeds profile limit
+        return contentRating <= ratingLimit;
     });
 }
 
@@ -271,6 +283,7 @@ export const api = {
         clearSession();
         return { ok: true };
     },
+    
     // Configuration for GitHub OAuth
     githubConfig: {
         clientId: localStorage.getItem("klyx_gh_client_id") || "Ov23li81yQjUN8E4lIAa",
@@ -700,25 +713,126 @@ export const api = {
         return { ok: true, data }; 
     }
   },
-  profiles: {
-      async list() {
-          let profiles = [];
-          try {
-             profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
-          } catch(e) {}
+  search: {
+      async query(q) {
+          if (!q) return { ok: false, data: { error: "Query empty" } };
+          q = q.toLowerCase();
           
-          if (profiles.length === 0) {
-              profiles = [{ id: "p1", name: "Perfil Demo", avatar: "" }];
-              localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
-          }
+          // Search Movies (already filtered by restriction)
+          const moviesRes = await api.movies.list();
+          const movies = moviesRes.ok ? moviesRes.data : [];
+          
+          // Search Series (already filtered by restriction)
+          const seriesRes = await api.content.getSeries();
+          const series = seriesRes.ok ? (seriesRes.data.series || []) : [];
+          
+          // Filter
+          const results = [];
+          
+          movies.forEach(m => {
+              if (m.title.toLowerCase().includes(q)) {
+                  results.push({ ...m, type: 'movie', image_url: m.poster });
+              }
+          });
+          
+          series.forEach(s => {
+              if (s.title.toLowerCase().includes(q)) {
+                  results.push({ ...s, type: 'series', image_url: s.poster });
+              }
+          });
+          
+          return { ok: true, data: { results } };
+      }
+  },
+  profiles: {
+      list() {
+          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
           return { ok: true, data: profiles };
       },
-      async create({ name }) {
-          let profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
-          const newProfile = { id: "p" + Date.now(), name, avatar: "" };
+      create(data) {
+          // Check plan limits
+          const user = JSON.parse(localStorage.getItem("klyx.session") || "{}").user;
+          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          
+          // Default plan limits (Mock)
+          // Individual: 1 profile (owner)
+          // Premium: 4 profiles
+          const plan = user?.plan || "premium"; // Default to premium for demo/dev
+          const limit = plan === "individual" ? 1 : 4;
+
+          if (profiles.length >= limit) {
+              return { ok: false, data: { error: `Limite de perfis atingido (${limit}) para o plano ${plan}.` } };
+          }
+
+          const newProfile = {
+              id: "p" + Date.now(),
+              name: data.name,
+              avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name}`,
+              age: parseInt(data.age) || 18,
+              isKid: (parseInt(data.age) || 18) <= 12,
+              pin: data.pin || null, // For adult profiles if needed
+              created_at: new Date().toISOString()
+          };
+
           profiles.push(newProfile);
           localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
           return { ok: true, data: newProfile };
+      },
+      update(id, data) {
+          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const index = profiles.findIndex(p => p.id === id);
+          
+          if (index === -1) return { ok: false, data: { error: "Perfil não encontrado" } };
+          
+          profiles[index] = { ...profiles[index], ...data };
+          localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          return { ok: true, data: profiles[index] };
+      },
+      delete(id) {
+          let profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          // Prevent deleting the last profile
+          if (profiles.length <= 1) {
+              return { ok: false, data: { error: "Você não pode excluir o último perfil." } };
+          }
+          
+          profiles = profiles.filter(p => p.id !== id);
+          localStorage.setItem("klyx.profiles", JSON.stringify(profiles));
+          return { ok: true };
+      },
+      setCurrent(id) {
+          localStorage.setItem("klyx_profile_id", id);
+          
+          // Apply Age Restrictions based on profile
+          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          const profile = profiles.find(p => p.id === id);
+          
+          if (profile) {
+              // Determine content restriction level
+              // 18+: No restriction
+              // 16-17: Block 18+
+              // 14-15: Block 16+
+              // 10-13: Block 14+
+              // <10: Kids mode (Block 10+)
+              
+              let maxRating = 18;
+              if (profile.age < 18) maxRating = 16;
+              if (profile.age < 16) maxRating = 14;
+              if (profile.age < 14) maxRating = 12;
+              if (profile.age < 12) maxRating = 10;
+              if (profile.age < 10) maxRating = 0; // Kids only
+              
+              localStorage.setItem("klyx_content_rating_limit", maxRating.toString());
+              
+              // Also toggle parental control flag for legacy checks
+              localStorage.setItem("klyx_parental_active", (profile.age < 18).toString());
+          }
+          
+          return { ok: true };
+      },
+      getCurrent() {
+          const id = localStorage.getItem("klyx_profile_id");
+          const profiles = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+          return profiles.find(p => p.id === id) || profiles[0];
       }
   }
 };
