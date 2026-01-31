@@ -232,6 +232,28 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                      video.currentTime = startTime;
                  }
             }
+
+            // AUTO-LANDSCAPE & FULLSCREEN LOGIC
+            // Attempt to force landscape or enter fullscreen on mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                try {
+                    // iOS specific
+                    if (video.webkitEnterFullscreen) {
+                        video.webkitEnterFullscreen();
+                    } 
+                    // Android / Generic
+                    else if (document.documentElement.requestFullscreen) {
+                        await document.documentElement.requestFullscreen();
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(err => console.warn("Orientation lock failed:", err));
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Fullscreen/Orientation failed:", e);
+                }
+            }
+
             await video.play();
         } catch (err) {
             if (err.name !== 'AbortError') {
