@@ -7,10 +7,11 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "DIRECT_HTTPS", // Try upgrading HTTP to HTTPS first
     "https://api.codetabs.com/v1/proxy?quest=",
+    "https://corsproxy.io/?", // Worth retrying as fallback
     "https://api.allorigins.win/raw?url=",
-    "https://thingproxy.freeboard.io/fetch/"
+    "https://thingproxy.freeboard.io/fetch/",
+    "DIRECT_HTTPS" // Moved to end: Only try direct upgrade if proxies fail
 ];
 
 function getProxiedStreamUrl(url, proxyIndex = 0) {
@@ -271,9 +272,9 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             if (Hls.isSupported()) {
                 // Add timeouts to fail fast on bad proxies
                 const hls = new Hls({
-                    manifestLoadingTimeOut: 20000,
-                    fragLoadingTimeOut: 20000,
-                    levelLoadingTimeOut: 20000
+                    manifestLoadingTimeOut: 5000, // Reduced from 20s to 5s for faster failover
+                    fragLoadingTimeOut: 5000,
+                    levelLoadingTimeOut: 5000
                 });
                 currentHls = hls; // Save reference
                 hls.loadSource(finalUrl);
