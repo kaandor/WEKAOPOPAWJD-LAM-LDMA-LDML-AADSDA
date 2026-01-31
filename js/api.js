@@ -58,22 +58,34 @@ function filterRestrictedContent(items) {
     if (ratingLimit >= 18 && !isParentalActive) return items;
     
     // Keywords for rating classification (Simple Heuristic)
-    const keywords18 = ["xxx", "adult", "porn", "sex", "+18", "18+", "erotic", "nude", "horror", "terror", "hot", "hentai", "sexo"];
+    // Explicit Adult Content (Requires specific permission + PIN)
+    const keywordsExplicit = ["xxx", "porn", "hentai", "adultos", "erotic", "nude", "sexo explicito"];
+    // Standard 18+ Content (Horror, Thriller, Strong Violence)
+    const keywords18 = ["adult", "sex", "+18", "18+", "horror", "terror", "hot", "sexo", "violencia extrema", "gore"];
+    
     const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato"];
     const keywords14 = ["action", "fight", "14+", "acao", "luta", "guerra", "tiro"];
     const keywords12 = ["adventure", "drama", "12+", "aventura", "suspense", "romance"];
     const keywords10 = ["comedy", "family", "10+", "comedia", "familia"];
     const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar"];
     
+    // Get profile permissions
+    const isExplicitAllowed = localStorage.getItem("klyx_profile_explicit_allowed") === "true";
+
     return items.filter(item => {
         if (!item) return false;
         const title = (item.title || "").toLowerCase();
         const category = (item.category || "").toLowerCase();
         const combined = title + " " + category;
         
+        // 1. Check for Explicit Content FIRST
+        if (keywordsExplicit.some(kw => combined.includes(kw))) {
+            // Only show if explicit content is allowed AND user is 18+
+            return ratingLimit >= 18 && isExplicitAllowed;
+        }
+
         // Determine approximate rating of content
         // Default: 12 (Teen) - Safer fallback for unknown content
-        // This prevents "unknown" content from appearing in Kids profiles (<10)
         let contentRating = 12; 
         
         if (keywords18.some(kw => combined.includes(kw))) contentRating = 18;
@@ -825,7 +837,10 @@ export const api = {
               if (profile.age < 12) maxRating = 10;
               if (profile.age < 10) maxRating = 0; // Kids only
               
+              localStorage.setItem("klyx_active_profile_name", profile.name);
+              localStorage.setItem("klyx_active_profile_avatar", profile.avatar);
               localStorage.setItem("klyx_content_rating_limit", maxRating.toString());
+              localStorage.setItem("klyx_profile_explicit_allowed", profile.allowExplicit ? "true" : "false");
               
               // Also toggle parental control flag for legacy checks
               localStorage.setItem("klyx_parental_active", (profile.age < 18).toString());

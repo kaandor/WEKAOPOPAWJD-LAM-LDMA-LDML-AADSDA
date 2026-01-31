@@ -17,11 +17,49 @@ const profileModal = document.getElementById("profileModal");
 const modalTitle = document.getElementById("modalTitle");
 const profileNameInput = document.getElementById("profileName");
 const profileAgeInput = document.getElementById("profileAge");
+const adultContentSection = document.getElementById("adultContentSection");
+const profileAllowExplicit = document.getElementById("profileAllowExplicit");
+const pinSection = document.getElementById("pinSection");
+const profilePinInput = document.getElementById("profilePin");
+
 const modalAvatarPreview = document.getElementById("modalAvatarPreview");
 const changeAvatarBtn = document.getElementById("changeAvatarBtn");
 const deleteProfileBtn = document.getElementById("deleteProfileBtn");
 const cancelProfileBtn = document.getElementById("cancelProfileBtn");
 const saveProfileBtn = document.getElementById("saveProfileBtn");
+
+// PIN Verification Modal (Created dynamically)
+let pinVerificationCallback = null;
+const pinModal = document.createElement("div");
+pinModal.className = "fixed inset-0 bg-black/90 flex items-center justify-center hidden z-[60]";
+pinModal.innerHTML = `
+    <div class="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-sm border border-gray-800 text-center">
+        <h3 class="text-xl font-bold text-white mb-4">Digite o PIN do Perfil</h3>
+        <p class="text-gray-400 text-sm mb-6">Este perfil é protegido.</p>
+        <input type="password" id="verificationPin" maxlength="4" class="w-full bg-gray-800 text-white text-center text-3xl tracking-[0.5em] rounded p-4 mb-6 focus:outline-none focus:ring-2 focus:ring-purple-600" placeholder="0000">
+        <div class="flex gap-3">
+            <button id="cancelPinBtn" class="flex-1 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">Cancelar</button>
+            <button id="submitPinBtn" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Entrar</button>
+        </div>
+    </div>
+`;
+document.body.appendChild(pinModal);
+
+const verificationPinInput = pinModal.querySelector("#verificationPin");
+pinModal.querySelector("#cancelPinBtn").onclick = () => {
+    pinModal.classList.add("hidden");
+    verificationPinInput.value = "";
+    pinVerificationCallback = null;
+};
+pinModal.querySelector("#submitPinBtn").onclick = () => verifyPin();
+verificationPinInput.onkeydown = (e) => { if (e.key === "Enter") verifyPin(); };
+
+function verifyPin() {
+    const pin = verificationPinInput.value;
+    if (pinVerificationCallback) {
+        pinVerificationCallback(pin);
+    }
+}
 
 // Icon Selector Elements
 const iconSelectorModal = document.getElementById("iconSelectorModal");
@@ -99,7 +137,25 @@ function render() {
             if (isManageMode) {
                 openEditModal(p);
             } else {
-                selectProfile(p);
+                // Check if profile is locked (Explicit Content enabled)
+                if (p.allowExplicit && p.pin) {
+                    verificationPinInput.value = "";
+                    pinModal.classList.remove("hidden");
+                    verificationPinInput.focus();
+                    
+                    pinVerificationCallback = (pin) => {
+                        if (pin === p.pin) {
+                            pinModal.classList.add("hidden");
+                            selectProfile(p);
+                        } else {
+                            alert("PIN incorreto.");
+                            verificationPinInput.value = "";
+                            verificationPinInput.focus();
+                        }
+                    };
+                } else {
+                    selectProfile(p);
+                }
             }
         });
         
@@ -159,6 +215,15 @@ function openCreateModal() {
     profileNameInput.value = "";
     profileAgeInput.value = "18"; // Default
     
+    // Reset adult content fields
+    adultContentSection.classList.remove("hidden"); // Show by default if 18, check logic below
+    profileAllowExplicit.checked = false;
+    pinSection.classList.add("hidden");
+    profilePinInput.value = "";
+    
+    // Trigger age change to set visibility
+    profileAgeInput.dispatchEvent(new Event('change'));
+
     // Random default avatar
     const randomIcon = AVAILABLE_ICONS[Math.floor(Math.random() * AVAILABLE_ICONS.length)];
     selectedAvatarUrl = randomIcon;
@@ -174,6 +239,17 @@ function openEditModal(profile) {
     modalTitle.textContent = "Editar Perfil";
     profileNameInput.value = profile.name;
     profileAgeInput.value = profile.age || "18";
+    
+    // Set adult content fields
+    profileAllowExplicit.checked = !!profile.allowExplicit;
+    profilePinInput.value = profile.pin || "";
+    
+    // Trigger age change to set visibility of section
+    profileAgeInput.dispatchEvent(new Event('change'));
+    
+    // Trigger check change to set visibility of PIN
+    profileAllowExplicit.dispatchEvent(new Event('change'));
+    
     selectedAvatarUrl = profile.avatar;
     modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
     
@@ -190,6 +266,13 @@ async function saveProfile() {
     if (!name) return;
     
     const age = parseInt(profileAgeInput.value);
+    const allowExplicit = profileAllowExplicit.checked;
+    const pin = profilePinInput.value.trim();
+    
+    if (allowExplicit && (!pin || pin.length !== 4)) {
+        alert("Para ativar conteúdo adulto, você deve definir um PIN de 4 dígitos.");
+        return;
+    }
     
     saveProfileBtn.disabled = true;
     saveProfileBtn.textContent = "Salvando...";
@@ -201,14 +284,18 @@ async function saveProfile() {
             res = await api.profiles.update(currentEditingProfileId, {
                 name,
                 age,
-                avatar: selectedAvatarUrl
+                avatar: selectedAvatarUrl,
+                allowExplicit,
+                pin
             });
         } else {
             // Create
             res = await api.profiles.create({
                 name,
                 age,
-                avatar: selectedAvatarUrl
+                avatar: selectedAvatarUrl,
+                allowExplicit,
+                pin
             });
         }
         
@@ -295,6 +382,28 @@ function setupEventListeners() {
     // Enter key to save
     profileNameInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") saveProfile();
+    });
+    
+    // Age change logic
+    profileAgeInput.addEventListener("change", (e) => {
+        const age = parseInt(e.target.value);
+        if (age >= 18) {
+            adultContentSection.classList.remove("hidden");
+        } else {
+            adultContentSection.classList.add("hidden");
+            profileAllowExplicit.checked = false; // Auto uncheck if under 18
+            pinSection.classList.add("hidden");
+            profilePinInput.value = "";
+        }
+    });
+    
+    // Explicit toggle logic
+    profileAllowExplicit.addEventListener("change", (e) => {
+        if (e.target.checked) {
+            pinSection.classList.remove("hidden");
+        } else {
+            pinSection.classList.add("hidden");
+        }
     });
 }
 
