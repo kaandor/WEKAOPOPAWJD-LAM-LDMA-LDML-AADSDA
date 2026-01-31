@@ -58,11 +58,12 @@ function filterRestrictedContent(items) {
     if (ratingLimit >= 18 && !isParentalActive) return items;
     
     // Keywords for rating classification (Simple Heuristic)
-    const keywords18 = ["xxx", "adult", "porn", "sex", "+18", "18+", "erotic", "nude", "horror", "terror"];
-    const keywords16 = ["violence", "crime", "drug", "16+"];
-    const keywords14 = ["action", "fight", "14+"];
-    const keywords12 = ["adventure", "drama", "12+"];
-    const keywords10 = ["comedy", "family", "10+"];
+    const keywords18 = ["xxx", "adult", "porn", "sex", "+18", "18+", "erotic", "nude", "horror", "terror", "hot", "hentai", "sexo"];
+    const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato"];
+    const keywords14 = ["action", "fight", "14+", "acao", "luta", "guerra", "tiro"];
+    const keywords12 = ["adventure", "drama", "12+", "aventura", "suspense", "romance"];
+    const keywords10 = ["comedy", "family", "10+", "comedia", "familia"];
+    const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar"];
     
     return items.filter(item => {
         if (!item) return false;
@@ -71,13 +72,16 @@ function filterRestrictedContent(items) {
         const combined = title + " " + category;
         
         // Determine approximate rating of content
-        let contentRating = 0; // Default: Safe for all (G)
+        // Default: 12 (Teen) - Safer fallback for unknown content
+        // This prevents "unknown" content from appearing in Kids profiles (<10)
+        let contentRating = 12; 
         
         if (keywords18.some(kw => combined.includes(kw))) contentRating = 18;
         else if (keywords16.some(kw => combined.includes(kw))) contentRating = 16;
         else if (keywords14.some(kw => combined.includes(kw))) contentRating = 14;
         else if (keywords12.some(kw => combined.includes(kw))) contentRating = 12;
         else if (keywords10.some(kw => combined.includes(kw))) contentRating = 10;
+        else if (keywordsSafe.some(kw => combined.includes(kw))) contentRating = 0; // Livre
         
         // Filter out if content rating exceeds profile limit
         return contentRating <= ratingLimit;
