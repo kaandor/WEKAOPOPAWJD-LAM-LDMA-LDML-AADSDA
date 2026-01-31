@@ -310,7 +310,9 @@ export const api = {
         if (gist) {
             const file = gist.files[this.GIST_FILENAME];
             if (file && file.raw_url) {
-                const res = await fetch(file.raw_url);
+                // FORCE NO-CACHE: Add timestamp to URL to bypass GitHub raw file caching
+                const noCacheUrl = file.raw_url + (file.raw_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                const res = await fetch(noCacheUrl);
                 const cloudData = await res.json();
                 
                 // Restore to LocalStorage
