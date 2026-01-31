@@ -419,20 +419,6 @@ function setupEventListeners() {
         if (e.key === "Enter") saveProfile();
     });
     
-    // Age change logic REMOVED
-    /*
-    profileAgeInput.addEventListener("change", (e) => {
-        const age = parseInt(e.target.value);
-        if (age >= 18) {
-            adultContentSection.classList.remove("hidden");
-        } else {
-            adultContentSection.classList.add("hidden");
-            profileAllowExplicit.checked = false; 
-            pinSection.classList.add("hidden");
-        }
-    });
-    */
-    
     // Explicit toggle logic
     profileAllowExplicit.addEventListener("change", (e) => {
         // Keep pin section hidden always, handled by prompt
