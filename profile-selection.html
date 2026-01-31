@@ -387,6 +387,86 @@
         }
       }
 
+      /* Toggle Switch & Adult Section */
+      .adult-section {
+        border: 1px solid rgba(220, 38, 38, 0.5);
+        background: rgba(220, 38, 38, 0.1);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+      }
+
+      .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #444;
+        transition: .4s;
+        border-radius: 34px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: #dc2626;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(22px);
+      }
+      
+      .pin-input {
+        width: 100%;
+        background: #000;
+        border: 1px solid #444;
+        color: #fff;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 1.5rem;
+        text-align: center;
+        letter-spacing: 0.5em;
+        margin-top: 5px;
+      }
+      
+      .pin-input:focus {
+        border-color: #dc2626;
+        outline: none;
+      }
+
       @keyframes fadeIn {
         from { opacity: 0; transform: scale(1.1); }
         to { opacity: 1; transform: scale(1); }
@@ -431,9 +511,9 @@
             </div>
             
             <!-- Age Selection -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Idade</label>
-                <select id="profileAge" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-600">
+            <div class="form-group">
+                <label for="profileAge">Idade</label>
+                <select id="profileAge">
                     <option value="18">18+ (Sem restrições)</option>
                     <option value="16">16+ (Não recomendado para menores de 16)</option>
                     <option value="14">14+ (Não recomendado para menores de 14)</option>
@@ -444,22 +524,22 @@
             </div>
 
             <!-- Adult Content Toggle (Hidden by default, shown only for 18+) -->
-            <div id="adultContentSection" class="hidden border border-red-900/50 bg-red-900/10 p-3 rounded-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <label class="block text-sm font-medium text-red-400">Ativar conteúdo adulto (XXX)?</label>
-                        <p class="text-xs text-gray-400">Exige senha PIN para acessar o perfil.</p>
+            <div id="adultContentSection" class="adult-section hidden">
+                <div class="toggle-container">
+                    <div style="margin-right: 15px;">
+                        <label style="display: block; color: #f87171; font-weight: 500; margin-bottom: 2px;">Ativar conteúdo adulto (XXX)?</label>
+                        <p style="margin: 0; font-size: 0.8rem; color: #9ca3af;">Exige senha PIN para acessar.</p>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="profileAllowExplicit" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="profileAllowExplicit">
+                        <span class="slider"></span>
                     </label>
                 </div>
 
                 <!-- PIN Input (Shown only when Adult Content is checked) -->
-                <div id="pinSection" class="mt-3 hidden">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Crie um PIN de 4 dígitos</label>
-                    <input type="tel" id="profilePin" maxlength="4" placeholder="0000" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-red-600 text-center tracking-widest text-lg">
+                <div id="pinSection" class="hidden">
+                    <label style="display: block; color: #ccc; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">Crie um PIN de 4 dígitos</label>
+                    <input type="tel" id="profilePin" maxlength="4" placeholder="0000" class="pin-input">
                 </div>
             </div>
           </div>
