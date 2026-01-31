@@ -300,16 +300,27 @@ export const api = {
                 // Restore to LocalStorage
                 const user = readSession().user;
                 if (user) {
-                    if (cloudData.profiles) localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(cloudData.profiles));
-                    if (cloudData.progress) localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(cloudData.progress));
+                    // Force overwrite from cloud - Hive Mind Authority
+                    const profiles = cloudData.profiles || [];
+                    const progress = cloudData.progress || {};
+                    
+                    localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(profiles));
+                    localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(progress));
                     
                     // Sync Account-Bound Device Identity (MAC/Key)
-                    if (cloudData.deviceIdentity) {
+                    // If Cloud has Identity, Enforce it.
+                    if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
                         localStorage.setItem('klyx_device_mac', cloudData.deviceIdentity.mac);
                         localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
+                    } else {
+                        // If Cloud has NO Identity (e.g. fresh account or reset),
+                        // and we have one locally, we should probably keep it and let syncUp push it later.
+                        // BUT, if we just reset, we want to clear it?
+                        // Actually, reset() handles clearing. 
+                        // If we are here, it's a normal sync.
                     }
                     
-                    console.log("☁️ Sync Down Complete");
+                    console.log("☁️ Sync Down Complete (Hive Mind Active)");
                 }
             }
         } else {
@@ -370,11 +381,12 @@ export const api = {
         // 1. Wipe Cloud Gist
         const gist = await this._findGist(token);
         if (gist) {
-            // Write empty structure
+            // Write empty structure with explicit NULL identity
             await this._updateGist(token, gist.id, {
                 updatedAt: new Date().toISOString(),
                 profiles: [], // Empty profiles
-                progress: {}  // Empty progress
+                progress: {}, // Empty progress
+                deviceIdentity: { mac: null, key: null } // Wipe identity
             });
         }
 
