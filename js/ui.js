@@ -491,6 +491,31 @@ export async function initSettings() {
         statusEl.style.background = "#4ade80";
         statusEl.style.color = "#000";
     }
+
+    // Reset Data Logic
+    const resetBtn = document.getElementById("resetData");
+    if (resetBtn) {
+        resetBtn.onclick = async () => {
+            const confirmReset = confirm("TEM CERTEZA? Isso apagará todos os perfis e histórico deste dispositivo E da nuvem. Use apenas para corrigir problemas ou começar do zero.");
+            
+            if (confirmReset) {
+                resetBtn.textContent = "Apagando...";
+                resetBtn.disabled = true;
+                
+                try {
+                    await api.cloud.reset();
+                    alert("Dados apagados com sucesso! O aplicativo será reiniciado.");
+                    // Force logout/reload
+                    api.session.clear();
+                    window.location.href = "./index.html";
+                } catch (e) {
+                    alert("Erro ao apagar dados: " + e.message);
+                    resetBtn.textContent = "Tentar Novamente";
+                    resetBtn.disabled = false;
+                }
+            }
+        };
+    }
 }
 
 // Global Series Modal Handler

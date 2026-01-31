@@ -208,6 +208,191 @@ export const api = {
         return true; // Always online for local demo
     }
   },
+  cloud: {
+    // Configuration
+    GIST_FILENAME: "klyx_user_data_v1.json",
+    GIST_DESCRIPTION: "Klyx App User Data - Do not delete",
+    _syncTimer: null,
+
+    // Helper: Get GitHub Token
+    _getToken() {
+        const session = readSession();
+        return session?.tokens?.accessToken;
+    },
+
+    // 1. Find existing Gist
+    async _findGist(token) {
+        try {
+            const res = await fetch("https://api.github.com/gists", {
+                headers: { "Authorization": `token ${token}` }
+            });
+            if (!res.ok) return null;
+            const gists = await res.json();
+            return gists.find(g => g.files && g.files[this.GIST_FILENAME]);
+        } catch (e) {
+            console.error("Gist Find Error", e);
+            return null;
+        }
+    },
+
+    // 2. Create new Gist
+    async _createGist(token, data) {
+        try {
+            const res = await fetch("https://api.github.com/gists", {
+                method: "POST",
+                headers: { 
+                    "Authorization": `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    description: this.GIST_DESCRIPTION,
+                    public: false,
+                    files: {
+                        [this.GIST_FILENAME]: {
+                            content: JSON.stringify(data, null, 2)
+                        }
+                    }
+                })
+            });
+            return await res.json();
+        } catch (e) {
+            console.error("Gist Create Error", e);
+            return null;
+        }
+    },
+
+    // 3. Update existing Gist
+    async _updateGist(token, gistId, data) {
+        try {
+            await fetch(`https://api.github.com/gists/${gistId}`, {
+                method: "PATCH",
+                headers: { 
+                    "Authorization": `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    files: {
+                        [this.GIST_FILENAME]: {
+                            content: JSON.stringify(data, null, 2)
+                        }
+                    }
+                })
+            });
+        } catch (e) {
+            console.error("Gist Update Error", e);
+        }
+    },
+
+    // SYNC DOWN: Cloud -> Local
+    async syncDown() {
+        const token = this._getToken();
+        if (!token || token.startsWith("klyx_")) return; // Skip if no token or demo token
+
+        console.log("☁️ Syncing Down from GitHub...");
+        const gist = await this._findGist(token);
+        
+        if (gist) {
+            const file = gist.files[this.GIST_FILENAME];
+            if (file && file.raw_url) {
+                const res = await fetch(file.raw_url);
+                const cloudData = await res.json();
+                
+                // Restore to LocalStorage
+                const user = readSession().user;
+                if (user) {
+                    if (cloudData.profiles) localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(cloudData.profiles));
+                    if (cloudData.progress) localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(cloudData.progress));
+                    
+                    // Sync Account-Bound Device Identity (MAC/Key)
+                    if (cloudData.deviceIdentity) {
+                        localStorage.setItem('klyx_device_mac', cloudData.deviceIdentity.mac);
+                        localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
+                    }
+                    
+                    console.log("☁️ Sync Down Complete");
+                }
+            }
+        } else {
+            console.log("☁️ No Gist found. Will create on first save.");
+        }
+    },
+
+    // SYNC UP: Local -> Cloud
+    async syncUp() {
+        const token = this._getToken();
+        if (!token || token.startsWith("klyx_")) return;
+
+        console.log("☁️ Syncing Up to GitHub...");
+        const user = readSession().user;
+        if (!user) return;
+
+        // Gather Local Data
+        const profiles = JSON.parse(localStorage.getItem(`klyx.profiles.${user.id}`) || "[]");
+        const progress = JSON.parse(localStorage.getItem(`klyx_progress_${user.id}`) || "{}");
+        
+        // Gather Device Identity (Account Bound)
+        const deviceIdentity = {
+            mac: localStorage.getItem('klyx_device_mac'),
+            key: localStorage.getItem('klyx_device_key')
+        };
+        
+        const data = {
+            updatedAt: new Date().toISOString(),
+            profiles,
+            progress,
+            deviceIdentity
+        };
+
+        const gist = await this._findGist(token);
+        if (gist) {
+            await this._updateGist(token, gist.id, data);
+        } else {
+            await this._createGist(token, data);
+        }
+        console.log("☁️ Sync Up Complete");
+    },
+
+    // Debounced Sync Up
+    scheduleSyncUp() {
+        if (this._syncTimer) clearTimeout(this._syncTimer);
+        this._syncTimer = setTimeout(() => {
+            this.syncUp();
+        }, 5000); // Wait 5 seconds after last change
+    },
+
+    // 4. RESET / WIPE CLOUD DATA
+    async reset() {
+        const token = this._getToken();
+        if (!token) return { ok: false, error: "Not logged in" };
+
+        console.log("🔥 RESETTING CLOUD DATA...");
+        
+        // 1. Wipe Cloud Gist
+        const gist = await this._findGist(token);
+        if (gist) {
+            // Write empty structure
+            await this._updateGist(token, gist.id, {
+                updatedAt: new Date().toISOString(),
+                profiles: [], // Empty profiles
+                progress: {}  // Empty progress
+            });
+        }
+
+        // 2. Wipe Local Data
+        const user = readSession().user;
+        if (user) {
+            localStorage.removeItem(`klyx.profiles.${user.id}`);
+            localStorage.removeItem(`klyx_progress_${user.id}`);
+            // Also reset Device Identity so it can be re-synced or re-generated
+            localStorage.removeItem('klyx_device_mac');
+            localStorage.removeItem('klyx_device_key');
+            // Keep the session active, but clear data
+        }
+
+        console.log("🔥 RESET COMPLETE");
+        return { ok: true };
+    }
+  },
   auth: {
     async login({ email, password }) {
         // Mock delay
@@ -327,7 +512,7 @@ export const api = {
         console.log("GitHub Auth Redirect URI:", this.githubConfig.redirectUri);
 
         // Redirect to GitHub
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email&state=${state}`;
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email,gist&state=${state}`;
         window.location.href = authUrl;
         
         // This promise will never resolve because of the redirect, which is expected
@@ -517,6 +702,9 @@ export const api = {
             // Login
             writeSession({ user, tokens: { accessToken, refreshToken: "gh-oauth" } });
             localStorage.setItem("klyx_parental_active", "true");
+
+            // Sync Cloud Data
+            await api.cloud.syncDown();
             
             return { ok: true, data: { user } };
             
@@ -554,12 +742,8 @@ export const api = {
               localData[contentId] = progressData;
               localStorage.setItem(localKey, JSON.stringify(localData));
               
-              // Save to Firebase (Async / Cross-Device)
-              const url = `${FIREBASE_DB_URL}/users/${userId}/playback/${contentId}.json`;
-              fetch(url, {
-                  method: 'PUT',
-                  body: JSON.stringify(progressData)
-              }).catch(e => console.warn("Firebase save failed (background)", e));
+              // Save to Cloud (GitHub Gist)
+              api.cloud.scheduleSyncUp();
               
               return { ok: true };
           } catch (e) {
@@ -575,15 +759,7 @@ export const api = {
           const userId = session.user.id;
           
           try {
-              // Try Firebase first for cross-device sync
-              const url = `${FIREBASE_DB_URL}/users/${userId}/playback/${contentId}.json`;
-              const res = await fetch(url);
-              if (res.ok) {
-                  const data = await res.json();
-                  if (data) return { ok: true, data };
-              }
-              
-              // Fallback to LocalStorage
+              // Read from LocalStorage (Synced via Cloud on Login)
               const localKey = `klyx_progress_${userId}`;
               const localData = JSON.parse(localStorage.getItem(localKey) || "{}");
               if (localData[contentId]) {
@@ -593,13 +769,7 @@ export const api = {
               return { ok: true, data: { progress: 0 } };
           } catch (e) {
               console.error("Get Progress Error", e);
-              // Fallback to LocalStorage on error
-              const localKey = `klyx_progress_${userId}`;
-              const localData = JSON.parse(localStorage.getItem(localKey) || "{}");
-              if (localData[contentId]) {
-                  return { ok: true, data: localData[contentId] };
-              }
-              return { ok: false, error: e.message };
+              return { ok: true, data: { progress: 0 } };
           }
       },
       
@@ -965,6 +1135,7 @@ export const api = {
 
           profiles.push(newProfile);
           localStorage.setItem(key, JSON.stringify(profiles));
+          api.cloud.scheduleSyncUp();
           return { ok: true, data: newProfile };
       },
       update(id, data) {
@@ -976,6 +1147,7 @@ export const api = {
           
           profiles[index] = { ...profiles[index], ...data };
           localStorage.setItem(key, JSON.stringify(profiles));
+          api.cloud.scheduleSyncUp();
           return { ok: true, data: profiles[index] };
       },
       delete(id) {
@@ -988,6 +1160,7 @@ export const api = {
           
           profiles = profiles.filter(p => p.id !== id);
           localStorage.setItem(key, JSON.stringify(profiles));
+          api.cloud.scheduleSyncUp();
           return { ok: true };
       },
       setCurrent(id) {
