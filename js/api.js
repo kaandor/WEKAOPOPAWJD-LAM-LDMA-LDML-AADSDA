@@ -54,13 +54,13 @@ function filterRestrictedContent(items) {
     // Keywords for rating classification (Simple Heuristic)
     // Explicit Adult Content (Requires specific permission + PIN)
     // Expanded list to catch more variations
-    const keywordsExplicit = ["xxx", "porn", "porno", "hentai", "adultos", "adults", "adult", "erotic", "nude", "sexo", "sex", "18+ explicit", "hardcore"];
+    const keywordsExplicit = ["xxx", "porn", "porno", "hentai", "adultos", "adults", "adult", "erotic", "nude", "sexo", "sex", "18+ explicit", "hardcore", "playboy", "erotico", "erótica", "erotica", "sexul"];
     
     // Standard 18+ Content (Horror, Thriller, Strong Violence, but not necessarily Porn)
     // Moved "adult", "sex" to Explicit
-    const keywords18 = ["+18", "18+", "horror", "terror", "hot", "violencia extrema", "gore", "thriller"];
+    const keywords18 = ["+18", "18+", "horror", "terror", "hot", "violencia extrema", "gore", "thriller", "suspense pesado", "morte"];
     
-    const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato"];
+    const keywords16 = ["violence", "crime", "drug", "16+", "violencia", "drogas", "assassinato", "misterio", "investigacao"];
     const keywords14 = ["action", "fight", "14+", "acao", "luta", "guerra", "tiro"];
     const keywords12 = ["adventure", "drama", "12+", "aventura", "suspense", "romance"];
     const keywords10 = ["comedy", "family", "10+", "comedia", "familia"];
@@ -536,17 +536,71 @@ export const api = {
   },
   movies: {
     async get(id) {
-        // Use list() to ensure we get the deduplicated version with Audio 2
-        const res = await api.movies.list();
-        if (!res.ok) return { ok: false, data: { error: "Failed to load movies" } };
+        // Fetch raw data to find any movie, even if hidden by deduplication
+        const data = await getLocalData("movies.json");
+        let rawMovies = (data?.movies || []).map(normalize);
         
-        let movie = res.data.find(m => m.id === id);
+        // Apply Parental Filter
+        rawMovies = filterRestrictedContent(rawMovies);
+        
+        let movie = rawMovies.find(m => m.id === id);
         if (!movie) return { ok: false, data: { error: "Movie not found" } };
         
-        // Ensure stream_url exists (fallback to sample if missing)
-        if (!movie.stream_url) {
-            movie.stream_url = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"; // Big Buck Bunny HLS
+        // Attempt to find sibling version (Dub/Sub) for Audio 2 support
+        // This reproduces the logic of deduplicateMovies for a single item
+        const title = movie.title.trim();
+        const lowerTitle = title.toLowerCase();
+        
+        // Determine if current is Subtitled
+        const isSubtitled = 
+            lowerTitle.endsWith(" [l]") || 
+            lowerTitle.endsWith(" (l)") || 
+            lowerTitle.includes("(legendado)") || 
+            lowerTitle.includes("[legendado]") ||
+            lowerTitle.includes(" legendado") ||
+            lowerTitle.includes(" - legendado");
+            
+        // Get Base Title
+        let baseTitle = title
+            .replace(/ \[L\]$/i, "")
+            .replace(/ \(L\)$/i, "")
+            .replace(/\(Legendado\)/i, "")
+            .replace(/\[Legendado\]/i, "")
+            .replace(/ - Legendado/i, "")
+            .replace(/ Legendado/i, "")
+            .trim();
+        if (baseTitle.endsWith(" -")) baseTitle = baseTitle.substring(0, baseTitle.length - 2).trim();
+        
+        // Find sibling
+        // If we are Dubbed, look for Subtitled
+        // If we are Subtitled, look for Dubbed
+        const sibling = rawMovies.find(m => {
+            if (m.id === id) return false; // Skip self
+            const t = m.title.trim();
+            return t.startsWith(baseTitle) && (
+                (isSubtitled && !t.toLowerCase().includes("legendado")) || // We are sub, looking for dub
+                (!isSubtitled && (t.toLowerCase().includes("legendado") || t.toLowerCase().includes("[l]"))) // We are dub, looking for sub
+            );
+        });
+        
+        if (sibling) {
+            if (isSubtitled) {
+                // If we are playing the Subtitled version, treat it as main but maybe offer Dubbed as Audio 2?
+                // Or just keep it as is.
+                console.log(`Playing Subtitled version: ${title}. Sibling (Dub) found: ${sibling.title}`);
+            } else {
+                // We are playing Dubbed, attach Subtitled as Audio 2
+                if (!movie.stream_url_subtitled_version) {
+                    movie.stream_url_subtitled_version = sibling.stream_url;
+                }
+            }
         }
+
+        // Ensure stream_url exists (fallback)
+        if (!movie.stream_url) {
+            movie.stream_url = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"; 
+        }
+        
         return { ok: true, data: { item: movie } };
     },
     async list() {

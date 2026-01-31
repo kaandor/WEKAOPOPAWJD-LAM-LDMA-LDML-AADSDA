@@ -1,5 +1,5 @@
 import { requireAuth } from "./auth.js";
-import { api } from "./api.js?v=20240130";
+import { api } from "./api.js?v=20260130";
 import { initInput } from "./input.js";
 
 function icon() {
@@ -12,7 +12,7 @@ function icon() {
 }
 
 export async function mountAppShell({ currentPath }) {
-  console.log('Klyx Router v3 Loaded - Profile Button Removed');
+  console.log('Klyx Router v7 Loaded - Force Update');
   initInput(); // Initialize TV Navigation globally
   const session = await requireAuth();
   if (!session) return;
@@ -97,10 +97,6 @@ export async function mountAppShell({ currentPath }) {
               <a href="./settings.html" class="dropdown-item focusable">
                 <span class="dropdown-icon">${icons.settings}</span>
                 Configurações
-              </a>
-              <a href="./profile-selection.html" class="dropdown-item focusable">
-                <span class="dropdown-icon">${icons.switch}</span>
-                Trocar Perfil
               </a>
               <div class="dropdown-divider"></div>
               <button id="logoutBtn" class="dropdown-item dropdown-danger focusable" type="button">
