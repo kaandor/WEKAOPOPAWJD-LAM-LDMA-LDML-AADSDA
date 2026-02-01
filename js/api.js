@@ -1331,6 +1331,12 @@ export const api = {
             let continueWatching = JSON.parse(localStorage.getItem(`klyx.continueWatching.${profileId}`) || "[]");
             continueWatching = continueWatching.filter(i => i.id !== id);
             localStorage.setItem(`klyx.continueWatching.${profileId}`, JSON.stringify(continueWatching));
+            
+            // Trigger Cloud Sync
+            if (api.cloud && api.cloud.scheduleSyncUp) {
+                api.cloud.scheduleSyncUp();
+            }
+
             return { ok: true };
         } catch (e) {
             return { ok: false };

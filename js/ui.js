@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-fixauth8";
+import { api } from "./api.js?v=20260201-logo1";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in
@@ -663,28 +663,25 @@ export async function initSettings() {
 
 // Global Series Modal Handler
 window.showSeriesModal = async function(seriesId) {
+    console.log("showSeriesModal called for ID:", seriesId);
     // 1. Create Backdrop
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop active'; 
+    backdrop.className = 'netflix-modal-backdrop active'; 
+    backdrop.style.zIndex = "10001"; // Force high z-index
     
     // 2. Create Modal Structure
     backdrop.innerHTML = `
-        <div class="series-modal">
-            <div class="series-modal-header">
-                <h2 class="series-modal-title">Carregando...</h2>
-                <button class="close-modal-btn">&times;</button>
-            </div>
-            <div class="series-modal-body">
-                <div style="display:flex; justify-content:center; padding: 40px;">
-                    <div class="loading-spinner"></div>
-                </div>
+        <div class="netflix-modal-content">
+            <button class="netflix-close-btn">&times;</button>
+            <div class="netflix-modal-body loading">
+                <div class="loading-spinner"></div>
             </div>
         </div>
     `;
     
     document.body.appendChild(backdrop);
     
-    const closeBtn = backdrop.querySelector('.close-modal-btn');
+    const closeBtn = backdrop.querySelector('.netflix-close-btn');
     const close = () => {
         backdrop.classList.remove('active');
         setTimeout(() => backdrop.remove(), 300);
@@ -723,75 +720,81 @@ window.showSeriesModal = async function(seriesId) {
         const seasonNumbers = Object.keys(seasons).sort((a, b) => a - b);
         
         // Update Modal Content
-        const titleEl = backdrop.querySelector('.series-modal-title');
-        const bodyEl = backdrop.querySelector('.series-modal-body');
-        
-        titleEl.textContent = series.title;
+        const bodyEl = backdrop.querySelector('.netflix-modal-body');
+        bodyEl.classList.remove('loading');
         
         // Render Body
         bodyEl.innerHTML = `
-            <div class="series-info">
-                <img class="series-poster" src="${getProxiedImage(series.poster)}" alt="${series.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Poster'">
-                <div class="series-details">
-                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 10px;">
-                        <span class="badge">Série</span>
-                        <span class="badge">★ ${series.rating || 'N/A'}</span>
-                        <span style="color:var(--muted)">${series.genre || ''}</span>
-                    </div>
-                    <div class="series-desc">${series.description || 'Sem descrição.'}</div>
+            <div class="netflix-hero">
+                <img class="netflix-poster" src="${getProxiedImage(series.poster)}" alt="${series.title}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                <div class="netflix-hero-gradient"></div>
+            </div>
+            
+            <div class="netflix-info-container">
+                <h2 style="font-size: 24px; margin-bottom: 10px; font-weight: bold;">${series.title}</h2>
+                <div class="netflix-meta-row" style="justify-content: flex-start;">
+                    <span class="match-score">${series.rating ? series.rating + ' ★' : ''}</span>
+                    <span class="meta-item">${series.year || ''}</span>
+                    <span class="badge" style="background:rgba(255,255,255,0.2); padding:0 6px;">Série</span>
                 </div>
-            </div>
-            
-            <div class="season-selector">
-                ${seasonNumbers.map((s, i) => `
-                    <button class="season-tab ${i === 0 ? 'active' : ''}" data-season="${s}">
-                        Temporada ${s}
-                    </button>
-                `).join('')}
-            </div>
-            
-            <div class="episodes-list">
-                <!-- Episodes will be injected here -->
+
+                <p class="netflix-description">${series.description || 'Sem descrição.'}</p>
+                
+                <div class="season-selector" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;">
+                    ${seasonNumbers.map((s, i) => `
+                        <button class="season-tab ${i === 0 ? 'active' : ''}" data-season="${s}" 
+                                style="background: ${i === 0 ? '#9333ea' : 'rgba(255,255,255,0.1)'}; border: none; color: white; padding: 8px 16px; border-radius: 20px; white-space: nowrap; cursor: pointer;">
+                            Temporada ${s}
+                        </button>
+                    `).join('')}
+                </div>
+                
+                <div class="episodes-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Episodes will be injected here -->
+                </div>
             </div>
         `;
         
         const listEl = bodyEl.querySelector('.episodes-list');
         const tabs = bodyEl.querySelectorAll('.season-tab');
-        const seasonSelector = bodyEl.querySelector('.season-selector');
-
-        // Enable Drag-to-Scroll for Season Selector
-        if (seasonSelector) setupDragScroll(seasonSelector);
         
         const renderEpisodes = (season) => {
             const seasonEps = seasons[season] || [];
             if (seasonEps.length === 0) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted)">Nenhum episódio encontrado.</div>';
+                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">Nenhum episódio encontrado.</div>';
                 return;
             }
             
             listEl.innerHTML = seasonEps.map(ep => `
-                <div class="episode-item" onclick="window.location.href='./player.html?type=series&id=${encodeURIComponent(series.id)}&s=${ep.season_number}&e=${ep.episode_number}'">
-                    <div class="episode-number">${ep.episode_number}</div>
-                    <div class="episode-info">
-                        <span class="episode-title">${ep.title || `Episódio ${ep.episode_number}`}</span>
-                        <span class="episode-meta">${ep.duration ? Math.round(ep.duration / 60) + ' min' : ''}</span>
+                <div class="episode-item" onclick="window.location.href='./player.html?type=series&id=${encodeURIComponent(series.id)}&s=${ep.season_number}&e=${ep.episode_number}'"
+                     style="display: flex; gap: 15px; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
+                    <div style="font-size: 24px; font-weight: bold; color: #555; width: 30px; text-align: center;">${ep.episode_number}</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; font-size: 14px;">${ep.title || `Episódio ${ep.episode_number}`}</div>
+                        <div style="font-size: 12px; color: #aaa;">${ep.duration ? Math.round(ep.duration / 60) + ' min' : ''}</div>
                     </div>
-                    <div class="play-icon">▶</div>
+                    <div style="width: 30px; height: 30px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <div style="width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid white; margin-left: 2px;"></div>
+                    </div>
                 </div>
             `).join('');
         };
         
-        // Initial Render (First Season)
+        // Initial Render
         if (seasonNumbers.length > 0) {
             renderEpisodes(seasonNumbers[0]);
         } else {
-            listEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted)">Nenhum episódio disponível.</div>';
+            listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">Nenhum episódio disponível.</div>';
         }
         
         // Tab Switching
         tabs.forEach(tab => {
             tab.onclick = () => {
-                tabs.forEach(t => t.classList.remove('active'));
+                tabs.forEach(t => {
+                    t.style.background = 'rgba(255,255,255,0.1)';
+                    t.classList.remove('active');
+                });
+                tab.style.background = '#9333ea';
                 tab.classList.add('active');
                 renderEpisodes(tab.dataset.season);
             };
@@ -799,7 +802,7 @@ window.showSeriesModal = async function(seriesId) {
         
     } catch (e) {
         console.error(e);
-        backdrop.querySelector('.series-modal-body').innerHTML = `
+        backdrop.querySelector('.netflix-modal-body').innerHTML = `
             <div style="padding: 20px; color: #ff4444; text-align: center;">
                 Erro ao carregar detalhes: ${e.message}
             </div>

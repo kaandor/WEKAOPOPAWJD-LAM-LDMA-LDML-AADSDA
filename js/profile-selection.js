@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-fixauth8";
+import { api } from "./api.js?v=20260201-logo1";
 import { requireAuth } from "./auth.js";
 
 // Ensure user is logged in
@@ -105,16 +105,20 @@ async function init() {
 
 async function loadProfiles() {
     try {
-        // Force Cloud Sync (Hive Mind)
+        // Force Cloud Sync (Hive Mind) - Best Effort
         const loadingDiv = document.createElement("div");
         loadingDiv.id = "sync-loading";
         loadingDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#9333ea;color:white;padding:5px 10px;border-radius:4px;z-index:9999;font-size:12px;";
         loadingDiv.textContent = "☁️ Sincronizando...";
         document.body.appendChild(loadingDiv);
         
-        await api.cloud.syncDown();
-        
-        if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+        try {
+            await api.cloud.syncDown();
+        } catch (syncError) {
+            console.warn("Sync failed, proceeding with local data:", syncError);
+        } finally {
+             if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+        }
 
         const res = await api.profiles.list();
         if (res.ok) {
@@ -122,12 +126,18 @@ async function loadProfiles() {
             if (!Array.isArray(profiles) && profiles.profiles) {
                 profiles = profiles.profiles;
             }
-            render();
         } else {
             console.error("Error loading profiles", res);
+            profiles = []; // Ensure empty array on error
         }
+        
+        // Always render, even if empty (will show Add Profile button)
+        render();
+        
     } catch (e) {
-        console.error("Network error", e);
+        console.error("Critical error loading profiles", e);
+        profiles = [];
+        render(); // Fallback render
     }
 }
 
@@ -420,34 +430,45 @@ function closeIconModal() {
 
 // Event Listeners
 function setupEventListeners() {
+    if (!manageBtn) {
+        console.error("Manage Profiles button not found!");
+        return;
+    }
+
     manageBtn.addEventListener("click", () => {
+        console.log("Manage Profiles clicked. Mode:", !isManageMode);
         isManageMode = !isManageMode;
         render();
     });
     
-    logoutBtn.addEventListener("click", async () => {
-        await api.auth.logout();
-        window.location.href = "./index.html";
-    });
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            await api.auth.logout();
+            window.location.href = "./index.html";
+        });
+    }
     
-    cancelProfileBtn.addEventListener("click", closeModal);
-    saveProfileBtn.addEventListener("click", saveProfile);
-    deleteProfileBtn.addEventListener("click", deleteProfile);
+    if (cancelProfileBtn) cancelProfileBtn.addEventListener("click", closeModal);
+    if (saveProfileBtn) saveProfileBtn.addEventListener("click", saveProfile);
+    if (deleteProfileBtn) deleteProfileBtn.addEventListener("click", deleteProfile);
     
-    changeAvatarBtn.addEventListener("click", openIconModal);
-    modalAvatarPreview.addEventListener("click", openIconModal);
-    cancelIconBtn.addEventListener("click", closeIconModal);
+    if (changeAvatarBtn) changeAvatarBtn.addEventListener("click", openIconModal);
+    if (modalAvatarPreview) modalAvatarPreview.addEventListener("click", openIconModal);
+    if (cancelIconBtn) cancelIconBtn.addEventListener("click", closeIconModal);
     
     // Enter key to save
-    profileNameInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") saveProfile();
-    });
+    if (profileNameInput) {
+        profileNameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") saveProfile();
+        });
+    }
     
     // Explicit toggle logic
-    profileAllowExplicit.addEventListener("change", (e) => {
-        // Keep pin section hidden always, handled by prompt
-        pinSection.classList.add("hidden");
-    });
+    if (profileAllowExplicit) {
+        profileAllowExplicit.addEventListener("change", (e) => {
+            // Keep pin section hidden always, handled by prompt
+            if (pinSection) pinSection.classList.add("hidden");
+        });
+    }
 }
-
-init();
+// init() called by importing module
