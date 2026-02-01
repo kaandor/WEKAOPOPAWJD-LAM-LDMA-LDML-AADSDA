@@ -144,6 +144,9 @@ async function loadProfiles() {
 function render() {
     grid.innerHTML = "";
     
+    // Filter out invalid profiles to prevent ghost slots
+    profiles = profiles.filter(p => p && p.id);
+    
     // Determine limit based on plan
     const user = session.user;
     const plan = user?.plan || "premium"; // Default to premium
