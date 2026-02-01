@@ -901,9 +901,9 @@ export const api = {
                 try {
                     console.log(`Trying proxy (${proxy.name}): ${fetchUrl}`);
                     
-                    // Add timeout to prevent hanging
+                    // Add timeout to prevent hanging (increased to 20s for slow proxies)
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
                     
                     const response = await fetch(fetchUrl, {
                         ...fetchOptions,

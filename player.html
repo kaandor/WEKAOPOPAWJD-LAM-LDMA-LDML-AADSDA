@@ -221,7 +221,7 @@
       try {
           console.log("Player starting...");
           // Force new version for cache busting
-          const v = "20260131-fixproxy7";
+          const v = "20260131-fixauth2";
           const { mountAppShell } = await import(`./js/router.js?v=${v}`);
           const { initPlayer } = await import(`./js/player.js?v=${v}`);
 
