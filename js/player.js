@@ -7,12 +7,11 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "DIRECT_HTTPS", // Try upgrading to HTTPS first (Best quality if supported)
-    "https://api.codetabs.com/v1/proxy?quest=",
-    "https://api.cors.lol/?url=",
-    "https://corsproxy.io/?", 
-    "https://thingproxy.freeboard.io/fetch/",
-    "https://api.allorigins.win/raw?url="
+    "https://corsproxy.io/?", // Top Priority: Robust and fast
+    "https://api.codetabs.com/v1/proxy?quest=", // Good backup
+    "https://api.cors.lol/?url=", // Another reliable option
+    "https://thingproxy.freeboard.io/fetch/", // Fallback
+    "DIRECT_HTTPS" // Last resort: Try upgrading to HTTPS
 ];
 
 function getProxiedStreamUrl(url, proxyIndex = 0) {
