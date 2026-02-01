@@ -1,5 +1,5 @@
 
-import { api } from "./api.js?v=20260131-fixauth4";
+import { api } from "./api.js?v=20260131-fixauth6";
 
 // Helper for URL params
 const qs = (key) => new URLSearchParams(window.location.search).get(key);
