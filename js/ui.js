@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-fixauth7";
+import { api } from "./api.js?v=20260131-fixauth8";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in
@@ -809,9 +809,11 @@ window.showSeriesModal = async function(seriesId) {
 
 // Global Movie Modal Handler (Netflix Mobile Style)
 window.showMovieModal = async function(movieId) {
+    console.log("showMovieModal called for ID:", movieId);
     // 1. Create Backdrop
     const backdrop = document.createElement('div');
     backdrop.className = 'netflix-modal-backdrop active'; 
+    backdrop.style.zIndex = "10001"; // Force high z-index
     
     // 2. Create Modal Structure (Loading State)
     backdrop.innerHTML = `

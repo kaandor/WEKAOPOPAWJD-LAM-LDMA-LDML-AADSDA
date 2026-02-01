@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-fixauth7";
+import { api } from "./api.js?v=20260131-fixauth8";
 import { requireAuth } from "./auth.js";
 
 // Ensure user is logged in

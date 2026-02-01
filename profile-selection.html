@@ -553,6 +553,10 @@
       </div>
     </div>
 
-    <script type="module" src="./js/profile-selection.js?v=20260131-fixauth7"></script>
+    <script type="module">
+      import { api } from "./js/api.js?v=20260131-fixauth8";
+      import { init } from "./js/profile-selection.js?v=20260131-fixauth8";
+      init();
+    </script>
   </body>
 </html>
