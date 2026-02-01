@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-fixauth6";
+import { api } from "./api.js?v=20260131-fixauth7";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in
@@ -557,7 +557,10 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
     card.append(img, info);
     
     if (onClick) {
-        card.addEventListener("click", onClick);
+        card.addEventListener("click", (e) => {
+            console.log("Card clicked:", title);
+            onClick(e);
+        });
         card.addEventListener("keydown", (e) => {
             if (e.key === "Enter") onClick();
         });
