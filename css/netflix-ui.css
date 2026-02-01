@@ -547,3 +547,23 @@
     width: 140px;
   }
 }
+
+/* Movie Modal Specifics */
+.btn-trailer {
+  background-color: rgba(255, 0, 0, 0.15);
+  color: #ff0000;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-trailer:hover {
+  background-color: #ff0000;
+  color: white;
+  border-color: #ff0000;
+  transform: translateY(-1px);
+}
+
+.btn-trailer svg {
+  width: 20px;
+  height: 20px;
+}
