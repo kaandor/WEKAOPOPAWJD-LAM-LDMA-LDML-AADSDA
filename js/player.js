@@ -287,43 +287,36 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, () => safePlay());
                 hls.on(Hls.Events.ERROR, (event, data) => {
-                    if (data.fatal) {
-                        console.error("HLS Fatal Error", data);
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                // If it's a 403/404 or manifest error, try next proxy immediately
-                                if (data.response && (data.response.code === 403 || data.response.code === 404)) {
-                                     console.warn("HLS Network Error (403/404) - Switching proxy");
-                                     hls.destroy();
-                                     if (proxyIndex < PROXY_LIST.length - 1) {
-                                         attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
-                                     } else {
-                                         showError("Erro: Fonte de vídeo indisponível.");
-                                     }
-                                     return;
-                                }
-                                console.log("HLS Network Error - Retrying...");
-                                hls.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.log("HLS Media Error - Recovering...");
-                                hls.recoverMediaError();
-                                break;
-                            default:
-                                hls.destroy();
-                                // Trigger video error to handle proxy switch
-                                if (proxyIndex < PROXY_LIST.length - 1) {
-                                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
-                                }
-                                break;
-                        }
-                    } else if (data.details === Hls.ErrorDetails.MANIFEST_PARSING_ERROR) {
-                        // Non-fatal but critical parsing error (often means proxy returned HTML)
-                        console.warn("HLS Manifest Parsing Error - Switching proxy");
+                    console.warn("HLS Error Detail:", data.type, data.details, data.fatal);
+                    
+                    // Critical errors that require proxy switch
+                    // We treat NETWORK_ERROR and Parsing Errors as fatal for the current proxy
+                    const isCritical = data.fatal || 
+                                       data.type === Hls.ErrorTypes.NETWORK_ERROR || 
+                                       data.details === 'manifestParsingError' ||
+                                       data.details === 'manifestLoadError' ||
+                                       data.details === 'manifestParsersError';
+
+                    if (isCritical) {
+                        console.error("HLS Critical Error - Switching Proxy", data);
                         hls.destroy();
+                        
                         if (proxyIndex < PROXY_LIST.length - 1) {
-                             attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                            console.warn(`Proxy ${proxyIndex} failed (${data.details}). Switching to Proxy ${proxyIndex + 1}...`);
+                            attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                        } else {
+                            showError("Erro: Fonte de vídeo indisponível após tentar todas as opções.");
                         }
+                        return;
+                    }
+
+                    // Non-critical errors: try to recover
+                    if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                        console.log("HLS Media Error - Recovering...");
+                        hls.recoverMediaError();
+                    } else {
+                        // Other errors
+                        console.log("HLS Minor Error - Ignoring", data);
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
