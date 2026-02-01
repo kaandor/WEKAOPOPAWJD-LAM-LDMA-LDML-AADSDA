@@ -1351,22 +1351,38 @@ export const api = {
   content: {
     // Keep these for ui.js compatibility
     async getHome() { 
-        const data = await getLocalData("home.json");
-        if (data && data.rails) {
-            for (const key in data.rails) {
-                if (Array.isArray(data.rails[key])) {
-                    // 1. Normalize
-                    let items = data.rails[key].map(normalize);
-                    
-                    // 2. FORCE FILTER explicitly (Safety check)
-                    items = filterRestrictedContent(items);
-                    
-                    // 3. Deduplicate (which also filters, but we ensure it here)
-                    data.rails[key] = deduplicateMovies(items);
-                }
-            }
+        // Dynamic Home Generation (Bypassing static home.json limits)
+        try {
+            const [moviesRes, seriesRes] = await Promise.all([
+                api.movies.list(),
+                api.content.getSeries()
+            ]);
+
+            const allMovies = moviesRes.ok ? moviesRes.data : [];
+            const allSeries = seriesRes.ok ? (seriesRes.data.series || []) : [];
+            
+            // Helper to get random or sliced items
+            const getItems = (items, count = 100, filterFn = null) => {
+                let filtered = filterFn ? items.filter(filterFn) : items;
+                return filtered.slice(0, count);
+            };
+
+            const rails = {
+                topMovies: getItems(allMovies, 100),
+                topSeries: getItems(allSeries, 100),
+                recentMovies: getItems(allMovies, 100, m => true).reverse().slice(0, 100), // Simple "recent" simulation
+                horrorMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("terror")),
+                comedyMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("comédia")),
+                actionMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("ação"))
+            };
+
+            return { ok: true, data: { rails } };
+        } catch (e) {
+            console.error("Dynamic Home Error", e);
+            // Fallback to static file if dynamic fails
+            const data = await getLocalData("home.json");
+            return { ok: true, data };
         }
-        return { ok: true, data }; 
     },
     async getMovies() { 
         // Use api.movies.list() to get deduplicated list

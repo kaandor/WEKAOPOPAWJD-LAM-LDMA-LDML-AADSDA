@@ -192,7 +192,7 @@ export async function initDashboard() {
                             return `
                             <div class="card focusable" data-id="${item.id}" tabindex="0" 
                                  onclick="${clickAction}">
-                                <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=Error';">
+                                <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" draggable="false" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=Error';">
                                 <div class="card-body">
                                     <h3 class="card-title">${item.title}</h3>
                                     <div class="card-meta">

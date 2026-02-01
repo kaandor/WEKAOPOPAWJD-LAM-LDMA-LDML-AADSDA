@@ -545,6 +545,8 @@ main.page {
   border-radius: 8px;
   overflow: hidden;
   background: var(--surface);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .card:hover {
@@ -558,6 +560,11 @@ main.page {
   object-fit: cover;
   border-radius: 8px;
   background: var(--surface-2);
+  -webkit-user-drag: none;
+  user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
 }
 
 .card-body {
