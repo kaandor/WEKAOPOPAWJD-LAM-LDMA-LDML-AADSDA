@@ -50,15 +50,15 @@ export default function SiteHeader({ showAnchors }: Props) {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link to="/coming-soon?intent=login" aria-label="Login (coming soon)">
+          <a href="https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/profile-selection.html" aria-label="Go to Site">
             <Button variant="secondary" className="hidden sm:inline-flex">
               <LogIn className="h-4 w-4" />
-              Login
+              Site
             </Button>
-            <Button variant="secondary" className="sm:hidden" aria-label="Login">
+            <Button variant="secondary" className="sm:hidden" aria-label="Site">
               <LogIn className="h-4 w-4" />
             </Button>
-          </Link>
+          </a>
           <Link to="/coming-soon?intent=download" aria-label="Download (coming soon)">
             <Button className="hidden sm:inline-flex">
               <Download className="h-4 w-4" />

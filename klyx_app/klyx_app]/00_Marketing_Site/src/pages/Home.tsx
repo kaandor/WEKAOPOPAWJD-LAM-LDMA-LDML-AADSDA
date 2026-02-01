@@ -32,15 +32,15 @@ export default function Home() {
                 <Link to="/coming-soon?intent=download" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto">Download</Button>
                 </Link>
-                <Link to="/coming-soon?intent=login" className="w-full sm:w-auto">
+                <a href="https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/profile-selection.html" className="w-full sm:w-auto">
                   <Button variant="secondary" className="w-full sm:w-auto">
-                    Login
+                    Site
                     <ArrowRight className="h-4 w-4" />
                   </Button>
-                </Link>
+                </a>
               </div>
 
-              <div className="mt-3 text-xs text-white/50">Login and downloads are placeholders for a future launch.</div>
+              <div className="mt-3 text-xs text-white/50">Downloads are placeholders for a future launch.</div>
             </div>
 
             <div className="relative">

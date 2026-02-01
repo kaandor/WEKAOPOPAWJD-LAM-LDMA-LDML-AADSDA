@@ -1,9 +1,8 @@
 export type ScreenshotCategory = "All" | "Onboarding" | "Core" | "Settings";
 
-function imgUrl(prompt: string, imageSize: string) {
-  return `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-    prompt,
-  )}&image_size=${encodeURIComponent(imageSize)}`;
+// Use local screenshots instead of AI generation
+function imgUrl(filename: string) {
+  return `/screenshots/${filename}`;
 }
 
 export const klyxCopy = {
@@ -102,73 +101,49 @@ export const screenshots: Screenshot[] = [
     id: "onboarding-1",
     title: "Welcome screen",
     category: "Onboarding",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, onboarding welcome screen, brand name Klyx, two CTA buttons login and download, minimal layout, 16:9`,
-      "landscape_16_9",
-    ),
+    imageUrl: imgUrl("welcome-screen.png"),
   },
   {
     id: "onboarding-2",
     title: "Sign-in placeholder",
     category: "Onboarding",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, sign in form placeholder, email field, password field, remember me, subtle glass card, 4:3`,
-      "landscape_4_3",
-    ),
+    imageUrl: imgUrl("sign-in.png"),
   },
   {
     id: "core-1",
     title: "Home dashboard",
     category: "Core",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, streaming home dashboard, featured banner, continue watching row, channels row, navigation sidebar, 16:9`,
-      "landscape_16_9",
-    ),
+    imageUrl: imgUrl("home-dashboard.png"),
   },
   {
     id: "core-2",
     title: "Channel guide",
     category: "Core",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, IPTV channel guide grid, channel logos column, program timeline, highlighted current program, 16:9`,
-      "landscape_16_9",
-    ),
+    imageUrl: imgUrl("channel-guide.png"),
   },
   {
     id: "core-3",
     title: "Player controls",
     category: "Core",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, video player UI overlay, live badge, playback controls, quality selector, minimal control bar, 4:3`,
-      "landscape_4_3",
-    ),
+    imageUrl: imgUrl("player-controls.png"),
   },
   {
     id: "settings-1",
     title: "Preferences",
     category: "Settings",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, settings page, tabs for playback, subtitles, network, toggles and dropdowns, 4:3`,
-      "landscape_4_3",
-    ),
+    imageUrl: imgUrl("preferences.png"),
   },
   {
     id: "settings-2",
     title: "Profiles",
     category: "Settings",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, profiles management screen, avatar cards, add profile button, clean grid, 4:3`,
-      "landscape_4_3",
-    ),
+    imageUrl: imgUrl("profiles.png"),
   },
   {
     id: "settings-3",
     title: "Theme & display",
     category: "Settings",
-    imageUrl: imgUrl(
-      `${screenshotStyle}, appearance settings, theme selector, density slider, preview panel, 16:9`,
-      "landscape_16_9",
-    ),
+    imageUrl: imgUrl("theme-display.png"),
   },
 ];
 
@@ -179,7 +154,4 @@ export const galleryCategories = [
   "Settings",
 ] as const satisfies readonly ScreenshotCategory[];
 
-export const heroDeviceMockUrl = imgUrl(
-  "sleek device mockup displaying a modern streaming and IPTV interface, dark theme with purple accents, minimal glassmorphism, high-end product hero image, studio lighting, 16:9",
-  "landscape_16_9",
-);
+export const heroDeviceMockUrl = imgUrl("hero-mockup.png");
