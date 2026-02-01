@@ -48,10 +48,15 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260131-fixauth4";
-      import { initSeries } from "./js/ui.js?v=20260131-fixauth4";
-      await mountAppShell({ currentPath: "/series" });
-      initSeries();
+      import { mountAppShell } from "./js/router.js?v=20260131-fixauth5";
+      import { initSeries } from "./js/ui.js?v=20260131-fixauth5";
+      
+      try {
+        await mountAppShell({ currentPath: "/series" });
+        await initSeries();
+      } catch (e) {
+        console.error("Series Init Error:", e);
+      }
     </script>
   </body>
 </html>
