@@ -7,11 +7,12 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://corsproxy.io/?", // Top Priority: Robust and fast
+    "https://corsproxy.io/?", // Top Priority (Unencoded)
     "https://api.codetabs.com/v1/proxy?quest=", // Good backup
+    "https://api.allorigins.win/raw?url=", // Restored: Often works for raw MP4
     "https://api.cors.lol/?url=", // Another reliable option
     "https://thingproxy.freeboard.io/fetch/", // Fallback
-    "DIRECT_HTTPS" // Last resort: Try upgrading to HTTPS
+    "DIRECT_HTTPS" // Last resort
 ];
 
 function getProxiedStreamUrl(url, proxyIndex = 0) {
@@ -36,7 +37,12 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     // Avoid double proxying
     if (url.includes('corsproxy.io') || url.includes('api.codetabs.com') || url.includes('api.allorigins.win') || url.includes('thingproxy.freeboard.io')) return url;
     
-    // Special handling for corsproxy.io (sometimes prefers unencoded, but encoded is safer for params)
+    // Special handling for corsproxy.io (should NOT be encoded usually)
+    if (proxyBase.includes('corsproxy.io')) {
+        return `${proxyBase}${url}`;
+    }
+    
+    // Default encoding for others (CodeTabs, CorsLoL, etc)
     return `${proxyBase}${encodeURIComponent(url)}`;
 }
 
