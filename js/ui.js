@@ -718,30 +718,25 @@ window.showSeriesModal = async function(seriesId) {
     }
 };
 
-// Global Movie Modal Handler
+// Global Movie Modal Handler (Netflix Mobile Style)
 window.showMovieModal = async function(movieId) {
     // 1. Create Backdrop
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop active'; 
+    backdrop.className = 'netflix-modal-backdrop active'; 
     
-    // 2. Create Modal Structure
+    // 2. Create Modal Structure (Loading State)
     backdrop.innerHTML = `
-        <div class="series-modal movie-modal">
-            <div class="series-modal-header">
-                <h2 class="series-modal-title">Carregando...</h2>
-                <button class="close-modal-btn">&times;</button>
-            </div>
-            <div class="series-modal-body">
-                <div style="display:flex; justify-content:center; padding: 40px;">
-                    <div class="loading-spinner"></div>
-                </div>
+        <div class="netflix-modal-content">
+            <button class="netflix-close-btn">&times;</button>
+            <div class="netflix-modal-body loading">
+                <div class="loading-spinner"></div>
             </div>
         </div>
     `;
     
     document.body.appendChild(backdrop);
     
-    const closeBtn = backdrop.querySelector('.close-modal-btn');
+    const closeBtn = backdrop.querySelector('.netflix-close-btn');
     const close = () => {
         backdrop.classList.remove('active');
         setTimeout(() => backdrop.remove(), 300);
@@ -760,37 +755,79 @@ window.showMovieModal = async function(movieId) {
         
         const movie = detailsRes.data.item;
         
-        // Update Modal Content
-        const titleEl = backdrop.querySelector('.series-modal-title');
-        const bodyEl = backdrop.querySelector('.series-modal-body');
-        
-        titleEl.textContent = movie.title;
-        
         // Prepare Trailer URL (YouTube Search)
         const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + " trailer")}`;
         
+        // Randomize Match Score for Demo
+        const matchScore = Math.floor(Math.random() * (99 - 85) + 85);
+        const year = movie.year || '2023';
+        const age = movie.age || '14';
+        const duration = movie.duration ? `${Math.floor(movie.duration/60)}h ${movie.duration%60}min` : '1h 45min';
+
         // Render Body
+        const bodyEl = backdrop.querySelector('.netflix-modal-body');
+        bodyEl.classList.remove('loading');
+        
         bodyEl.innerHTML = `
-            <div class="series-info">
-                <img class="series-poster" src="${getProxiedImage(movie.poster)}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Poster'">
-                <div class="series-details">
-                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 10px;">
-                        <span class="badge">Filme</span>
-                        <span class="badge">★ ${movie.rating || 'N/A'}</span>
-                        <span style="color:var(--muted)">${movie.category || ''}</span>
-                    </div>
-                    <div class="series-desc">${movie.description || 'Sem descrição.'}</div>
+            <div class="netflix-hero">
+                <img class="netflix-poster" src="${getProxiedImage(movie.poster)}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                <div class="netflix-hero-gradient"></div>
+            </div>
+            
+            <div class="netflix-info-container">
+                <div class="netflix-meta-row">
+                    <span class="match-score">${matchScore}% relevante</span>
+                    <span class="meta-item">${year}</span>
+                    <span class="age-badge">${age}</span>
+                    <span class="meta-item">${duration}</span>
+                </div>
+
+                <div class="netflix-actions-stack">
+                     <button class="btn-play-lg" onclick="window.location.href='./player.html?type=movie&id=${encodeURIComponent(movie.id)}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 3l14 9-14 9V3z"/>
+                        </svg>
+                        Assistir
+                    </button>
                     
-                    <div style="display:flex; gap:10px; margin-top: 20px;">
-                         <button class="btn btn-primary" onclick="window.location.href='./player.html?type=movie&id=${encodeURIComponent(movie.id)}'">
-                            Assistir
-                        </button>
-                        <a href="${trailerUrl}" target="_blank" class="btn btn-trailer" style="gap: 8px;">
-                            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19.615 3.184C20.218 3.184 20.732 3.653 20.814 4.254L20.824 4.394L20.822 4.474L20.824 4.544C20.824 4.544 20.824 16.793 20.824 16.793C20.824 16.793 20.824 19.344 19.615 19.654C19.006 19.811 18.528 19.351 18.438 18.775L18.428 18.634L18.429 18.554L18.428 18.484L18.428 6.234L18.428 6.164L18.429 6.094L18.428 6.014L18.428 5.874C18.428 5.298 17.95 4.838 17.374 4.838L5.124 4.838C4.548 4.838 4.07 5.298 4.054 5.864L4.054 5.874L4.054 6.014L4.053 6.094L4.054 6.164L4.054 18.414C4.054 18.99 4.532 19.45 5.108 19.45L17.358 19.45C17.934 19.45 18.412 18.99 18.428 18.424L18.428 18.414L18.428 16.793C18.428 16.793 18.428 4.544 18.428 4.544C18.428 4.544 18.428 4.544 18.428 4.544C18.428 3.792 18.997 3.184 19.615 3.184ZM12.72 9.53L10.23 8.09C9.76 7.82 9.17 8.16 9.17 8.71V15.29C9.17 15.84 9.76 16.18 10.23 15.91L15.93 12.62C16.4 12.35 16.4 11.65 15.93 11.38L12.72 9.53Z"/>
-                            </svg>
-                            Trailer
-                        </a>
+                    <a href="${trailerUrl}" target="_blank" class="btn-secondary-lg">
+                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                        Trailer
+                    </a>
+                </div>
+
+                <p class="netflix-description">${movie.description || 'Sem descrição disponível.'}</p>
+                
+                <div class="netflix-cast-info">
+                     <div class="meta-line"><span class="label">Elenco:</span> ${movie.cast || 'Indisponível'}</div>
+                     <div class="meta-line"><span class="label">Criação:</span> ${movie.director || 'Indisponível'}</div>
+                </div>
+
+                <div class="netflix-icon-actions">
+                    <div class="icon-action">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        <span>Minha lista</span>
+                    </div>
+                    <div class="icon-action">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                        </svg>
+                        <span>Classifique</span>
+                    </div>
+                    <div class="icon-action">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        <span>Compartilhe</span>
                     </div>
                 </div>
             </div>
@@ -798,9 +835,10 @@ window.showMovieModal = async function(movieId) {
         
     } catch (e) {
         console.error(e);
-        backdrop.querySelector('.series-modal-body').innerHTML = `
-            <div style="padding: 20px; color: #ff4444; text-align: center;">
-                Erro ao carregar detalhes: ${e.message}
+        backdrop.querySelector('.netflix-modal-body').innerHTML = `
+            <div style="padding: 40px; color: #ff4444; text-align: center;">
+                <p>Erro ao carregar detalhes</p>
+                <p style="font-size:12px; opacity:0.7">${e.message}</p>
             </div>
         `;
     }
