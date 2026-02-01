@@ -150,12 +150,16 @@ function render() {
     const maxProfiles = plan === "individual" ? 1 : 4;
     
     profiles.forEach(p => {
+        if (!p) return; // Skip invalid profiles
+
         const card = document.createElement("div");
         card.className = `profile-card ${isManageMode ? 'edit-mode' : ''}`;
         
         const avatar = document.createElement("div");
         avatar.className = "avatar";
-        avatar.style.backgroundImage = `url('${p.avatar}')`;
+        // Fallback for missing avatar
+        const avatarUrl = p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name || 'User'}`;
+        avatar.style.backgroundImage = `url('${avatarUrl}')`;
         
         const overlay = document.createElement("div");
         overlay.className = "edit-overlay";
