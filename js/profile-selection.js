@@ -97,7 +97,7 @@ for (const style of AVATAR_STYLES) {
 }
 
 // Init
-async function init() {
+export async function init() {
     await loadProfiles();
     setupEventListeners();
     generateIconGrid();
