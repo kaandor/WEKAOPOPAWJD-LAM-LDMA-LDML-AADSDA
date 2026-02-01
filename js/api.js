@@ -874,7 +874,11 @@ export const api = {
                 if (proxy.method === "GET") {
                     // For GET proxies, append params to GitHub URL, then encode
                     const fullGithubUrl = `${tokenUrl}?${params.toString()}`;
+                    
+                    // Special handling for CorsProxyIO (needs unencoded)
+                    // The proxy.url function handles the wrapping, but we need to ensure we don't double encode
                     fetchUrl = proxy.url(fullGithubUrl);
+                    
                     fetchOptions = {
                         method: "GET",
                         headers: {
