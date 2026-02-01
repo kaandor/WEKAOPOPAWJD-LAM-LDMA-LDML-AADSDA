@@ -290,12 +290,12 @@ function setupCustomDropdown(selectId, options, onSelect) {
     
     const btn = document.createElement('button');
     btn.className = 'category-btn focusable';
-    btn.innerHTML = \`
+    btn.innerHTML = `
         <span class="selected-label">Todas as categorias</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
-    \`;
+    `;
     
     const menu = document.createElement('div');
     menu.className = 'category-menu';
@@ -407,7 +407,7 @@ export async function initMovies() {
                     title: movie.title,
                     posterUrl: movie.poster,
                     metaLeft: "",
-                    metaRight: movie.rating ? \`★ \${movie.rating}\` : "",
+                    metaRight: movie.rating ? `★ ${movie.rating}` : "",
                     onClick: () => {
                         window.showMovieModal(movie.id);
                     }
@@ -436,7 +436,7 @@ export async function initMovies() {
 
     } catch (e) {
         console.error("Movies error:", e);
-        container.innerHTML = \`<p style="color:red">Erro: \${e.message}</p>\`;
+        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
 }
 
@@ -489,7 +489,7 @@ export async function initSeries() {
                     title: item.title,
                     posterUrl: item.poster,
                     metaLeft: "Série",
-                    metaRight: item.rating ? \`★ \${item.rating}\` : "",
+                    metaRight: item.rating ? `★ ${item.rating}` : "",
                     onClick: () => {
                         window.showSeriesModal(item.id);
                     }
@@ -518,7 +518,7 @@ export async function initSeries() {
 
     } catch (e) {
         console.error("Series error:", e);
-        container.innerHTML = \`<p style="color:red">Erro: \${e.message}</p>\`;
+        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
 }
 
