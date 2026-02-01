@@ -637,6 +637,97 @@ main.page {
   border-color: var(--accent);
 }
 
+/* Custom Category Dropdown (Replacing .select) */
+.category-dropdown {
+  position: relative;
+  display: inline-block;
+  min-width: 200px;
+}
+
+.category-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.category-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+}
+
+.category-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 240px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #1a1d26; /* Darker opaque background for contrast */
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  margin-top: 8px;
+  padding: 8px 0;
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-menu.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.category-item {
+  display: block;
+  padding: 10px 16px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.category-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding-left: 20px; /* Slight movement */
+}
+
+.category-item.selected {
+  color: var(--text);
+  border-left-color: var(--accent);
+  background: linear-gradient(90deg, rgba(147, 51, 234, 0.1) 0%, transparent 100%);
+}
+
+/* Scrollbar for menu */
+.category-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.category-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.category-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+
 /* Mobile Layout */
 @media (max-width: 1024px) {
   /* Lock body scroll for app-like feel */

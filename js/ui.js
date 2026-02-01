@@ -277,11 +277,94 @@ export async function initDashboard() {
     }
 }
 
+// Helper to setup custom dropdown
+function setupCustomDropdown(selectId, options, onSelect) {
+    const originalSelect = document.getElementById(selectId);
+    if (!originalSelect) return;
+
+    const container = originalSelect.parentElement;
+    
+    // Create new structure
+    const dropdown = document.createElement('div');
+    dropdown.className = 'category-dropdown';
+    
+    const btn = document.createElement('button');
+    btn.className = 'category-btn focusable';
+    btn.innerHTML = \`
+        <span class="selected-label">Todas as categorias</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    \`;
+    
+    const menu = document.createElement('div');
+    menu.className = 'category-menu';
+    
+    // Add "All" option
+    const addOption = (label, value) => {
+        const item = document.createElement('div');
+        item.className = 'category-item focusable';
+        item.textContent = label;
+        item.dataset.value = value;
+        item.tabIndex = 0;
+        
+        item.onclick = () => {
+            btn.querySelector('.selected-label').textContent = label;
+            menu.classList.remove('active');
+            onSelect(value);
+            
+            // Update selected state
+            menu.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+        };
+        
+        // Add Enter key support
+        item.onkeydown = (e) => {
+            if (e.key === 'Enter') item.click();
+        };
+
+        menu.appendChild(item);
+    };
+    
+    addOption("Todas as categorias", "");
+    options.forEach(opt => addOption(opt, opt));
+    
+    dropdown.appendChild(btn);
+    dropdown.appendChild(menu);
+    
+    // Toggle menu
+    btn.onclick = (e) => {
+        e.stopPropagation();
+        const isActive = menu.classList.contains('active');
+        // Close all other menus
+        document.querySelectorAll('.category-menu.active').forEach(m => m.classList.remove('active'));
+        
+        if (!isActive) {
+            menu.classList.add('active');
+        }
+    };
+    
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+    
+    // Replace original select
+    originalSelect.style.display = 'none';
+    // Remove old custom dropdown if exists
+    const old = container.querySelector('.category-dropdown');
+    if (old) old.remove();
+    
+    container.insertBefore(dropdown, originalSelect);
+}
+
 export async function initMovies() {
     console.log("Movies Initialized");
     const container = document.getElementById("moviesGrid");
-    const categorySelect = document.getElementById("movieCategory"); // Updated ID
-    const searchInput = document.getElementById("movieSearch"); // Updated ID if needed, but usually movieSearch
+    const categorySelectId = "movieCategory";
+    const searchInput = document.getElementById("movieSearch");
 
     if (!container) return;
 
@@ -302,28 +385,14 @@ export async function initMovies() {
             return;
         }
 
-        // Populate Categories
-        if (categorySelect && catsRes.ok) {
-            // Keep first option (All)
-            const first = categorySelect.firstElementChild;
-            categorySelect.innerHTML = '';
-            if (first) categorySelect.appendChild(first);
-
-            catsRes.data.forEach(cat => {
-                const opt = document.createElement("option");
-                opt.value = cat;
-                opt.textContent = cat;
-                categorySelect.appendChild(opt);
-            });
-        }
+        // Render Function
+        let currentCategory = "";
+        let currentSearch = "";
 
         const render = () => {
-            const cat = categorySelect ? categorySelect.value : "";
-            const query = searchInput ? searchInput.value.toLowerCase() : "";
-            
             const filtered = allMovies.filter(m => {
-                const matchesCat = !cat || (m.category && m.category.includes(cat));
-                const matchesSearch = !query || m.title.toLowerCase().includes(query);
+                const matchesCat = !currentCategory || (m.category && m.category.includes(currentCategory));
+                const matchesSearch = !currentSearch || m.title.toLowerCase().includes(currentSearch);
                 return matchesCat && matchesSearch;
             });
             
@@ -337,8 +406,8 @@ export async function initMovies() {
                 return createPosterCard({
                     title: movie.title,
                     posterUrl: movie.poster,
-                    metaLeft: "", // Year removed as requested
-                    metaRight: movie.rating ? `★ ${movie.rating}` : "",
+                    metaLeft: "",
+                    metaRight: movie.rating ? \`★ \${movie.rating}\` : "",
                     onClick: () => {
                         window.showMovieModal(movie.id);
                     }
@@ -346,27 +415,41 @@ export async function initMovies() {
             });
         };
 
-        // Event Listeners
-        if (categorySelect) categorySelect.onchange = render;
-        if (searchInput) searchInput.oninput = render;
+        // Setup Custom Dropdown
+        if (catsRes.ok) {
+            setupCustomDropdown(categorySelectId, catsRes.data, (val) => {
+                currentCategory = val;
+                render();
+            });
+        }
+
+        // Search Listener
+        if (searchInput) {
+            searchInput.oninput = (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                render();
+            };
+        }
 
         // Initial Render
         render();
 
     } catch (e) {
         console.error("Movies error:", e);
-        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
+        container.innerHTML = \`<p style="color:red">Erro: \${e.message}</p>\`;
     }
 }
 
 export async function initSeries() {
     console.log("Series Initialized");
     const container = document.getElementById("seriesGrid");
-    const categorySelect = document.getElementById("seriesCategory");
+    const categorySelectId = "seriesCategory";
     const searchInput = document.getElementById("seriesSearch");
-
+    
     if (!container) return;
 
+    // Switch to Grid layout (reset display if it was changed to block)
+    container.style.display = "grid"; 
     container.innerHTML = '<div class="loading-spinner">Carregando séries...</div>';
 
     try {
@@ -377,30 +460,21 @@ export async function initSeries() {
 
         if (!seriesRes.ok) throw new Error(seriesRes.data?.error || "Erro ao carregar séries");
 
-        let allSeries = seriesRes.data.series || [];
+        const allSeries = seriesRes.data.series || [];
 
-        // Populate Categories
-        if (categorySelect && catsRes.ok) {
-             // Keep first option (All)
-             const first = categorySelect.firstElementChild;
-             categorySelect.innerHTML = '';
-             if (first) categorySelect.appendChild(first);
-
-            catsRes.data.forEach(cat => {
-                const opt = document.createElement("option");
-                opt.value = cat;
-                opt.textContent = cat;
-                categorySelect.appendChild(opt);
-            });
+        if (allSeries.length === 0) {
+            container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+            return;
         }
 
+        // Render Function
+        let currentCategory = "";
+        let currentSearch = "";
+
         const render = () => {
-            const cat = categorySelect ? categorySelect.value : "";
-            const query = searchInput ? searchInput.value.toLowerCase() : "";
-            
             const filtered = allSeries.filter(s => {
-                const matchesCat = !cat || (s.category && s.category.includes(cat));
-                const matchesSearch = !query || s.title.toLowerCase().includes(query);
+                const matchesCat = !currentCategory || (s.category && s.category.includes(currentCategory));
+                const matchesSearch = !currentSearch || s.title.toLowerCase().includes(currentSearch);
                 return matchesCat && matchesSearch;
             });
             
@@ -410,29 +484,41 @@ export async function initSeries() {
                 return;
             }
             
-            setupInfiniteScroll(filtered, container, (series) => {
+            setupInfiniteScroll(filtered, container, (item) => {
                 return createPosterCard({
-                    title: series.title,
-                    posterUrl: series.poster,
-                    metaLeft: "", // Year removed as requested
-                    metaRight: series.rating ? `★ ${series.rating}` : "",
+                    title: item.title,
+                    posterUrl: item.poster,
+                    metaLeft: "Série",
+                    metaRight: item.rating ? \`★ \${item.rating}\` : "",
                     onClick: () => {
-                        window.showSeriesModal(series.id);
+                        window.showSeriesModal(item.id);
                     }
                 });
             });
         };
 
-        // Event Listeners
-        if (categorySelect) categorySelect.onchange = render;
-        if (searchInput) searchInput.oninput = render;
+        // Setup Custom Dropdown
+        if (catsRes.ok) {
+            setupCustomDropdown(categorySelectId, catsRes.data, (val) => {
+                currentCategory = val;
+                render();
+            });
+        }
+
+        // Search Listener
+        if (searchInput) {
+            searchInput.oninput = (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                render();
+            };
+        }
 
         // Initial Render
         render();
 
     } catch (e) {
         console.error("Series error:", e);
-        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
+        container.innerHTML = \`<p style="color:red">Erro: \${e.message}</p>\`;
     }
 }
 

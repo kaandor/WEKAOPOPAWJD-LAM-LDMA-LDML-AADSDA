@@ -1410,6 +1410,83 @@ export const api = {
         return { ok: true, data }; 
     }
   },
+  series: {
+      async get(id) {
+          const res = await api.content.getSeries();
+          if (!res.ok) return { ok: false, data: { error: "Failed to load series" } };
+          
+          const series = res.data.series.find(s => s.id === id);
+          if (!series) return { ok: false, data: { error: "Series not found" } };
+          
+          return { ok: true, data: { item: series } };
+      },
+      async episodes(id) {
+          // Mock Episodes Generator since we don't have real episode data
+          // Deterministic mock based on ID
+          const seed = id.charCodeAt(0) || 10;
+          const seasonCount = (seed % 4) + 1; // 1-4 seasons
+          
+          const episodes = [];
+          let epIdCounter = 1;
+          
+          for (let s = 1; s <= seasonCount; s++) {
+              const epCount = (seed % 5) + 8; // 8-12 episodes
+              for (let e = 1; e <= epCount; e++) {
+                  episodes.push({
+                      id: `${id}_s${s}_e${e}`,
+                      series_id: id,
+                      season_number: s,
+                      episode_number: e,
+                      title: `Episódio ${e}`,
+                      description: `Descrição do episódio ${e} da temporada ${s}.`,
+                      duration: 2400 + (e * 60), // ~40-50 mins
+                      still_url: null // Placeholder will be used
+                  });
+              }
+          }
+          
+          return { ok: true, data: { episodes } };
+      },
+      async categories() {
+          const res = await api.content.getSeries();
+          if (!res.ok) return { ok: false, data: [] };
+          
+          const categories = new Set();
+          res.data.series.forEach(s => {
+              if (s.category) {
+                  s.category.split('|').forEach(c => categories.add(c.trim()));
+              }
+          });
+          
+          return { ok: true, data: Array.from(categories).sort() };
+      }
+  },
+  movies: {
+      async list() {
+           const data = await getLocalData("movies.json");
+           if (!data) return { ok: false };
+           const movies = deduplicateMovies(data);
+           return { ok: true, data: movies };
+      },
+      async get(id) {
+          const res = await this.list();
+          if (!res.ok) return { ok: false, data: { error: "Failed to load movies" } };
+          const movie = res.data.find(m => m.id === id);
+          if (!movie) return { ok: false, data: { error: "Movie not found" } };
+          return { ok: true, data: { item: movie } };
+      },
+      async categories() {
+          const res = await this.list();
+          if (!res.ok) return { ok: false, data: [] };
+          const categories = new Set();
+          res.data.forEach(m => {
+              if (m.category) {
+                   m.category.split('|').forEach(c => categories.add(c.trim()));
+              }
+          });
+          return { ok: true, data: Array.from(categories).sort() };
+      }
+  },
   search: {
       async query(q) {
           if (!q) return { ok: false, data: { error: "Query empty" } };
