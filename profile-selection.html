@@ -10,6 +10,15 @@
     <title>KLYX — Quem está assistindo?</title>
     <link rel="stylesheet" href="./css/global.css" />
     <style>
+      /* Force hide any logo image that might persist due to cache */
+      .profile-gate img, .profile-container img {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+      }
+
       body {
         background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
         margin: 0;
@@ -553,8 +562,8 @@
     </div>
 
     <script type="module">
-      import { api } from "./js/api.js?v=20260201-restore1";
-      import { init } from "./js/profile-selection.js?v=20260201-restore1";
+      import { api } from "./js/api.js?v=20260201-db2";
+      import { init } from "./js/profile-selection.js?v=20260201-db2";
       init();
     </script>
   </body>

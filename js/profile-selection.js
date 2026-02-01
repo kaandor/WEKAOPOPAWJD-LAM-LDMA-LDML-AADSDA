@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260201-logo1";
+import { api } from "./api.js?v=20260201-db2";
 import { requireAuth } from "./auth.js";
 
 // Ensure user is logged in
@@ -165,6 +165,12 @@ function render() {
         const user = session.user;
         const key = user ? `klyx.profiles.${user.id}` : "klyx.profiles";
         localStorage.setItem(key, JSON.stringify(profiles));
+        
+        // SYNC TO CLOUD (Database)
+        if (api.cloud && api.cloud.syncUp) {
+            console.log("⚡ Syncing default profile to Cloud DB...");
+            api.cloud.syncUp().catch(e => console.error("Default profile sync failed", e));
+        }
     }
     
     // Determine limit based on plan
