@@ -1454,7 +1454,29 @@ export const api = {
       },
       list() {
           const key = this._getUserProfilesKey();
-          const profiles = JSON.parse(localStorage.getItem(key) || "[]");
+          let profiles = JSON.parse(localStorage.getItem(key) || "[]");
+          
+          // RECOVERY STRATEGY: If empty, look for ANY profile data in localStorage
+          if (profiles.length === 0) {
+              console.warn("No profiles found for current user. Searching legacy/other keys...");
+              
+              // 1. Try generic key
+              const generic = JSON.parse(localStorage.getItem("klyx.profiles") || "[]");
+              if (generic.length > 0) return { ok: true, data: generic };
+              
+              // 2. Scan for any klyx.profiles.*
+              for (let i = 0; i < localStorage.length; i++) {
+                  const k = localStorage.key(i);
+                  if (k && k.startsWith("klyx.profiles.") && k !== key) {
+                      const found = JSON.parse(localStorage.getItem(k) || "[]");
+                      if (found.length > 0) {
+                          console.log(`Recovered profiles from ${k}`);
+                          return { ok: true, data: found };
+                      }
+                  }
+              }
+          }
+          
           return { ok: true, data: profiles };
       },
       async create(data) {
