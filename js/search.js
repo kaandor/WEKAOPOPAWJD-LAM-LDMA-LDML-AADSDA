@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-realtime";
+import { api } from "./api.js?v=20260131-fixauth4";
 import { createPosterCard, createThumbCard } from "./ui.js";
 
 function debounce(fn, waitMs) {

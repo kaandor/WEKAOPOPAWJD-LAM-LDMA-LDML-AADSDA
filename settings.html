@@ -105,8 +105,9 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260131-realtime";
-      import { initSettings } from "./js/ui.js?v=20260131-realtime";
+      import { mountAppShell } from "./js/router.js?v=20260131-fixauth4";
+      import { initSettings } from "./js/ui.js?v=20260131-fixauth4";
+      
       await mountAppShell({ currentPath: "/settings" });
       await initSettings();
     </script>

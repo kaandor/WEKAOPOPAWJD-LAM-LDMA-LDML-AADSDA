@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260131-fixauth2";
+import { api } from "./api.js?v=20260131-fixauth4";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in

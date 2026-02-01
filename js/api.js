@@ -828,22 +828,27 @@ export const api = {
             
             
                 // Proxies configuration
-            // We prioritize GET requests with parameters in URL because many proxies handle GET better than POST
+            // We prioritize CodeTabs and CorsProxyIO. Added AllOrigins with improved parsing logic.
             const proxies = [
                 {
-                    name: "AllOriginsRaw",
-                    url: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    name: "CodeTabs",
+                    url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                    method: "GET"
+                },
+                {
+                    name: "CorsProxyIO",
+                    url: (url) => `https://corsproxy.io/?${url}`,
+                    method: "GET"
+                },
+                {
+                    name: "AllOrigins",
+                    url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
                     method: "GET"
                 },
                 {
                     name: "VercelAuth",
                     url: () => `https://klyx-api.vercel.app/api/token`,
                     method: "POST"
-                },
-                {
-                    name: "CodeTabs",
-                    url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                    method: "GET"
                 },
                 {
                     name: "CorsLoL",
@@ -933,14 +938,44 @@ export const api = {
                         throw new Error(`Proxy status: ${response.status}`);
                     }
                     
-                    data = await response.json();
+                    // Parse response with fallback for non-JSON (GitHub default)
+                    const responseText = await response.text();
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        // Not JSON, assume form-encoded string (e.g. CodeTabs ignoring Accept header)
+                        // GitHub returns: access_token=...&scope=...&token_type=bearer
+                        console.log(`Proxy ${proxy.name} returned non-JSON, checking form-encoded...`);
+                        const params = new URLSearchParams(responseText);
+                        if (params.has('access_token')) {
+                            data = Object.fromEntries(params.entries());
+                        } else {
+                            // If it's not a token response, maybe it's an error in plain text
+                            throw new Error(`Invalid response format: ${responseText.substring(0, 100)}...`);
+                        }
+                    }
                     
-                    // AllOrigins/CorsLoL sometimes wrap response
+                    // Handle Proxy Wrappers (AllOrigins, CorsLoL)
+                    // Some proxies wrap the actual content in a JSON object
                     if (data.contents) {
-                         // Sometimes contents is string, sometimes object
                          if (typeof data.contents === 'string') {
-                             try { data = JSON.parse(data.contents); } catch(e) { console.error("Parse error", e); }
+                             try { 
+                                 // Try to parse contents as JSON
+                                 data = JSON.parse(data.contents); 
+                             } catch(e) { 
+                                 // If JSON parse fails, it might be form-encoded
+                                 console.log("Wrapper contents not JSON, trying form-encoded parse:", data.contents);
+                                 const params = new URLSearchParams(data.contents);
+                                 if (params.has('access_token')) {
+                                     data = Object.fromEntries(params.entries());
+                                 } else {
+                                     // If we can't parse contents, and it's not a token, it might be the data itself?
+                                     // But for token endpoint, we expect an object or form params.
+                                     // Keep data as is if it has access_token property (unlikely if string)
+                                 }
+                             }
                          } else {
+                             // Contents is already an object
                              data = data.contents;
                          }
                     }
