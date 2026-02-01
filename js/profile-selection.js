@@ -146,6 +146,26 @@ function render() {
     
     // Filter out invalid profiles to prevent ghost slots
     profiles = profiles.filter(p => p && p.id);
+
+    // RESTORE/RECOVERY: If no profiles exist (wiped or sync error), create a default one immediately
+    if (profiles.length === 0) {
+        console.warn("No profiles found! Creating default 'Perfil 1'...");
+        const defaultProfile = {
+            id: "p" + Date.now(),
+            name: "Perfil 1",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Perfil1",
+            age: 18,
+            isKid: false,
+            allowExplicit: false,
+            created_at: new Date().toISOString()
+        };
+        profiles.push(defaultProfile);
+        
+        // Save back to storage immediately so it persists
+        const user = session.user;
+        const key = user ? `klyx.profiles.${user.id}` : "klyx.profiles";
+        localStorage.setItem(key, JSON.stringify(profiles));
+    }
     
     // Determine limit based on plan
     const user = session.user;
