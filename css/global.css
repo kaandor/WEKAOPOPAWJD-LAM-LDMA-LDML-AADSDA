@@ -234,61 +234,90 @@ body[data-device-mode="tv"] main.page {
 /* Navigation - GLOBAL (Mobile Style Everywhere) */
 .nav {
   position: fixed;
-  bottom: max(8px, env(safe-area-inset-bottom));
-  left: 24px;
-  right: 24px;
+  bottom: max(16px, env(safe-area-inset-bottom)); /* Lifted up slightly for floating effect */
+  left: 50%;
+  transform: translateX(-50%);
   width: auto;
-  background: rgba(15, 15, 20, 0.35); /* More transparent */
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px; /* Slightly tighter radius */
-  padding: 4px 16px; /* Slimmer padding */
+  min-width: 280px;
+  max-width: 400px;
+  background: rgba(20, 20, 25, 0.75); /* Dark Glass */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.2); /* Top light for 3D effect */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3); /* Bottom shadow for 3D effect */
+  border-radius: 24px; /* Pill shape */
+  padding: 6px 8px; /* Compact padding */
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly; /* Even spacing */
   align-items: center;
   z-index: 1000;
-  gap: 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20); /* Lighter shadow */
+  gap: 4px;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.5),
+    0 4px 10px -3px rgba(0, 0, 0, 0.3); /* Deep shadow for floating 3D */
+}
+
+/* Light Mode Navigation Override */
+html[data-theme="light"] .nav {
+  background: rgba(255, 255, 255, 0.85); /* Light Glass */
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    0 10px 30px -5px rgba(0, 0, 0, 0.15),
+    0 4px 12px -3px rgba(0, 0, 0, 0.1);
 }
 
 .nav a {
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   font-size: 10px;
-  padding: 0;
-  border-radius: 8px;
+  padding: 6px 16px;
+  border-radius: 16px;
   background: transparent !important;
   color: var(--muted);
-  min-width: auto;
-  width: 60px;
-  height: 100%;
+  min-width: 60px;
+  width: auto;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0.7;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
 }
 
 .nav a:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
 }
 
 .nav a[aria-current="page"] {
-  color: var(--accent);
-  background: transparent;
+  color: white; /* Always white text for contrast on active pill */
+  background: var(--accent) !important; /* Solid accent background */
   opacity: 1;
   transform: translateY(-2px);
+  box-shadow: 
+    0 4px 12px color-mix(in srgb, var(--accent) 50%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3); /* Inner bevel */
+}
+
+html[data-theme="light"] .nav a[aria-current="page"] {
+  color: white; /* Keep white text even in light mode for the pill */
+  box-shadow: 
+    0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 .nav a[aria-current="page"] .nav-icon {
-  filter: drop-shadow(0 0 8px var(--accent-2));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .nav-icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 2px;
 }
 
 .nav-icon svg {
@@ -911,5 +940,12 @@ body.using-keyboard .dropdown-item.focusable:focus {
   .nav-icon svg {
     width: 20px;
     height: 20px;
+  }
+
+  /* Reset Light Mode Nav for Desktop */
+  html[data-theme="light"] .nav {
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 }
