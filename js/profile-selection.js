@@ -87,20 +87,28 @@ let selectedAvatarUrl = "";
 
 // Constants
 const DICEBEAR_BASE = "https://api.dicebear.com/7.x";
-const AVATAR_STYLES = ["avataaars", "bottts", "fun-emoji", "adventurer", "big-ears"];
-// Generate 100 icons (20 of each style)
-const AVAILABLE_ICONS = [];
-for (const style of AVATAR_STYLES) {
-    for (let i = 0; i < 20; i++) {
-        AVAILABLE_ICONS.push(`${DICEBEAR_BASE}/${style}/svg?seed=icon${i}_${style}`);
+
+// Icon Styles
+const ADULT_STYLES = ["avataaars", "big-ears", "lorelei", "micah"];
+const KID_STYLES = ["fun-emoji", "bottts", "adventurer", "thumbs"];
+
+function getAvailableIcons(isKid) {
+    const styles = isKid ? KID_STYLES : ADULT_STYLES;
+    const icons = [];
+    for (const style of styles) {
+        for (let i = 0; i < 20; i++) {
+            icons.push(`${DICEBEAR_BASE}/${style}/svg?seed=icon${i}_${style}`);
+        }
     }
+    return icons;
 }
 
 // Init
 export async function init() {
     await loadProfiles();
     setupEventListeners();
-    generateIconGrid();
+    // Pre-generate default grid (Adult)
+    generateIconGrid(false);
 }
 
 async function loadProfiles() {
@@ -154,9 +162,7 @@ function render() {
             id: "p" + Date.now(),
             name: "Perfil 1",
             avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Perfil1",
-            age: 18,
             isKid: false,
-            allowExplicit: false,
             created_at: new Date().toISOString()
         };
         profiles.push(defaultProfile);
@@ -279,8 +285,9 @@ function openCreateModal() {
     pinSection.classList.add("hidden");
     profilePinInput.value = ""; 
     
-    // Random default avatar
-    const randomIcon = AVAILABLE_ICONS[Math.floor(Math.random() * AVAILABLE_ICONS.length)];
+    // Random default avatar (Adult default)
+    const icons = getAvailableIcons(false);
+    const randomIcon = icons[Math.floor(Math.random() * icons.length)];
     selectedAvatarUrl = randomIcon;
     modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
     
@@ -392,9 +399,10 @@ async function deleteProfile() {
 }
 
 // Icon Selector
-function generateIconGrid() {
+function generateIconGrid(isKid) {
     iconGrid.innerHTML = "";
-    AVAILABLE_ICONS.forEach(iconUrl => {
+    const icons = getAvailableIcons(isKid);
+    icons.forEach(iconUrl => {
         const img = document.createElement("div");
         img.className = "icon-option";
         img.style.backgroundImage = `url('${iconUrl}')`;
@@ -408,6 +416,8 @@ function generateIconGrid() {
 }
 
 function openIconModal() {
+    // Regenerate grid based on current toggle state
+    generateIconGrid(profileIsKid.checked);
     iconSelectorModal.classList.remove("hidden");
 }
 
@@ -450,6 +460,18 @@ function setupEventListeners() {
         });
     }
     
-    // (Removed explicit toggle logic)
+    // Toggle Kid Profile - Auto swap avatar
+    if (profileIsKid) {
+        profileIsKid.addEventListener("change", () => {
+            const isKid = profileIsKid.checked;
+            const icons = getAvailableIcons(isKid);
+            // Pick a random icon from the new set to immediately reflect the change
+            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+            selectedAvatarUrl = randomIcon;
+            if (modalAvatarPreview) {
+                modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
+            }
+        });
+    }
 }
 // init() called by importing module
