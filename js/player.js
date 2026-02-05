@@ -1,5 +1,9 @@
 
-import { api } from "./api.js?v=20260131-fixauth8";
+import { api } from "./api.js?v=20260204-theme";
+import { applyGlobalTheme } from "./ui.js?v=20260204-theme"; // Import UI for Theme
+
+// Apply theme immediately
+applyGlobalTheme();
 
 // Helper for URL params
 const qs = (key) => new URLSearchParams(window.location.search).get(key);

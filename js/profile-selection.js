@@ -1,5 +1,9 @@
 import { api } from "./api.js?v=20260201-db2";
 import { requireAuth } from "./auth.js";
+import { applyGlobalTheme } from "./ui.js?v=20260201-db2"; // Import UI for Theme & Sync
+
+// Apply theme immediately
+applyGlobalTheme();
 
 // Ensure user is logged in
 const session = await requireAuth();

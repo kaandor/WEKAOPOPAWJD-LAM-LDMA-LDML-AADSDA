@@ -46,11 +46,31 @@ window.addEventListener('klyx-sync-end', () => {
 window.addEventListener('klyx-data-updated', () => {
     // Optional: Show toast "Dados Atualizados"
     console.log("UI: Data Updated from Cloud");
+    
+    // Re-apply theme in case it changed
+    applyGlobalTheme();
+    
     // If on profile selection, reload to show new profiles
     if (window.location.pathname.includes("profile-selection.html")) {
         window.location.reload();
     }
 });
+
+// --- THEME APPLICATION ---
+function applyGlobalTheme() {
+    try {
+        const prefs = api.settings.get();
+        if (prefs.theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    } catch (e) { console.warn("Theme apply error", e); }
+}
+
+// Apply on load
+applyGlobalTheme();
+// -------------------------
 // ----------------------------------------
 
 // Helper for Drag-to-Scroll (Mouse)
@@ -575,24 +595,48 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
     return createPosterCard({ title, posterUrl: thumbUrl, metaLeft, metaRight, onClick });
 }
 
+export function applyTheme(theme) {
+    if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+}
+
 export async function initSettings() {
     console.log("Settings Initialized");
     
-    // --- Parental Control Logic Removed ---
-    // User requested to remove parental control from settings.
+    // Load current values
+    const prefs = api.settings.get();
+    if (prefs.theme) {
+        const themeEl = document.getElementById("theme");
+        if (themeEl) themeEl.value = prefs.theme;
+        applyTheme(prefs.theme);
+    }
+    if (prefs.language) {
+        const langEl = document.getElementById("language");
+        if (langEl) langEl.value = prefs.language;
+    }
 
-
-    // Settings Saving Mock
+    // Settings Saving
     const saveBtn = document.getElementById("saveSettings");
     if (saveBtn) {
         saveBtn.onclick = () => {
+            const theme = document.getElementById("theme").value;
+            const language = document.getElementById("language").value;
+            
+            // Save to Cloud
+            api.settings.save({ theme, language });
+            
+            // Apply immediately
+            applyTheme(theme);
+            
             const saveStatus = document.getElementById("settingsStatus");
             if (saveStatus) {
-                saveStatus.textContent = "Salvo!";
-                setTimeout(() => saveStatus.textContent = "", 2000);
+                saveStatus.textContent = "Salvo & Sincronizando...";
+                saveStatus.style.color = "#4ade80";
+                setTimeout(() => saveStatus.textContent = "", 3000);
             }
-            // Reload page to apply changes (simplest way to refresh api.js filters)
-            setTimeout(() => window.location.reload(), 500);
         };
     }
     

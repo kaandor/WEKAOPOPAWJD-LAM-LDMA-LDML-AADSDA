@@ -31,11 +31,10 @@
                 </select>
               </div>
               <div class="field" style="margin-top: 12px">
-                <label class="subtext">Language</label>
+                <label class="subtext">Linguagem</label>
                 <select id="language" class="select" style="margin-top: 6px">
-                  <option value="en">English</option>
+                  <option value="en">Inglês</option>
                   <option value="pt">Português</option>
-                  <option value="es">Español</option>
                 </select>
               </div>
               <div class="field" style="margin-top: 12px">
@@ -96,11 +95,15 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260131-fixauth6";
-      import { initSettings } from "./js/ui.js?v=20260131-fixauth6";
+      import { mountAppShell } from "./js/router.js?v=20260204-theme";
+      import { initSettings } from "./js/ui.js?v=20260204-theme";
       
-      await mountAppShell({ currentPath: "/settings" });
-      await initSettings();
+      try {
+        await mountAppShell({ currentPath: "/settings" });
+        await initSettings();
+      } catch (e) {
+        console.error("Settings Init Error:", e);
+      }
     </script>
   </body>
 </html>

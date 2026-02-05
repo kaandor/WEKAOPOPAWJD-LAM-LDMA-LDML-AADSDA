@@ -238,6 +238,28 @@ export const api = {
         return true; // Always online for local demo
     }
   },
+  settings: {
+    save(settings) {
+        const user = readSession().user;
+        if (!user) return;
+        
+        // Merge with existing
+        const current = JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
+        const updated = { ...current, ...settings };
+        
+        localStorage.setItem(`klyx_preferences_${user.id}`, JSON.stringify(updated));
+        
+        // Trigger Sync
+        api.cloud.scheduleSyncUp();
+        
+        return updated;
+    },
+    get() {
+        const user = readSession().user;
+        if (!user) return {};
+        return JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
+    }
+  },
   cloud: {
     // Configuration
     GIST_FILENAME: "klyx_user_data_v1.json",
@@ -532,6 +554,7 @@ export const api = {
             const supportStats = cloudData.supportStats || {tickets:0, lastContact:null};
             const subscription = cloudData.subscription || {plan:"free", status:"active"};
             const accountStatus = cloudData.accountStatus || "active";
+            const preferences = cloudData.preferences || {};
             
             localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(profiles));
             localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(progress));
@@ -540,6 +563,7 @@ export const api = {
             localStorage.setItem(`klyx_support_stats_${user.id}`, JSON.stringify(supportStats));
             localStorage.setItem(`klyx_subscription_${user.id}`, JSON.stringify(subscription));
             localStorage.setItem(`klyx_account_status_${user.id}`, accountStatus);
+            localStorage.setItem(`klyx_preferences_${user.id}`, JSON.stringify(preferences));
             
             // Sync Account-Bound Device Identity
             if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
@@ -597,6 +621,7 @@ export const api = {
         const supportStats = JSON.parse(localStorage.getItem(`klyx_support_stats_${user.id}`) || '{"tickets":0,"lastContact":null}');
         const subscription = JSON.parse(localStorage.getItem(`klyx_subscription_${user.id}`) || '{"plan":"free","status":"active"}');
         const accountStatus = localStorage.getItem(`klyx_account_status_${user.id}`) || "active";
+        const preferences = JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
         
         const deviceIdentity = {
             mac: localStorage.getItem('klyx_device_mac'),
@@ -613,6 +638,7 @@ export const api = {
             supportStats,
             subscription,
             accountStatus,
+            preferences,
             deviceIdentity
         };
 
