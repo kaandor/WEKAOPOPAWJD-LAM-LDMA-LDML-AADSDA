@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260204-fix1";
+import { api } from "./api.js?v=20260204-fix2";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in
@@ -59,8 +59,12 @@ window.addEventListener('klyx-data-updated', () => {
 // --- THEME APPLICATION ---
 export function applyGlobalTheme() {
     try {
-        const prefs = api.settings.get();
-        applyTheme(prefs.theme);
+        if (api.settings && typeof api.settings.get === 'function') {
+            const prefs = api.settings.get();
+            applyTheme(prefs.theme);
+        } else {
+            console.warn("api.settings not available yet");
+        }
     } catch (e) { console.warn("Theme apply error", e); }
 }
 

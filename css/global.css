@@ -621,77 +621,7 @@ main.page {
   gap: 6px;
 }
 
-/* Category Dropdown & Buttons (Dynamic) */
-.category-dropdown {
-    position: relative;
-    display: inline-block;
-    min-width: 200px;
-}
-
-.category-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 10px 16px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.category-btn:hover {
-    background: var(--border);
-}
-
-.category-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    width: 100%;
-    max-height: 300px;
-    overflow-y: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    z-index: 100;
-    display: none;
-    flex-direction: column;
-    padding: 6px;
-}
-
-.category-menu.active {
-    display: flex;
-    animation: slideDown 0.2s ease-out;
-}
-
-.category-item {
-    padding: 10px 12px;
-    border-radius: 6px;
-    color: var(--text);
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.category-item:hover,
-.category-item:focus {
-    background: var(--surface-2);
-    color: var(--accent);
-    outline: none;
-}
-
-.category-item.selected {
-    background: var(--accent);
-    color: white;
-}
-
-/* Category Dropdown & Buttons (Fixed for Light/Dark) */
+/* Category Dropdown & Buttons (Unified) */
 .category-dropdown {
     position: relative;
     display: inline-block;
@@ -731,7 +661,7 @@ main.page {
     border: 1px solid var(--border);
     border-radius: 12px;
     box-shadow: var(--shadow);
-    z-index: 101;
+    z-index: 1000; /* Increased z-index */
     display: none;
     flex-direction: column;
     padding: 6px;
@@ -762,6 +692,7 @@ main.page {
     background: var(--accent);
     color: white;
 }
+
 
 
 /* =========================================
@@ -769,39 +700,46 @@ main.page {
    ========================================= */
 @media (min-width: 768px) {
   .nav {
-    position: static;
-    transform: none;
+    position: static !important;
+    transform: none !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    width: auto;
-    max-width: none;
-    padding: 0;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 20px 0;
     margin: 0;
     border-radius: 0;
-    justify-content: flex-start;
-    gap: 16px;
+    display: flex !important;
+    justify-content: center !important; /* Center the buttons group */
+    gap: 20px; /* Consistent gap */
+    left: auto;
+    bottom: auto;
   }
 
   .nav a {
     flex-direction: row; /* Horizontal icons/text */
     background: transparent !important;
-    padding: 8px 16px;
-    gap: 8px;
-    border-radius: 8px;
-    width: auto;
-    min-width: auto;
-    box-shadow: none !important; /* Remove pill shadow */
+    padding: 12px 24px;
+    gap: 12px;
+    border-radius: 12px;
+    width: 180px; /* Fixed equal width for all buttons */
+    flex: 0 0 180px; /* Don't grow or shrink */
+    box-shadow: none !important;
     color: var(--muted);
     opacity: 1;
     height: auto;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
   }
 
   .nav a .nav-text {
     display: inline-block;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 600;
   }
   
   .nav a .nav-icon {
@@ -809,29 +747,31 @@ main.page {
   }
 
   .nav a .nav-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   /* Active State for Desktop */
   .nav a[aria-current='page'] {
     background: rgba(255, 255, 255, 0.1) !important;
     color: var(--text);
-    transform: none;
-    box-shadow: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
   }
   
   /* Hover State for Desktop */
   .nav a:hover {
     background: rgba(255, 255, 255, 0.05) !important;
     color: var(--text);
+    transform: translateY(-1px);
   }
   
   /* Light Mode Adjustments */
   html[data-theme='light'] .nav a[aria-current='page'] {
-     background: rgba(0, 0, 0, 0.05) !important;
+     background: var(--surface) !important;
      color: var(--accent);
-     box-shadow: none;
+     box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+     border: 1px solid var(--border);
   }
   
   html[data-theme='light'] .nav a:hover {
@@ -848,6 +788,12 @@ main.page {
   gap: 16px;
   width: 100%;
   padding-bottom: 20px;
+}
+
+/* Ensure cards in grid fill the cell */
+.grid-cards .card {
+  width: 100%;
+  flex: 1;
 }
 
 @media (min-width: 768px) {
