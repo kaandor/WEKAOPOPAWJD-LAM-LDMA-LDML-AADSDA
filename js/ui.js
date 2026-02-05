@@ -622,20 +622,27 @@ export async function initSettings() {
     const saveBtn = document.getElementById("saveSettings");
     if (saveBtn) {
         saveBtn.onclick = () => {
-            const theme = document.getElementById("theme").value;
-            const language = document.getElementById("language").value;
-            
-            // Save to Cloud
-            api.settings.save({ theme, language });
-            
-            // Apply immediately
-            applyTheme(theme);
-            
-            const saveStatus = document.getElementById("settingsStatus");
-            if (saveStatus) {
-                saveStatus.textContent = "Salvo & Sincronizando...";
-                saveStatus.style.color = "#4ade80";
-                setTimeout(() => saveStatus.textContent = "", 3000);
+            try {
+                const theme = document.getElementById("theme").value;
+                const language = document.getElementById("language").value;
+                
+                console.log("Saving settings...", { theme, language });
+
+                // Save to Cloud
+                api.settings.save({ theme, language });
+                
+                // Apply immediately
+                applyTheme(theme);
+                
+                const saveStatus = document.getElementById("settingsStatus");
+                if (saveStatus) {
+                    saveStatus.textContent = "Salvo & Sincronizando...";
+                    saveStatus.style.color = "#4ade80";
+                    setTimeout(() => saveStatus.textContent = "", 3000);
+                }
+            } catch (e) {
+                console.error("Save Settings Error:", e);
+                alert("Erro ao salvar configurações: " + e.message);
             }
         };
     }
