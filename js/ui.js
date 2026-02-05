@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260201-logo1";
+import { api } from "./api.js?v=20260204-fix1";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in
@@ -57,14 +57,10 @@ window.addEventListener('klyx-data-updated', () => {
 });
 
 // --- THEME APPLICATION ---
-function applyGlobalTheme() {
+export function applyGlobalTheme() {
     try {
         const prefs = api.settings.get();
-        if (prefs.theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
+        applyTheme(prefs.theme);
     } catch (e) { console.warn("Theme apply error", e); }
 }
 
@@ -596,11 +592,13 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
 }
 
 export function applyTheme(theme) {
-    if (theme === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-    } else {
-        document.documentElement.removeAttribute('data-theme');
-    }
+    try {
+        if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    } catch (e) { console.warn("Theme apply error", e); }
 }
 
 export async function initSettings() {

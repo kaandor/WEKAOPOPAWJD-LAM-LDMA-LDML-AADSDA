@@ -1,6 +1,6 @@
-import { api } from "./api.js?v=20260201-db2";
+import { api } from "./api.js?v=20260204-fix1";
 import { requireAuth } from "./auth.js";
-import { applyGlobalTheme } from "./ui.js?v=20260201-db2"; // Import UI for Theme & Sync
+import { applyGlobalTheme } from "./ui.js?v=20260204-fix1"; // Import UI for Theme & Sync
 
 // Apply theme immediately
 applyGlobalTheme();
@@ -135,8 +135,13 @@ async function loadProfiles() {
         const res = await api.profiles.list();
         if (res.ok) {
             profiles = res.data;
-            if (!Array.isArray(profiles) && profiles.profiles) {
+            if (!Array.isArray(profiles) && profiles?.profiles) {
                 profiles = profiles.profiles;
+            }
+            // Safety check: Ensure profiles is an array
+            if (!Array.isArray(profiles)) {
+                console.warn("Profiles data invalid, resetting to empty array:", profiles);
+                profiles = [];
             }
         } else {
             console.error("Error loading profiles", res);

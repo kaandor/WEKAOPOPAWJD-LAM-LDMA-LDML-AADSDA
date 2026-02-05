@@ -1629,5 +1629,28 @@ export const api = {
           const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           return profiles.find(p => p.id === id) || profiles[0];
       }
+  },
+  settings: {
+      _getKey() {
+          const user = readSession().user;
+          return user ? `klyx_preferences_${user.id}` : "klyx_preferences_guest";
+      },
+      get() {
+          const key = this._getKey();
+          return JSON.parse(localStorage.getItem(key) || "{}");
+      },
+      async save(newPrefs) {
+          const key = this._getKey();
+          const current = this.get();
+          const updated = { ...current, ...newPrefs };
+          localStorage.setItem(key, JSON.stringify(updated));
+          
+          // Trigger Cloud Sync
+          if (api.cloud && api.cloud.syncUp) {
+              console.log("Saving Settings & Syncing to Cloud...");
+              await api.cloud.syncUp();
+          }
+          return { ok: true };
+      }
   }
 };

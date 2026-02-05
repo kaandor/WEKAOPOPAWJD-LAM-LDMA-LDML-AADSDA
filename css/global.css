@@ -597,13 +597,16 @@ main.page {
 }
 
 .card-body {
-  padding: 8px 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .card-title {
   font-size: 13px;
   font-weight: 500;
-  margin: 0 0 4px 0;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -611,341 +614,152 @@ main.page {
 }
 
 .card-meta {
+  font-size: 11px;
+  color: var(--muted);
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  color: var(--muted);
 }
 
-.badge {
-  background: var(--surface-2);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-}
-
-@media (min-width: 768px) {
-  .card {
-    width: 180px;
-  }
-  
-  .section h2 {
-    font-size: 20px;
-  }
-}
-
-/* Grid Layout for Movies/Series Pages */
-.grid-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-  width: 100%;
-  padding-bottom: 40px;
-}
-
-@media (min-width: 768px) {
-  .grid-cards {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 24px;
-  }
-}
-
-/* Toolbar Inputs */
-.select, .search-input {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 8px 12px;
-  border-radius: 8px;
-  outline: none;
-  font-size: 14px;
-}
-
-.select:focus, .search-input:focus {
-  border-color: var(--accent);
-}
-
-/* Custom Category Dropdown (Replacing .select) */
+/* Category Dropdown & Buttons (Dynamic) */
 .category-dropdown {
-  position: relative;
-  display: inline-block;
-  min-width: 200px;
+    position: relative;
+    display: inline-block;
+    min-width: 200px;
 }
 
 .category-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .category-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--accent);
+    background: var(--border);
 }
 
 .category-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 240px;
-  max-height: 400px;
-  overflow-y: auto;
-  background: #1a1d26; /* Darker opaque background for contrast */
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  margin-top: 8px;
-  padding: 8px 0;
-  z-index: 200;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    padding: 6px;
 }
 
 .category-menu.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+    display: flex;
+    animation: slideDown 0.2s ease-out;
 }
 
 .category-item {
-  display: block;
-  padding: 10px 16px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-left: 3px solid transparent;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.category-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  padding-left: 20px; /* Slight movement */
+.category-item:hover,
+.category-item:focus {
+    background: var(--surface-2);
+    color: var(--accent);
+    outline: none;
 }
 
 .category-item.selected {
-  color: var(--text);
-  border-left-color: var(--accent);
-  background: linear-gradient(90deg, rgba(147, 51, 234, 0.1) 0%, transparent 100%);
+    background: var(--accent);
+    color: white;
 }
 
-/* Scrollbar for menu */
-.category-menu::-webkit-scrollbar {
-  width: 6px;
-}
-.category-menu::-webkit-scrollbar-track {
-  background: transparent;
-}
-.category-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+/* Category Dropdown & Buttons (Fixed for Light/Dark) */
+.category-dropdown {
+    position: relative;
+    display: inline-block;
+    min-width: 200px;
+    z-index: 100;
 }
 
-
-/* Mobile Layout */
-@media (max-width: 1024px) {
-  /* Lock body scroll for app-like feel */
-  html, body {
-    overflow: hidden;
-    height: 100%;
-    position: fixed;
-    width: 100%;
-  }
-
-  /* App Shell Structure */
-  .app-shell {
-    height: 100%;
-    overflow: hidden; /* Prevent shell from scrolling */
-  }
-
-  /* Auth Shell & Profile Shell for Mobile */
-  .auth-shell, .profile-shell {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: block; /* Override grid/flex if needed to allow scroll */
-  }
-  
-  .auth-shell > *, .profile-shell > * {
-     min-height: auto; /* Reset min-height to avoid forcing overflow */
-  }
-
-  /* Player Shell */
-  .player-shell {
-    height: 100%;
-    overflow: hidden;
-  }
-
-  /* Scrollable Content Area */
-  main.page {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(90px + env(safe-area-inset-bottom));
-  }
-  
-  /* Ensure Auth pages scroll independently */
-  .auth-shell {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .nav-item-home {
-    display: flex !important;
-  }
-  .header-inner {
-    height: 60px;
-    padding: 0 16px;
-  }
-  
-  .container {
-    padding-left: 16px;
-    padding-right: 16px;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .brand-logo {
-    height: 40px;
-    width: 40px;
-  }
-
-  .brand-text-group, .brand-dots {
-    display: none;
-  }
-  
-  /* Nav styles are now global */
-  .header-actions {
+.category-btn {
     display: flex;
-  }
-  
-  .profile-dropdown {
-    position: fixed;
-    top: auto;
-    bottom: max(80px, env(safe-area-inset-bottom) + 70px); /* Above floating nav */
-    right: 16px;
-    width: 220px;
-    margin-top: 0;
-    transform-origin: bottom right;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--surface-2);
     border: 1px solid var(--border);
-    z-index: 2000;
-  }
-  
-  main.page {
-    padding-bottom: calc(90px + env(safe-area-inset-bottom));
-  }
-  
-  /* Hide scrollbar on mobile but allow scrolling */
-  main.page::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-/* TV / Keyboard Navigation Styles */
-body.using-keyboard .focusable {
-  outline: none; /* Reset default outline */
-  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s;
-}
-
-body.using-keyboard .focusable:focus {
-  outline: 3px solid var(--accent);
-  outline-offset: 4px;
-  z-index: 50;
-  position: relative; /* Ensure z-index works */
-}
-
-/* Card Specific Focus */
-body.using-keyboard .card.focusable:focus {
-  transform: scale(1.1);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-  outline: 4px solid var(--accent);
-  outline-offset: 0; /* Border tight on card */
-  z-index: 100;
-}
-
-/* Nav Item Specific Focus */
-body.using-keyboard .nav a.focusable:focus,
-body.using-keyboard .profile-avatar-btn.focusable:focus {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Dropdown Item Focus */
-body.using-keyboard .dropdown-item.focusable:focus {
-  background: var(--surface-2);
-  outline: none;
-  border-left: 4px solid var(--accent);
-}
-
-/* Restore Desktop Navigation for larger screens */
-@media (min-width: 768px) {
-  .nav {
-    position: static;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    width: auto;
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    gap: 10px;
-    transform: none;
-  }
-
-  .nav a {
-    flex-direction: row;
-    font-size: 14px;
-    width: auto;
-    height: 40px;
-    padding: 0 16px;
-    gap: 8px;
-    background: transparent !important;
-    opacity: 0.7;
     border-radius: 8px;
-  }
-
-  .nav a:hover {
-    background: var(--surface-2) !important;
-    opacity: 1;
-  }
-
-  .nav a[aria-current="page"] {
-    background: var(--accent-2) !important;
-    color: var(--accent);
-    transform: none;
-  }
-  
-  .nav-icon svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  /* Reset Light Mode Nav for Desktop */
-  html[data-theme="light"] .nav {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  }
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
 }
+
+.category-btn:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+.category-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 101;
+    display: none;
+    flex-direction: column;
+    padding: 6px;
+}
+
+.category-menu.active {
+    display: flex;
+    animation: slideDown 0.2s ease-out;
+}
+
+.category-item {
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.category-item:hover,
+.category-item:focus {
+    background: var(--surface-2);
+    color: var(--accent);
+    outline: none;
+}
+
+.category-item.selected {
+    background: var(--accent);
+    color: white;
+}
+

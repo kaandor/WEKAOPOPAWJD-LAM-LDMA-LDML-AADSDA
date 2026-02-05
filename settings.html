@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Settings</title>
-    <link rel="stylesheet" href="./css/global.css?v=5" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=5" />
+    <link rel="stylesheet" href="./css/global.css?v=20260204-fix1" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix1" />
   </head>
   <body>
     <div class="app-shell">
@@ -95,8 +95,8 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260204-theme";
-      import { initSettings } from "./js/ui.js?v=20260204-theme";
+      import { mountAppShell } from "./js/router.js?v=20260204-fix1";
+      import { initSettings } from "./js/ui.js?v=20260204-fix1";
       
       try {
         await mountAppShell({ currentPath: "/settings" });
