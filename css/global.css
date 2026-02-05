@@ -347,6 +347,47 @@ html[data-theme="light"] .nav a[aria-current="page"] {
   padding-bottom: 10px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    outline: none;
+    height: 42px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.search-input::placeholder {
+    color: var(--muted);
+}
+
+.search-input:focus {
+    background: var(--border);
+    border-color: var(--accent);
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .category-dropdown, .search-input {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 /* Ensure header doesn't overlap if it exists */
@@ -643,6 +684,7 @@ main.page {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+    height: 42px;
 }
 
 .category-btn:hover {
