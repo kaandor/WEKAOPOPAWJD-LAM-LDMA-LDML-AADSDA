@@ -3,7 +3,7 @@ package com.klyx.app
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
-import androidx.media3.exoplayer.ExoPlayer
+import androidplx.media3.exoayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
 class PlayerActivity : AppCompatActivity() {
