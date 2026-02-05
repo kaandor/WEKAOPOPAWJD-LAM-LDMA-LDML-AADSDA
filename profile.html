@@ -51,10 +51,15 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260131-fixauth6";
-      import { initProfile } from "./js/ui.js?v=20260131-fixauth6";
-      await mountAppShell({ currentPath: "/profile" });
-      await initProfile();
+      import { mountAppShell } from "./js/router.js?v=20260204-theme";
+      import { initProfile } from "./js/ui.js?v=20260204-theme";
+      
+      try {
+        await mountAppShell({ currentPath: "/profile" });
+        await initProfile();
+      } catch (e) {
+        console.error("Profile Init Error:", e);
+      }
     </script>
   </body>
 </html>
