@@ -605,6 +605,83 @@ export function applyTheme(theme) {
     } catch (e) { console.warn("Theme apply error", e); }
 }
 
+// Helper for generic select dropdown (Settings, etc)
+function setupSelectDropdown(selectId) {
+    const originalSelect = document.getElementById(selectId);
+    if (!originalSelect) return;
+
+    const container = originalSelect.parentElement;
+    
+    // Create new structure
+    const dropdown = document.createElement('div');
+    dropdown.className = 'category-dropdown';
+    dropdown.style.width = '100%'; 
+    
+    // Get options
+    const options = Array.from(originalSelect.options).map(opt => ({
+        label: opt.text,
+        value: opt.value,
+        selected: opt.selected
+    }));
+    
+    const selectedOption = options.find(o => o.selected) || options[0];
+    
+    const btn = document.createElement('button');
+    btn.className = 'category-btn focusable';
+    btn.innerHTML = `
+        <span class="selected-label">${selectedOption ? selectedOption.label : 'Selecione'}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    `;
+    
+    const menu = document.createElement('div');
+    menu.className = 'category-menu';
+    
+    options.forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'category-item focusable';
+        if (opt.selected) item.classList.add('selected');
+        item.textContent = opt.label;
+        item.dataset.value = opt.value;
+        item.tabIndex = 0;
+        
+        item.onclick = () => {
+            btn.querySelector('.selected-label').textContent = opt.label;
+            menu.classList.remove('active');
+            menu.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            originalSelect.value = opt.value;
+            originalSelect.dispatchEvent(new Event('change'));
+        };
+        
+        item.onkeydown = (e) => {
+            if (e.key === 'Enter') item.click();
+        };
+        
+        menu.appendChild(item);
+    });
+    
+    dropdown.appendChild(btn);
+    dropdown.appendChild(menu);
+    
+    btn.onclick = (e) => {
+        e.stopPropagation();
+        const isActive = menu.classList.contains('active');
+        document.querySelectorAll('.category-menu.active').forEach(m => m.classList.remove('active'));
+        if (!isActive) menu.classList.add('active');
+    };
+    
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) menu.classList.remove('active');
+    });
+    
+    originalSelect.style.display = 'none';
+    const old = container.querySelector('.category-dropdown');
+    if (old) old.remove();
+    container.insertBefore(dropdown, originalSelect);
+}
+
 export async function initSettings() {
     console.log("Settings Initialized");
     
@@ -619,6 +696,10 @@ export async function initSettings() {
         const langEl = document.getElementById("language");
         if (langEl) langEl.value = prefs.language;
     }
+
+    // Apply Custom Dropdowns
+    setupSelectDropdown("theme");
+    setupSelectDropdown("language");
 
     // Settings Saving
     const saveBtn = document.getElementById("saveSettings");
