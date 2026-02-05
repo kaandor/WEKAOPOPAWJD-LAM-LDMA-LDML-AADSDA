@@ -17,8 +17,8 @@ const profileModal = document.getElementById("profileModal");
 const modalTitle = document.getElementById("modalTitle");
 const profileNameInput = document.getElementById("profileName");
 // Age input removed
-const adultContentSection = document.getElementById("adultContentSection");
-const profileAllowExplicit = document.getElementById("profileAllowExplicit");
+const kidProfileSection = document.getElementById("kidProfileSection");
+const profileIsKid = document.getElementById("profileIsKid");
 const pinSection = document.getElementById("pinSection");
 const profilePinInput = document.getElementById("profilePin");
 
@@ -202,31 +202,9 @@ function render() {
         
         card.addEventListener("click", () => {
             if (isManageMode) {
-                // Editing a profile
-                if (p.allowExplicit) {
-                     promptPinVerification("Digite o código (0000) para editar este perfil.", (pin) => {
-                         if (pin === "0000") {
-                             openEditModal(p);
-                         } else {
-                             alert("Código incorreto.");
-                         }
-                     });
-                } else {
-                    openEditModal(p);
-                }
+                openEditModal(p);
             } else {
-                // Accessing profile
-                if (p.allowExplicit) {
-                    promptPinVerification("Perfil Protegido. Digite o código (0000).", (pin) => {
-                        if (pin === "0000") {
-                            selectProfile(p);
-                        } else {
-                            alert("Código incorreto.");
-                        }
-                    });
-                } else {
-                    selectProfile(p);
-                }
+                selectProfile(p);
             }
         });
         
@@ -293,12 +271,12 @@ function openCreateModal() {
     profileNameInput.value = "";
     // Age removed
     
-    // Reset adult content fields
-    adultContentSection.classList.remove("hidden"); 
-    profileAllowExplicit.checked = false;
+    // Reset kid profile field
+    kidProfileSection.classList.remove("hidden"); 
+    profileIsKid.checked = false;
     
     // Hide manual PIN input
-    pinSection.classList.add("hidden"); 
+    pinSection.classList.add("hidden");
     profilePinInput.value = ""; 
     
     // Random default avatar
@@ -317,15 +295,12 @@ function openEditModal(profile) {
     profileNameInput.value = profile.name;
     // Age removed
     
-    // Set adult content fields
-    profileAllowExplicit.checked = !!profile.allowExplicit;
+    // Set kid profile fields
+    profileIsKid.checked = !!profile.isKid;
     
     // Hide manual PIN input
     pinSection.classList.add("hidden");
-    profilePinInput.value = ""; 
-    
-    // Trigger check change 
-    profileAllowExplicit.dispatchEvent(new Event('change'));
+    profilePinInput.value = "";
     
     selectedAvatarUrl = profile.avatar;
     modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
@@ -342,15 +317,7 @@ async function saveProfile() {
     const name = profileNameInput.value.trim();
     if (!name) return;
     
-    // const age = parseInt(profileAgeInput.value); // Removed
-    const allowExplicit = profileAllowExplicit.checked;
-    
-    // Determine PIN
-    let pin = "";
-    if (allowExplicit) {
-        // Enforce 0000 for +18
-        pin = "0000";
-    }
+    const isKid = profileIsKid.checked;
 
     const performSave = async () => {
         saveProfileBtn.disabled = true;
@@ -360,10 +327,8 @@ async function saveProfile() {
             let res;
             const profileData = {
                 name,
-                // Age removed
                 avatar: selectedAvatarUrl,
-                allowExplicit,
-                pin
+                isKid
             };
 
             if (currentEditingProfileId) {
@@ -396,18 +361,7 @@ async function saveProfile() {
         }
     };
 
-    if (allowExplicit) {
-        // Require Master PIN to enable +18
-        promptPinVerification("Digite o código mestre (0000) para permitir conteúdo +18", (inputPin) => {
-            if (inputPin === "0000") {
-                performSave();
-            } else {
-                alert("Código mestre incorreto. Permissão negada.");
-            }
-        });
-    } else {
-        performSave();
-    }
+    performSave();
 }
 
 async function deleteProfile() {
@@ -496,12 +450,6 @@ function setupEventListeners() {
         });
     }
     
-    // Explicit toggle logic
-    if (profileAllowExplicit) {
-        profileAllowExplicit.addEventListener("change", (e) => {
-            // Keep pin section hidden always, handled by prompt
-            if (pinSection) pinSection.classList.add("hidden");
-        });
-    }
+    // (Removed explicit toggle logic)
 }
 // init() called by importing module

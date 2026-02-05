@@ -59,11 +59,61 @@ function normalize(item) {
     return item;
 }
 
-// Helper to filter restricted content (Parental Control)
+// Helper to filter restricted content (Kid Profile & Global Adult Exclusion)
 function filterRestrictedContent(items) {
-    // Parental Control Removed - Allow all content
     if (!items || !Array.isArray(items)) return [];
-    return items;
+
+    // 1. GLOBAL ADULT EXCLUSION
+    // "Content Adulto (XXX) agora vai ser 100% excluido do catalogo"
+    const adultKeywords = ["adultos", "xxx", "porn", "erotic", "sexo", "hentai", "+18"];
+
+    // 2. CHECK KID PROFILE
+    let isKid = false;
+    try {
+        const profileId = localStorage.getItem("klyx_profile_id");
+        if (profileId) {
+            // Optimized check using cached flag from setCurrent
+            if (localStorage.getItem("klyx_profile_is_kid") === "true") {
+                isKid = true;
+            } else if (localStorage.getItem("klyx_profile_is_kid") === null) {
+                // Fallback: Read from full profile list
+                const session = readSession();
+                if (session && session.user) {
+                     const key = `klyx.profiles.${session.user.id}`;
+                     const profiles = JSON.parse(localStorage.getItem(key) || "[]");
+                     const profile = profiles.find(p => p.id === profileId);
+                     if (profile && profile.isKid) isKid = true;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("Error checking kid profile status", e);
+    }
+
+    // KID MODE SAFE KEYWORDS
+    const kidKeywords = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+
+    return items.filter(item => {
+        if (!item) return false;
+        
+        // Check Category & Title
+        const cat = (item.category || "").toLowerCase();
+        const title = (item.title || "").toLowerCase();
+        const combined = cat + " " + title;
+        
+        // 1. Global Exclusion (Exclude if matches adult keywords)
+        // Be careful with simple words. "xxx" is distinct. "adultos" is distinct.
+        // We use word boundaries or distinct checks if possible, but includes is safer for now.
+        if (adultKeywords.some(kw => combined.includes(kw))) return false;
+        
+        // 2. Kid Filter
+        if (isKid) {
+            // Must match at least one safe keyword to be INCLUDED
+            return kidKeywords.some(kw => combined.includes(kw));
+        }
+        
+        return true;
+    });
 }
 
 // Helper to deduplicate movies (merge Dub/Sub)
@@ -1483,10 +1533,7 @@ export const api = {
               id: "p" + Date.now(),
               name: data.name,
               avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name}`,
-              age: parseInt(data.age) || 18,
-              isKid: (parseInt(data.age) || 18) <= 12,
-              allowExplicit: data.allowExplicit, // Store explicit permission
-              pin: data.pin || null, // For adult profiles if needed
+              isKid: !!data.isKid, 
               created_at: new Date().toISOString()
           };
 
@@ -1533,33 +1580,19 @@ export const api = {
       setCurrent(id) {
           localStorage.setItem("klyx_profile_id", id);
           
-          // Apply Age Restrictions based on profile
           const key = this._getUserProfilesKey();
           const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           const profile = profiles.find(p => p.id === id);
           
           if (profile) {
-              // Determine content restriction level
-              // 18+: No restriction
-              // 16-17: Block 18+
-              // 14-15: Block 16+
-              // 10-13: Block 14+
-              // <10: Kids mode (Block 10+)
-              
-              let maxRating = 18;
-              if (profile.age < 18) maxRating = 16;
-              if (profile.age < 16) maxRating = 14;
-              if (profile.age < 14) maxRating = 12;
-              if (profile.age < 12) maxRating = 10;
-              if (profile.age < 10) maxRating = 0; // Kids only
-              
               localStorage.setItem("klyx_active_profile_name", profile.name);
               localStorage.setItem("klyx_active_profile_avatar", profile.avatar);
-              localStorage.setItem("klyx_content_rating_limit", maxRating.toString());
-              localStorage.setItem("klyx_profile_explicit_allowed", profile.allowExplicit ? "true" : "false");
+              localStorage.setItem("klyx_profile_is_kid", profile.isKid ? "true" : "false");
               
-              // Also toggle parental control flag for legacy checks
-              localStorage.setItem("klyx_parental_active", (profile.age < 18).toString());
+              // Clean up legacy keys
+              localStorage.removeItem("klyx_content_rating_limit");
+              localStorage.removeItem("klyx_profile_explicit_allowed");
+              localStorage.removeItem("klyx_parental_active");
           }
           
           return { ok: true };

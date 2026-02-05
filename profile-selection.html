@@ -10,13 +10,13 @@
     <title>KLYX — Quem está assistindo?</title>
     <link rel="stylesheet" href="./css/global.css" />
     <style>
-      /* Force hide any logo image that might persist due to cache */
-      .profile-gate img, .profile-container img {
-          display: none !important;
-          opacity: 0 !important;
-          visibility: hidden !important;
-          height: 0 !important;
-          width: 0 !important;
+      .profile-gate img.logo {
+          display: block;
+          margin: 0 auto 2rem auto;
+          width: 120px;
+          height: auto;
+          opacity: 1 !important;
+          visibility: visible !important;
       }
 
       body {
@@ -485,6 +485,7 @@
   <body>
     <div class="profile-container">
       <div class="profile-gate">
+        <img src="./assets/logos/klyx-logo.png" alt="KLYX" class="logo" />
         <h1>Quem está assistindo?</h1>
         
         <div id="profilesGrid" class="profiles-grid">
@@ -516,24 +517,24 @@
               <input type="text" id="profileName" placeholder="Nome do perfil" maxlength="20" />
             </div>
             
-            <!-- Adult Content Toggle -->
-            <div id="adultContentSection" class="adult-section">
+            <!-- Kid Profile Toggle (Replaces Adult Content) -->
+            <div id="kidProfileSection" class="adult-section">
                 <div class="toggle-container">
                     <div style="margin-right: 15px;">
-                        <label style="display: block; color: #f87171; font-weight: 500; margin-bottom: 2px;">Ativar conteúdo adulto (XXX)?</label>
-                        <p style="margin: 0; font-size: 0.8rem; color: #9ca3af;">Exige senha PIN para acessar.</p>
+                        <label style="display: block; color: #a78bfa; font-weight: 500; margin-bottom: 2px;">Perfil Infantil?</label>
+                        <p style="margin: 0; font-size: 0.8rem; color: #9ca3af;">Exibe apenas conteúdo adequado para crianças.</p>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="profileAllowExplicit">
+                        <input type="checkbox" id="profileIsKid">
                         <span class="slider"></span>
                     </label>
                 </div>
+            </div>
 
-                <!-- PIN Input (Shown only when Adult Content is checked) -->
-                <div id="pinSection" class="hidden">
-                    <label style="display: block; color: #ccc; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">Crie um PIN de 4 dígitos</label>
-                    <input type="tel" id="profilePin" maxlength="4" placeholder="0000" class="pin-input">
-                </div>
+            <!-- PIN Section (Hidden by default) -->
+            <div id="pinSection" class="hidden">
+                <label style="display: block; color: #ccc; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">Crie um PIN de 4 dígitos</label>
+                <input type="tel" id="profilePin" maxlength="4" placeholder="0000" class="pin-input">
             </div>
           </div>
         </div>
