@@ -763,3 +763,97 @@ main.page {
     color: white;
 }
 
+
+/* =========================================
+   Desktop Navigation Overrides
+   ========================================= */
+@media (min-width: 768px) {
+  .nav {
+    position: static;
+    transform: none;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  .nav a {
+    flex-direction: row; /* Horizontal icons/text */
+    background: transparent !important;
+    padding: 8px 16px;
+    gap: 8px;
+    border-radius: 8px;
+    width: auto;
+    min-width: auto;
+    box-shadow: none !important; /* Remove pill shadow */
+    color: var(--muted);
+    opacity: 1;
+    height: auto;
+  }
+
+  .nav a .nav-text {
+    display: inline-block;
+    font-size: 14px;
+  }
+  
+  .nav a .nav-icon {
+    margin-bottom: 0;
+  }
+
+  .nav a .nav-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Active State for Desktop */
+  .nav a[aria-current='page'] {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text);
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Hover State for Desktop */
+  .nav a:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text);
+  }
+  
+  /* Light Mode Adjustments */
+  html[data-theme='light'] .nav a[aria-current='page'] {
+     background: rgba(0, 0, 0, 0.05) !important;
+     color: var(--accent);
+     box-shadow: none;
+  }
+  
+  html[data-theme='light'] .nav a:hover {
+     background: rgba(0, 0, 0, 0.03) !important;
+  }
+}
+
+/* =========================================
+   Grid Layout Fixes
+   ========================================= */
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  width: 100%;
+  padding-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .grid-cards {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 24px;
+  }
+}
+
