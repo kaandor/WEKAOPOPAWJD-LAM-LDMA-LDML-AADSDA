@@ -578,31 +578,9 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
 export async function initSettings() {
     console.log("Settings Initialized");
     
-    // --- Parental Control Logic ---
-    const adultToggle = document.getElementById("adultContentToggle");
-    if (adultToggle) {
-        // Load initial state
-        const isEnabled = localStorage.getItem("klyx_adult_content_enabled") === "true";
-        adultToggle.checked = isEnabled;
-        
-        // Handle change
-        adultToggle.onchange = (e) => {
-            if (adultToggle.checked) {
-                // User trying to ENABLE
-                const pin = prompt("Digite o PIN para ativar o Conteúdo Adulto (Padrão: 0000):");
-                if (pin === "0000") {
-                    localStorage.setItem("klyx_adult_content_enabled", "true");
-                    alert("Conteúdo Adulto Ativado!");
-                } else {
-                    alert("PIN Incorreto!");
-                    adultToggle.checked = false; // Revert
-                }
-            } else {
-                // User trying to DISABLE (Always allowed)
-                localStorage.setItem("klyx_adult_content_enabled", "false");
-            }
-        };
-    }
+    // --- Parental Control Logic Removed ---
+    // User requested to remove parental control from settings.
+
 
     // Settings Saving Mock
     const saveBtn = document.getElementById("saveSettings");

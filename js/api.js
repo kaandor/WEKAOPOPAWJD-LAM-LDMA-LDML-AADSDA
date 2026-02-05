@@ -61,45 +61,9 @@ function normalize(item) {
 
 // Helper to filter restricted content (Parental Control)
 function filterRestrictedContent(items) {
+    // Parental Control Removed - Allow all content
     if (!items || !Array.isArray(items)) return [];
-    
-    // Check Content Rating Limit (set by profile)
-    // NEW SIMPLIFIED LOGIC: Adult Content Toggle (Boolean)
-    const isAdultEnabled = localStorage.getItem("klyx_adult_content_enabled") === "true";
-    
-    // Keywords for rating classification
-    // Explicit Adult Content (Requires specific permission + PIN)
-    // Using Regex for word boundaries to avoid false positives (e.g. "Essex" matching "sex")
-    const keywordsExplicit = [
-        /\bxxx\b/, /\bporn\b/, /\bporno\b/, /\bhentai\b/, /\badultos\b/, /\badults\b/, /\badult\b/, 
-        /\berotic\b/, /\bnude\b/, /\bsexo\b/, /\bsex\b/, /18\+\s*explicit/, /\bhardcore\b/, 
-        /\bplayboy\b/, /\berotico\b/, /\berótica\b/, /\berotica\b/, /\bsexul\b/
-    ];
-    
-    // Standard 18+ Content (Horror, Thriller, Strong Violence)
-    const keywords18 = [
-        /\+18/, /18\+/, /\bhorror\b/, /\bterror\b/, /\bhot\b/, /\bviolencia\s*extrema\b/, 
-        /\bgore\b/, /\bthriller\b/, /\bsuspense\s*pesado\b/, /\bmorte\b/
-    ];
-    
-    return items.filter(item => {
-        if (!item) return false;
-        const title = (item.title || "").toLowerCase();
-        const category = (item.category || "").toLowerCase();
-        const combined = title + " " + category;
-        
-        // Check for Adult Content (Explicit or 18+)
-        const isAdult = keywordsExplicit.some(pattern => pattern.test(combined)) || 
-                        keywords18.some(pattern => pattern.test(combined));
-        
-        // If Adult Content is NOT enabled, hide it
-        if (isAdult && !isAdultEnabled) {
-            return false;
-        }
-        
-        // Otherwise show everything (Simpler logic as requested)
-        return true;
-    });
+    return items;
 }
 
 // Helper to deduplicate movies (merge Dub/Sub)
