@@ -1199,7 +1199,8 @@ export const api = {
             lowerTitle.includes("(legendado)") || 
             lowerTitle.includes("[legendado]") ||
             lowerTitle.includes(" legendado") ||
-            lowerTitle.includes(" - legendado");
+            lowerTitle.includes(" - legendado") ||
+            lowerTitle.includes(" leg");
             
         // Get Base Title
         let baseTitle = title
@@ -1209,6 +1210,7 @@ export const api = {
             .replace(/\[Legendado\]/i, "")
             .replace(/ - Legendado/i, "")
             .replace(/ Legendado/i, "")
+            .replace(/ Leg$/i, "")
             .trim();
         if (baseTitle.endsWith(" -")) baseTitle = baseTitle.substring(0, baseTitle.length - 2).trim();
         
@@ -1218,22 +1220,21 @@ export const api = {
         const sibling = rawMovies.find(m => {
             if (m.id === id) return false; // Skip self
             const t = m.title.trim();
+            // Use exact match or startsWith for robustness
+            const tLower = t.toLowerCase();
+            const isSiblingSub = tLower.includes("legendado") || tLower.includes("[l]") || tLower.includes("(l)") || tLower.includes(" leg");
+            
             return t.startsWith(baseTitle) && (
-                (isSubtitled && !t.toLowerCase().includes("legendado")) || // We are sub, looking for dub
-                (!isSubtitled && (t.toLowerCase().includes("legendado") || t.toLowerCase().includes("[l]"))) // We are dub, looking for sub
+                (isSubtitled && !isSiblingSub) || // We are sub, looking for dub (not sub)
+                (!isSubtitled && isSiblingSub)    // We are dub, looking for sub
             );
         });
         
         if (sibling) {
-            if (isSubtitled) {
-                // If we are playing the Subtitled version, treat it as main but maybe offer Dubbed as Audio 2?
-                // Or just keep it as is.
-                console.log(`Playing Subtitled version: ${title}. Sibling (Dub) found: ${sibling.title}`);
-            } else {
-                // We are playing Dubbed, attach Subtitled as Audio 2
-                if (!movie.stream_url_subtitled_version) {
-                    movie.stream_url_subtitled_version = sibling.stream_url;
-                }
+            // Bi-directional linkage: Always attach the other version
+            if (!movie.stream_url_subtitled_version) {
+                 movie.stream_url_subtitled_version = sibling.stream_url;
+                 console.log(`[DualAudio] Linked sibling: ${sibling.title}`);
             }
         }
 

@@ -1,6 +1,6 @@
 
-import { api } from "./api.js?v=20260204-theme";
-import { applyGlobalTheme } from "./ui.js?v=20260204-theme"; // Import UI for Theme
+import { api } from "./api.js?v=20260212-fix-playback";
+import { applyGlobalTheme } from "./ui.js?v=20260212-fix-playback"; // Import UI for Theme
 
 // Apply theme immediately
 applyGlobalTheme();
@@ -11,7 +11,6 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://corsproxy.io/?", // Top Priority (Unencoded)
     "https://api.codetabs.com/v1/proxy?quest=", // Good backup
     "https://api.allorigins.win/raw?url=", // Restored: Often works for raw MP4
     "https://api.cors.lol/?url=", // Another reliable option
