@@ -192,8 +192,8 @@ function parseM3U() {
 
                 // Add Episode
                 seriesMap.get(seriesId).episodes.push({
-                    season: season,
-                    episode: episode,
+                    season_number: season,
+                    episode_number: episode,
                     title: currentItem.rawTitle,
                     stream_url: currentItem.stream_url,
                     duration: 0
