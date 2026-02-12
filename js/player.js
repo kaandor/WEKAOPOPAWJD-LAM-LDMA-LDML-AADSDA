@@ -11,12 +11,12 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://corsproxy.io/?", // Restored: Often the best option
+    "DIRECT_HTTPS", // Try upgrading to HTTPS first (Fastest if supported)
+    "https://corsproxy.io/?", // Best public proxy
     "https://api.codetabs.com/v1/proxy?quest=", // Good backup
-    "https://api.allorigins.win/raw?url=", // Restored: Often works for raw MP4
-    "https://api.cors.lol/?url=", // Another reliable option
-    "https://thingproxy.freeboard.io/fetch/", // Fallback
-    "DIRECT_HTTPS" // Last resort
+    "https://api.allorigins.win/raw?url=", // Backup
+    "https://api.cors.lol/?url=", // Backup
+    "https://thingproxy.freeboard.io/fetch/" // Fallback
 ];
 
 function showStatus(msg) {
@@ -304,9 +304,15 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             if (Hls.isSupported()) {
                 // Add timeouts to fail fast on bad proxies
                 const hls = new Hls({
-                    manifestLoadingTimeOut: 5000, // Reduced from 20s to 5s for faster failover
-                    fragLoadingTimeOut: 5000,
-                    levelLoadingTimeOut: 5000
+                    manifestLoadingTimeOut: 3000, // Reduced to 3s for faster failover
+                    fragLoadingTimeOut: 3000,
+                    levelLoadingTimeOut: 3000,
+                    xhrSetup: function(xhr, url) {
+                        // Hack to force some proxies to work better
+                        if (url.includes('corsproxy.io')) {
+                            // xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        }
+                    }
                 });
                 currentHls = hls; // Save reference
                 hls.loadSource(finalUrl);
