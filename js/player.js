@@ -11,6 +11,7 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
+    "https://corsproxy.io/?", // Restored: Often the best option
     "https://api.codetabs.com/v1/proxy?quest=", // Good backup
     "https://api.allorigins.win/raw?url=", // Restored: Often works for raw MP4
     "https://api.cors.lol/?url=", // Another reliable option
@@ -18,10 +19,30 @@ const PROXY_LIST = [
     "DIRECT_HTTPS" // Last resort
 ];
 
+function showStatus(msg) {
+    let statusEl = document.getElementById('playerStatus');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'playerStatus';
+        statusEl.style.position = 'absolute';
+        statusEl.style.top = '10px';
+        statusEl.style.left = '10px';
+        statusEl.style.color = 'yellow';
+        statusEl.style.background = 'rgba(0,0,0,0.5)';
+        statusEl.style.padding = '5px';
+        statusEl.style.zIndex = '1000';
+        statusEl.style.fontSize = '12px';
+        document.body.appendChild(statusEl);
+    }
+    statusEl.textContent = msg;
+    console.log(`[PlayerStatus] ${msg}`);
+}
+
 function getProxiedStreamUrl(url, proxyIndex = 0) {
     if (!url) return '';
     
     const strategy = PROXY_LIST[proxyIndex];
+    showStatus(`Tentando conectar (Método ${proxyIndex + 1}/${PROXY_LIST.length})...`);
 
     // Strategy 0: Direct HTTPS Upgrade
     if (strategy === "DIRECT_HTTPS") {
@@ -201,6 +222,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         if (error && (error.code === 3 || error.code === 4)) {
             if (proxyIndex < PROXY_LIST.length - 1) {
                 console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
+                showStatus(`Erro na conexão. Tentando método alternativo (${proxyIndex + 2})...`);
                 // Short delay to prevent rapid loops
                 setTimeout(() => {
                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
@@ -208,6 +230,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             } else {
                 console.error("All proxies failed.");
                 showError("Erro: Fonte de vídeo não suportada ou indisponível.");
+                showStatus("Falha: Todas as tentativas falharam.");
             }
         }
     };
@@ -288,7 +311,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 currentHls = hls; // Save reference
                 hls.loadSource(finalUrl);
                 hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => safePlay());
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    showStatus(""); // Clear status on success
+                    safePlay();
+                });
                 hls.on(Hls.Events.ERROR, (event, data) => {
                     console.warn("HLS Error Detail:", data.type, data.details, data.fatal);
                     
@@ -306,9 +332,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                         
                         if (proxyIndex < PROXY_LIST.length - 1) {
                             console.warn(`Proxy ${proxyIndex} failed (${data.details}). Switching to Proxy ${proxyIndex + 1}...`);
+                            showStatus(`Erro HLS (${data.details}). Tentando método alternativo (${proxyIndex + 2})...`);
                             attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                         } else {
                             showError("Erro: Fonte de vídeo indisponível após tentar todas as opções.");
+                            showStatus("Falha: Erro crítico HLS em todos os métodos.");
                         }
                         return;
                     }
@@ -327,16 +355,19 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 console.log("Using Native HLS Support");
                 video.src = finalUrl;
                 video.addEventListener('loadedmetadata', () => {
-                    safePlay();
-                });
-                video.addEventListener('error', (e) => {
-                     console.error("Native HLS Error", video.error);
-                     if (proxyIndex < PROXY_LIST.length - 1) {
-                        attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
-                     } else {
-                        showError("Erro: Fonte de vídeo não suportada (Native HLS).");
-                     }
-                });
+                showStatus(""); // Clear status
+                safePlay();
+            });
+            video.addEventListener('error', (e) => {
+                 console.error("Native HLS Error", video.error);
+                 if (proxyIndex < PROXY_LIST.length - 1) {
+                    showStatus(`Erro Nativo. Tentando método alternativo (${proxyIndex + 2})...`);
+                    attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                 } else {
+                    showError("Erro: Fonte de vídeo não suportada (Native HLS).");
+                    showStatus("Falha: Erro Nativo em todos os métodos.");
+                 }
+            });
             } else {
                 showError("Seu navegador não suporta HLS.");
             }
