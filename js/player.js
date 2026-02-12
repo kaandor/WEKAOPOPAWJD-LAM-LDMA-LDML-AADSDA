@@ -15,8 +15,9 @@ const PROXY_LIST = [
     "https://corsproxy.io/?", // Best public proxy
     "https://api.codetabs.com/v1/proxy?quest=", // Good backup
     "https://api.allorigins.win/raw?url=", // Backup
-    "https://api.cors.lol/?url=", // Backup
-    "https://thingproxy.freeboard.io/fetch/" // Fallback
+    "https://cors.eu.org/", // Reliable alternative
+    "https://thingproxy.freeboard.io/fetch/", // Fallback
+    "https://api.cors.lol/?url=" // Another backup
 ];
 
 function showStatus(msg) {
