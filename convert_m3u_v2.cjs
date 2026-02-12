@@ -141,21 +141,29 @@ function parseM3U() {
             const temporada = currentItem.rawTitle.match(/T(\d+)\s*[-:]?\s*E?(\d+)/i); // T1 - E01 or T1 01
             
             if (s00e00) {
-                isEpisode = true;
-                season = parseInt(s00e00[1]);
-                episode = parseInt(s00e00[2]);
-                seriesTitle = currentItem.rawTitle.replace(/S\d+\s*E\d+.*$/i, "").trim();
+                const potentialTitle = currentItem.rawTitle.replace(/S\d+\s*E\d+.*$/i, "").trim();
+                if (potentialTitle.length > 1) {
+                    isEpisode = true;
+                    season = parseInt(s00e00[1]);
+                    episode = parseInt(s00e00[2]);
+                    seriesTitle = potentialTitle;
+                }
             } else if (sxee) {
-                isEpisode = true;
-                season = parseInt(sxee[1]);
-                episode = parseInt(sxee[2]);
-                seriesTitle = currentItem.rawTitle.replace(/\d+x\d+.*$/i, "").trim();
+                const potentialTitle = currentItem.rawTitle.replace(/\d+x\d+.*$/i, "").trim();
+                if (potentialTitle.length > 1) {
+                    isEpisode = true;
+                    season = parseInt(sxee[1]);
+                    episode = parseInt(sxee[2]);
+                    seriesTitle = potentialTitle;
+                }
             } else if (temporada) {
-                isEpisode = true;
-                season = parseInt(temporada[1]);
-                episode = parseInt(temporada[2]);
-                 // Remove T1... from title
-                seriesTitle = currentItem.rawTitle.replace(/T\d+.*$/i, "").trim();
+                const potentialTitle = currentItem.rawTitle.replace(/T\d+.*$/i, "").trim();
+                if (potentialTitle.length > 1) {
+                    isEpisode = true;
+                    season = parseInt(temporada[1]);
+                    episode = parseInt(temporada[2]);
+                    seriesTitle = potentialTitle;
+                }
             } else if (isSeriesCategory(currentItem.category)) {
                 // It's in a series category but regex didn't match perfectly.
                 // Treat as episode 1 of season 1 if it looks like a single item?
