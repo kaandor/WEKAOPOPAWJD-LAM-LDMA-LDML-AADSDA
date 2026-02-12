@@ -1,5 +1,5 @@
 import { requireAuth } from "./auth.js";
-import { api } from "./api.js?v=20260204-fix1";
+import { api } from "./api.js?v=20260204-fix3";
 import { initInput } from "./input.js";
 
 function icon() {
@@ -19,7 +19,7 @@ export async function mountAppShell({ currentPath }) {
 
   // Check profile selection
   const profileId = localStorage.getItem("klyx_profile_id");
-  if (!profileId) {
+  if (!profileId && !window.location.pathname.includes("profile-selection")) {
       window.location.href = "./profile-selection.html";
       return;
   }
