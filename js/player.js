@@ -12,8 +12,8 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "DIRECT_HTTPS", // Try upgrading to HTTPS first (Fastest if supported)
-    "https://corsproxy.io/?", // Best public proxy
     "https://api.codetabs.com/v1/proxy?quest=", // Good backup
+    "https://corsproxy.io/?", // Best public proxy
     "https://api.allorigins.win/raw?url=", // Backup
     "https://cors.eu.org/", // Reliable alternative
     "https://thingproxy.freeboard.io/fetch/", // Fallback
@@ -58,17 +58,20 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     // If running on HTTPS and stream is HTTP, we MUST proxy (or have used Direct HTTPS above)
     // Or if we are forcing a proxy (proxyIndex > 0)
     
+    // Cleanup URL for proxies: remove port 80 if explicit, as some proxies choke on it
+    let cleanUrl = url.replace(':80/', '/');
+    
     const proxyBase = strategy;
     // Avoid double proxying
     if (url.includes('corsproxy.io') || url.includes('api.codetabs.com') || url.includes('api.allorigins.win') || url.includes('thingproxy.freeboard.io')) return url;
     
     // Special handling for corsproxy.io (should NOT be encoded usually)
     if (proxyBase.includes('corsproxy.io')) {
-        return `${proxyBase}${url}`;
+        return `${proxyBase}${cleanUrl}`;
     }
     
     // Default encoding for others (CodeTabs, CorsLoL, etc)
-    return `${proxyBase}${encodeURIComponent(url)}`;
+    return `${proxyBase}${encodeURIComponent(cleanUrl)}`;
 }
 
 // Helper to toggle seek controls
