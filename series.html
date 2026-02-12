@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Series</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/global.css?v=20260211-fix5" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260211-fix5" />
   </head>
   <body>
     <div class="app-shell">
@@ -20,8 +20,9 @@
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
             <div>
               <h1 style="margin: 0;">Séries</h1>
-              <div class="subtext" style="margin-top: 5px;">Escolha uma série, depois selecione temporadas e episódios.</div>
+              <div class="subtext" style="margin-top: 5px;">Maratonas completas para você.</div>
             </div>
+            
             <div class="toolbar" style="margin-top: 0;">
               <select id="seriesCategory" class="select">
                 <option value="">Todas as categorias</option>
@@ -30,26 +31,16 @@
             </div>
           </div>
           
-          <!-- Rows Container -->
-          <div id="seriesCatalog" style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 40px;"></div>
-
-          <div id="seriesListing" class="section">
+          <div class="section">
             <div id="seriesGrid" class="grid-cards"></div>
-          </div>
-
-          <div id="seriesDetailView" class="section hidden">
-            <button id="backToSeriesBtn" class="btn" style="margin-bottom: 20px">
-              ← Back to Series
-            </button>
-            <div id="seriesDetailContent"></div>
           </div>
         </div>
       </main>
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260204-fix3";
-      import { initSeries } from "./js/ui.js?v=20260204-fix3";
+      import { mountAppShell } from "./js/router.js?v=20260211-fix5";
+      import { initSeries } from "./js/ui.js?v=20260211-fix5";
       
       try {
         await mountAppShell({ currentPath: "/series" });

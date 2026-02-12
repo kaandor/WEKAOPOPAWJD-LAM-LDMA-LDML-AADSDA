@@ -8,9 +8,9 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
-    <title>KLYX — Movies</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix3" />
+    <title>KLYX — Filmes</title>
+    <link rel="stylesheet" href="./css/global.css?v=20260211-fix5" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260211-fix5" />
   </head>
   <body>
     <div class="app-shell">
@@ -37,20 +37,23 @@
           <div class="section">
             <div id="moviesGrid" class="grid-cards"></div>
           </div>
+          
+          <!-- Loading Spinner -->
+          <div id="loading" style="text-align: center; padding: 40px; display: none;">
+            <div class="spinner"></div>
+          </div>
         </div>
       </main>
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260204-fix3";
-      import { initMovies } from "./js/ui.js?v=20260204-fix3";
+      import { mountAppShell } from "./js/router.js?v=20260211-fix5";
+      import { initMovies } from "./js/ui.js?v=20260211-fix5";
       
       try {
         await mountAppShell({ currentPath: "/movies" });
         await initMovies();
-      } catch (e) {
-        console.error("Movies Init Error:", e);
-      }
+      initSearch('movie');
     </script>
   </body>
 </html>
