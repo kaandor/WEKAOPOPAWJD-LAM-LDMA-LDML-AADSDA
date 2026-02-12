@@ -108,7 +108,7 @@ function getAvailableIcons(isKid) {
 }
 
 // Init
-export async function init() {
+export async function initProfileSelection() {
     await loadProfiles();
     setupEventListeners();
     // Pre-generate default grid (Adult)
