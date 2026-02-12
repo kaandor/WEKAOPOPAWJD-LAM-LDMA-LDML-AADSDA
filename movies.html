@@ -53,7 +53,9 @@
       try {
         await mountAppShell({ currentPath: "/movies" });
         await initMovies();
-      initSearch('movie');
+      } catch (e) {
+        console.error("Movies Init Error:", e);
+      }
     </script>
   </body>
 </html>
