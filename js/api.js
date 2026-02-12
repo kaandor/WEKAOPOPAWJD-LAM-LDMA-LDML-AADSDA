@@ -1289,7 +1289,7 @@ export const api = {
                             break;
                         }
                         const data = await response.json();
-                        window.allEpisodesCache = window.allEpisodesCache.concat(data.episodes);
+                        window.allEpisodesCache = window.allEpisodesCache.concat(Array.isArray(data) ? data : (data.episodes || []));
                         chunkIndex++;
                     } catch (e) {
                         console.warn(`Stopped loading chunks at index ${chunkIndex}`, e);
