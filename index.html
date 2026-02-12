@@ -53,8 +53,8 @@
         margin-top: 10px;
       }
     </style>
-    <link rel="stylesheet" href="./css/global.css?v=7" />
-    <link rel="stylesheet" href="./css/login.css?v=7" />
+    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/login.css?v=20260204-fix3" />
   </head>
   <body>
     <div class="auth-shell">
@@ -91,9 +91,9 @@
     </div>
 
     <script type="module">
-      import { api } from "./js/api.js?v=20260204-theme";
-      import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260204-theme";
-      import { handleLoginSuccess } from "./js/ui.js?v=20260204-theme";
+      import { api } from "./js/api.js?v=20260204-fix3";
+      import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260204-fix3";
+      import { handleLoginSuccess } from "./js/ui.js?v=20260204-fix3";
 
       // Dev helper: ?logout=true clears session to allow seeing the login screen
       if (new URLSearchParams(window.location.search).has('logout')) {

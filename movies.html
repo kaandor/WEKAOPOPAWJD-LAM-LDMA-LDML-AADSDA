@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Movies</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260204-fix1" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix1" />
+    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix3" />
   </head>
   <body>
     <div class="app-shell">
@@ -42,8 +42,8 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260204-fix1";
-      import { initMovies } from "./js/ui.js?v=20260204-fix1";
+      import { mountAppShell } from "./js/router.js?v=20260204-fix3";
+      import { initMovies } from "./js/ui.js?v=20260204-fix3";
       
       try {
         await mountAppShell({ currentPath: "/movies" });

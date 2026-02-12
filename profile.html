@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Profile</title>
-    <link rel="stylesheet" href="./css/global.css?v=5" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=5" />
+    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix3" />
   </head>
   <body>
     <div class="app-shell">
@@ -51,8 +51,8 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260204-theme";
-      import { initProfile } from "./js/ui.js?v=20260204-theme";
+      import { mountAppShell } from "./js/router.js?v=20260204-fix3";
+      import { initProfile } from "./js/ui.js?v=20260204-fix3";
       
       try {
         await mountAppShell({ currentPath: "/profile" });

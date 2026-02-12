@@ -2,6 +2,17 @@
 const STORAGE_KEY = "klyx.session";
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
 
+// --- CONFIGURAÇÃO DA LISTA (LIST SWITCHING SYSTEM) ---
+// Para trocar a lista, apenas altere os nomes dos arquivos abaixo.
+// O sistema irá carregar automaticamente a nova lista sem quebrar a lógica.
+export const LIST_CONFIG = {
+    MOVIES_FILE: "movies.json",  // Ex: "canaisbr05_filmes.json"
+    SERIES_FILE: "series.json",  // Ex: "canaisbr05_series.json"
+    EPISODES_PATH: "assets/data/episodes/", // Pasta dos episódios
+    LIVE_FILE: "live.json"
+};
+// -----------------------------------------------------
+
 // Helper to simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1167,7 +1178,7 @@ export const api = {
   movies: {
     async get(id) {
         // Fetch raw data to find any movie, even if hidden by deduplication
-        const data = await getLocalData("movies.json");
+        const data = await getLocalData(LIST_CONFIG.MOVIES_FILE);
         let rawMovies = (data?.movies || []).map(normalize);
         
         // Apply Parental Filter
@@ -1234,7 +1245,7 @@ export const api = {
         return { ok: true, data: { item: movie } };
     },
     async list() {
-         const data = await getLocalData("movies.json");
+         const data = await getLocalData(LIST_CONFIG.MOVIES_FILE);
          const rawMovies = (data?.movies || []).map(normalize);
          return { ok: true, data: deduplicateMovies(rawMovies) };
     },
@@ -1272,7 +1283,7 @@ export const api = {
                 
                 while (loading) {
                     try {
-                        const response = await fetch(`assets/data/episodes/episodes_${chunkIndex}.json`);
+                        const response = await fetch(`${LIST_CONFIG.EPISODES_PATH}episodes_${chunkIndex}.json`);
                         if (!response.ok) {
                             loading = false;
                             break;
@@ -1436,7 +1447,7 @@ export const api = {
         return { ok: res.ok, data: { movies: res.data } };
     },
     async getSeries() { 
-        const data = await getLocalData("series.json");
+        const data = await getLocalData(LIST_CONFIG.SERIES_FILE);
         if (data && data.series) {
             // Apply Parental Filter to Series List
             let series = filterRestrictedContent(data.series);

@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Player</title>
-    <link rel="stylesheet" href="./css/global.css" />
-    <link rel="stylesheet" href="./css/netflix-ui.css" />
-    <link rel="stylesheet" href="./css/player-mobile.css" />
+    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/player-mobile.css?v=20260204-fix3" />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
   </head>
   <body>
@@ -227,7 +227,7 @@
       try {
           console.log("Player starting...");
           // Force new version for cache busting
-        const v = "20260131-fixauth8";
+        const v = "20260204-fix3";
         const { mountAppShell } = await import(`./js/router.js?v=${v}`);
         const { initPlayer } = await import(`./js/player.js?v=${v}`);
 
