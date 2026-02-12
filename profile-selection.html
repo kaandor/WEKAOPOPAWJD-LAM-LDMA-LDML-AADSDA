@@ -8,7 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Quem está assistindo?</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260211-fix5" />
+    <link rel="stylesheet" href="./css/global.css?v=20260211-fix6" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260211-fix6" />
     <style>
       .profile-gate img.logo {
           display: block;
@@ -563,8 +564,10 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260204-fix3";
-      import { initProfileSelection } from "./js/profile-selection.js?v=20260204-fix3";
+      import { initProfileSelection } from "./js/profile-selection.js?v=20260211-fix6";
+      import { applyGlobalTheme } from "./js/ui.js?v=20260211-fix6";
+      
+      applyGlobalTheme();
       initProfileSelection();
     </script>
   </body>

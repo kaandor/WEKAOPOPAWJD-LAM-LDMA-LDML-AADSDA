@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260211-fix5";
+import { api } from "./api.js?v=20260211-fix6";
 
 // --- GLOBAL SYNC INDICATOR & POLLING ---
 // Initialize polling if user is logged in
