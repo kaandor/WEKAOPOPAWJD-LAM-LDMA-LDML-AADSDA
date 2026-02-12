@@ -35,7 +35,7 @@ try {
 // Mock Data Loaders
 async function getLocalData(file) {
     try {
-        const res = await fetch(`./assets/data/${file}`);
+        const res = await fetch(`./assets/data/${file}?v=${new Date().getTime()}`); // Force fresh load
         if (!res.ok) return null;
         return await res.json();
     } catch (e) {
