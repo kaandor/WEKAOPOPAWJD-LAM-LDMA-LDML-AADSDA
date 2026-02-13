@@ -1002,8 +1002,10 @@ export async function initPlayer() {
     video.addEventListener('pause', () => saveProgress());
     window.addEventListener('beforeunload', () => saveProgress());
     
+    let detail = null;
+
     try {
-        const detail = await loadDetail(type, id);
+        detail = await loadDetail(type, id);
         if (!detail.ok) {
             if (window.finishLoading) window.finishLoading();
             showError(detail.error);
@@ -1160,6 +1162,13 @@ export async function initPlayer() {
     } catch (e) {
         console.error("Player Error:", e);
         if (window.finishLoading) window.finishLoading();
-        showError("Erro interno no player.");
+        
+        const errorMsg = e.message || "Erro interno no player.";
+        const errorAction = (detail && detail.streamUrl) ? {
+            text: "🎬 Abrir no VLC / Player Externo",
+            callback: () => window.open(detail.streamUrl, '_blank')
+        } : null;
+        
+        showError(errorMsg, errorAction);
     }
 }
