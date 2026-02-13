@@ -1016,9 +1016,8 @@ export async function initPlayer() {
         if (metaEl) metaEl.textContent = detail.meta;
 
         // Add Persistent External Player Button
-        const controlsTop = document.querySelector('.controls-top');
         const settingsBtn = document.getElementById('btnSettings');
-        if (controlsTop && settingsBtn) {
+        if (settingsBtn && settingsBtn.parentNode) {
             // Remove existing if any
             const existingExt = document.getElementById('btnExternalPlayer');
             if (existingExt) existingExt.remove();
@@ -1035,8 +1034,8 @@ export async function initPlayer() {
             extBtn.title = "Abrir em Player Externo (VLC)";
             extBtn.onclick = () => window.open(detail.streamUrl, '_blank');
             
-            // Insert before settings button
-            controlsTop.insertBefore(extBtn, settingsBtn);
+            // Insert before settings button in its actual container
+            settingsBtn.parentNode.insertBefore(extBtn, settingsBtn);
         }
         
         // iOS Audio Selection Prompt (User Request)
