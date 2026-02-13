@@ -114,6 +114,33 @@ function getProxiedImage(url) {
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
 }
 
+// Global Image Error Handler to try backups
+window.handleImageError = function(img) {
+    const originalSrc = img.getAttribute('data-original-src');
+    if (!originalSrc) {
+        img.src = 'https://via.placeholder.com/300x450?text=Error';
+        return;
+    }
+
+    // If weserv failed, try corsproxy
+    if (img.src.includes('images.weserv.nl')) {
+        console.warn('Weserv failed, trying CorsProxy for image:', originalSrc);
+        img.src = `https://corsproxy.io/?${encodeURIComponent(originalSrc)}`;
+        return;
+    }
+
+    // If corsproxy failed (or was direct), try codetabs
+    if (img.src.includes('corsproxy.io')) {
+        console.warn('CorsProxy failed, trying CodeTabs for image:', originalSrc);
+        img.src = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(originalSrc)}`;
+        return;
+    }
+
+    // Final fallback
+    img.onerror = null; // Prevent infinite loop
+    img.src = 'https://via.placeholder.com/300x450?text=No+Image';
+};
+
 // Helper for infinite scroll
 function setupInfiniteScroll(items, container, createCardFn) {
     const BATCH_SIZE = 200;
@@ -838,7 +865,7 @@ window.showSeriesModal = async function(seriesId) {
         // Render Body
         bodyEl.innerHTML = `
             <div class="netflix-hero">
-                <img class="netflix-poster" src="${getProxiedImage(series.poster)}" alt="${series.title}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                <img class="netflix-poster" src="${getProxiedImage(series.poster)}" data-original-src="${series.poster}" alt="${series.title}" onerror="window.handleImageError(this)">
                 <div class="netflix-hero-gradient"></div>
             </div>
             

@@ -1,5 +1,5 @@
 import { requireAuth } from "./auth.js";
-import { api } from "./api.js?v=20260211-fix7";
+import { api } from "./api.js?v=20260213-final-fix";
 import { initInput } from "./input.js";
 
 function icon() {

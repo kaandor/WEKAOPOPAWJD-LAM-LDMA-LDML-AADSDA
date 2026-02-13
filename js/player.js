@@ -1,6 +1,6 @@
 
-import { api } from "./api.js?v=20260212-fix-playback";
-import { applyGlobalTheme } from "./ui.js?v=20260212-fix-playback"; // Import UI for Theme
+import { api } from "./api.js?v=20260213-final-fix";
+import { applyGlobalTheme } from "./ui.js?v=20260213-final-fix"; // Import UI for Theme
 
 // Apply theme immediately
 applyGlobalTheme();
@@ -423,7 +423,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     callback: () => window.open(streamUrl, '_blank')
                 });
             }
-        }, 15000); // 15 seconds timeout
+        }, 8000); // 8 seconds timeout
 
         video.addEventListener('loadedmetadata', () => {
             clearTimeout(mp4Timeout); // Clear timeout on success
@@ -1012,6 +1012,30 @@ export async function initPlayer() {
         
         if (titleEl) titleEl.textContent = detail.title;
         if (metaEl) metaEl.textContent = detail.meta;
+
+        // Add Persistent External Player Button
+        const controlsTop = document.querySelector('.controls-top');
+        const settingsBtn = document.getElementById('btnSettings');
+        if (controlsTop && settingsBtn) {
+            // Remove existing if any
+            const existingExt = document.getElementById('btnExternalPlayer');
+            if (existingExt) existingExt.remove();
+
+            const extBtn = document.createElement('button');
+            extBtn.id = 'btnExternalPlayer';
+            extBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+            extBtn.style.background = 'transparent';
+            extBtn.style.border = 'none';
+            extBtn.style.color = 'white';
+            extBtn.style.cursor = 'pointer';
+            extBtn.style.padding = '10px';
+            extBtn.style.marginRight = '5px';
+            extBtn.title = "Abrir em Player Externo (VLC)";
+            extBtn.onclick = () => window.open(detail.streamUrl, '_blank');
+            
+            // Insert before settings button
+            controlsTop.insertBefore(extBtn, settingsBtn);
+        }
         
         // iOS Audio Selection Prompt (User Request)
         // If on iOS and multiple audio tracks exist, ask user BEFORE playing (native player takes over)
