@@ -11,12 +11,12 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
+    "https://api.cors.lol/?url=", // ⚡ FAST & WORKING (Prioritized for HTTP sources)
     "https://corsproxy.io/?", // Standard public proxy
     "https://api.codetabs.com/v1/proxy?quest=", // Good for redirects
     "https://cors.eu.org/", // Reliable alternative
     "https://proxy.cors.sh/", // New robust proxy
     "https://api.allorigins.win/raw?url=", // Backup
-    "https://api.cors.lol/?url=", // Another backup
     "DIRECT_HTTPS" // Try upgrading to HTTPS last
 ];
 
