@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="theme-color" content="#0b0e14" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -227,7 +228,7 @@
       try {
           console.log("Player starting...");
           // Force new version for cache busting
-        const v = "20260212-fix-playback-v5";
+        const v = "20260212-fix-playback-v6";
         const { mountAppShell } = await import(`./js/router.js?v=${v}`);
         const { initPlayer } = await import(`./js/player.js?v=${v}`);
 

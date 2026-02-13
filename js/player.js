@@ -399,10 +399,28 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         }
     } else {
         // Direct file (MP4/MKV)
+        console.log(`[attachSource] Setting video.src to ${finalUrl}`);
         video.src = finalUrl;
+        
+        // MP4 Timeout Logic
+        const mp4Timeout = setTimeout(() => {
+            console.warn(`MP4 Load Timeout (${proxyIndex}). Switching...`);
+            if (proxyIndex < PROXY_LIST.length - 1) {
+                showStatus(`Tempo esgotado. Tentando método alternativo (${proxyIndex + 2})...`);
+                attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+            } else {
+                showError("Erro: Tempo limite excedido ao carregar vídeo.");
+            }
+        }, 15000); // 15 seconds timeout
+
         video.addEventListener('loadedmetadata', () => {
+            clearTimeout(mp4Timeout); // Clear timeout on success
+            showStatus("");
             safePlay();
         }, { once: true });
+        
+        // Also clear on error (handled by onerror)
+        video.addEventListener('error', () => clearTimeout(mp4Timeout), { once: true });
     }
     
     // Subtitles (keep existing logic)
