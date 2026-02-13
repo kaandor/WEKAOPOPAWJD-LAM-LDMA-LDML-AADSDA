@@ -232,19 +232,22 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         const error = video.error;
         console.error("Video Error:", error ? error.code : 'Unknown', error ? error.message : '');
         
+        // Ignore AbortError (Code 1) as it's usually triggered by us switching sources
+        if (error && error.code === 1) {
+            console.warn("Ignoring AbortError (User/Script cancelled).");
+            return;
+        }
+
         // Try next proxy on ANY error (unless we exhausted the list)
-        // Removed specific error code check to be more aggressive with retries
         if (proxyIndex < PROXY_LIST.length - 1) {
             console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
             showStatus(`Erro na conexão. Tentando método alternativo (${proxyIndex + 2})...`);
-            // Short delay to prevent rapid loops
+            // Increased delay to 2s to prevent rapid loops and allow network to settle
             setTimeout(() => {
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
-            }, 500); // Reduced delay for faster failover
+            }, 2000); 
         } else {
             console.error("All proxies failed.");
-            // If all failed, show the error but also a "Force Play" option? 
-            // The user wants it to work.
             showError("Erro: Fonte insegura (HTTP/SSL) ou bloqueada. Use o App Externo.", {
                 text: "🎬 Abrir no VLC / Player Externo",
                 callback: () => window.open(streamUrl, '_blank')
@@ -433,7 +436,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     callback: () => window.open(streamUrl, '_blank')
                 });
             }
-        }, 15000); // Increased to 15s to allow slow proxies to connect
+        }, 20000); // Increased to 20s to be extra safe with slow proxies
 
         video.addEventListener('loadedmetadata', () => {
             clearTimeout(mp4Timeout); // Clear timeout on success
