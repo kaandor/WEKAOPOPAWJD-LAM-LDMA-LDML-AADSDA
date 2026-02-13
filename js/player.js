@@ -11,15 +11,14 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://klyx-api.vercel.app/api/proxy?url=", // Private Vercel Proxy (Most Reliable)
-    "https://corsproxy.io/?", // Best public proxy
+    "https://corsproxy.io/?", // Best public proxy (Restored)
+    "https://api.codetabs.com/v1/proxy?quest=", // Good for redirects
     "https://cors.eu.org/", // Reliable alternative
     "https://proxy.cors.sh/", // New robust proxy
-    "https://api.codetabs.com/v1/proxy?quest=", // Good backup but can be slow for MP4
     "https://api.allorigins.win/raw?url=", // Backup
     "https://thingproxy.freeboard.io/fetch/", // Fallback
     "https://api.cors.lol/?url=", // Another backup
-    "DIRECT_HTTPS" // Try upgrading to HTTPS last (Only if server supports it)
+    "DIRECT_HTTPS" // Try upgrading to HTTPS last
 ];
 
 function showStatus(msg) {
@@ -235,7 +234,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 }, 1000);
             } else {
                 console.error("All proxies failed.");
-                showError("Erro: Fonte de vídeo não suportada ou indisponível.");
+                showError("Erro: Não foi possível reproduzir no navegador. Tente abrir no App Externo.", {
+                    text: "🎬 Abrir no VLC / Player Externo",
+                    callback: () => window.open(streamUrl, '_blank')
+                });
                 showStatus("Falha: Todas as tentativas falharam.");
             }
         }
@@ -347,7 +349,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                             showStatus(`Erro HLS (${data.details}). Tentando método alternativo (${proxyIndex + 2})...`);
                             attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                         } else {
-                            showError("Erro: Fonte de vídeo indisponível após tentar todas as opções.");
+                            showError("Erro: Fonte indisponível. Tente abrir no App Externo.", {
+                                text: "🎬 Abrir no VLC / Player Externo",
+                                callback: () => window.open(streamUrl, '_blank')
+                            });
                             showStatus("Falha: Erro crítico HLS em todos os métodos.");
                         }
                         return;
@@ -376,7 +381,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     showStatus(`Erro Nativo. Tentando método alternativo (${proxyIndex + 2})...`);
                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                  } else {
-                    showError("Erro: Fonte de vídeo não suportada (Native HLS).");
+                    showError("Erro: Formato não suportado. Tente abrir no App Externo.", {
+                        text: "🎬 Abrir no VLC / Player Externo",
+                        callback: () => window.open(streamUrl, '_blank')
+                    });
                     showStatus("Falha: Erro Nativo em todos os métodos.");
                  }
             });
@@ -410,7 +418,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 showStatus(`Tempo esgotado. Tentando método alternativo (${proxyIndex + 2})...`);
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
             } else {
-                showError("Erro: Tempo limite excedido ao carregar vídeo.");
+                showError("Erro: Tempo limite excedido. Tente abrir no App Externo.", {
+                    text: "🎬 Abrir no VLC / Player Externo",
+                    callback: () => window.open(streamUrl, '_blank')
+                });
             }
         }, 15000); // 15 seconds timeout
 
@@ -778,12 +789,35 @@ if (!window.Hls) {
     document.head.appendChild(script);
 }
 
-function showError(msg) {
+function showError(msg, action = null) {
     const overlay = document.getElementById('errorOverlay');
     const msgEl = document.getElementById('errorMsg');
+    
+    // Remove existing action button if any
+    const existingBtn = document.getElementById('errorActionBtn');
+    if (existingBtn) existingBtn.remove();
+
     if (overlay && msgEl) {
         msgEl.textContent = msg;
         overlay.style.display = 'flex';
+        
+        if (action) {
+            const btn = document.createElement('button');
+            btn.id = 'errorActionBtn';
+            btn.textContent = action.text;
+            btn.style.marginTop = '20px';
+            btn.style.padding = '10px 20px';
+            btn.style.background = '#e50914';
+            btn.style.color = 'white';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '4px';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '16px';
+            btn.onclick = action.callback;
+            
+            // Append after message
+            msgEl.parentNode.appendChild(btn);
+        }
     }
 }
 
