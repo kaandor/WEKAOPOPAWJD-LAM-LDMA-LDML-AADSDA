@@ -8,16 +8,16 @@ applyGlobalTheme();
 // Helper for URL params
 const qs = (key) => new URLSearchParams(window.location.search).get(key);
 let currentHls = null; // Global reference for cleanup
+let isSwitchingSource = false; // Lock to prevent race conditions during proxy switch
+let retryTimeout = null; // Global retry timer to prevent double-firing
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://api.cors.lol/?url=", // ⚡ FAST & WORKING (Prioritized for HTTP sources)
-    "https://thingproxy.freeboard.io/fetch/", // Added back as robust backup
-    "https://corsproxy.io/?", // Standard public proxy
-    "https://api.codetabs.com/v1/proxy?quest=", // Good for redirects
-    "https://cors.eu.org/", // Reliable alternative
-    "https://proxy.cors.sh/", // New robust proxy
-    "https://api.allorigins.win/raw?url=", // Backup
+    "https://api.cors.lol/?url=", // ⚡ FAST & WORKING (Prioritized)
+    "https://proxy.cors.sh/", // Robust alternative
+    "https://thingproxy.freeboard.io/fetch/", // Backup
+    "https://api.codetabs.com/v1/proxy/?quest=", // Fixed URL (needs trailing slash)
+    "https://cors.eu.org/", // Sometimes blocked but worth keeping
     "DIRECT_HTTPS" // Try upgrading to HTTPS last
 ];
 
@@ -64,18 +64,9 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     
     const proxyBase = strategy;
     // Avoid double proxying
-    if (url.includes('corsproxy.io') || url.includes('api.codetabs.com') || url.includes('api.allorigins.win') || url.includes('thingproxy.freeboard.io')) return url;
+    if (url.includes('api.codetabs.com') || url.includes('thingproxy.freeboard.io') || url.includes('proxy.cors.sh')) return url;
     
-    // Special handling for corsproxy.io (should NOT be encoded usually)
-    if (proxyBase.includes('corsproxy.io')) {
-        return `${proxyBase}${cleanUrl}`;
-    }
-
     // Special handling for api.cors.lol (expects ?url= but raw URL often works better if encoding causes issues)
-    // But curl worked with raw. Let's try raw if it's cors.lol too?
-    // Actually, let's keep encoding for safety but if it fails, the retry logic will handle it.
-    // Wait, the curl worked with RAW. If I encode it, it becomes http%3A%2F%2F...
-    // Let's change this to NOT encode for cors.lol as well based on curl success.
     if (proxyBase.includes('api.cors.lol')) {
         return `${proxyBase}${cleanUrl}`;
     }
@@ -206,11 +197,20 @@ let currentProxyAttempt = 0;
 async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex = 0, startTime = 0) {
     console.log(`[attachSource] URL: ${streamUrl}, Type: ${streamType}, ProxyIndex: ${proxyIndex}, StartTime: ${startTime}`);
     
+    // Clear any pending retries
+    if (retryTimeout) clearTimeout(retryTimeout);
+    
+    // Lock to prevent race conditions
+    isSwitchingSource = true;
+    
     // Cleanup previous HLS instance if exists
     if (currentHls) {
         currentHls.destroy();
         currentHls = null;
     }
+
+    // Unlock after 1s to allow events to settle
+    setTimeout(() => { isSwitchingSource = false; }, 1000);
 
     if (!streamUrl) {
         console.error("No stream URL provided");
@@ -229,6 +229,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
     // Fallback logic for error handling
     const handleVideoError = async (e) => {
+        if (isSwitchingSource) {
+             console.warn("Ignoring error during source switch.");
+             return;
+        }
+
         const error = video.error;
         console.error("Video Error:", error ? error.code : 'Unknown', error ? error.message : '');
         
@@ -242,8 +247,10 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         if (proxyIndex < PROXY_LIST.length - 1) {
             console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
             showStatus(`Erro na conexão. Tentando método alternativo (${proxyIndex + 2})...`);
-            // Increased delay to 2s to prevent rapid loops and allow network to settle
-            setTimeout(() => {
+            
+            // Clear previous timeout and set new one (Debounce retry)
+            if (retryTimeout) clearTimeout(retryTimeout);
+            retryTimeout = setTimeout(() => {
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
             }, 2000); 
         } else {
@@ -256,7 +263,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         }
     };
 
-    // Remove existing error listeners
+    // Remove existing error listeners (handled by assignment below)
     video.onerror = handleVideoError;
 
     // Safe Play Helper to prevent AbortError & Handle Seek
@@ -325,9 +332,9 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             if (Hls.isSupported()) {
                 // Add timeouts to fail fast on bad proxies
                 const hls = new Hls({
-                    manifestLoadingTimeOut: 3000, // Reduced to 3s for faster failover
-                    fragLoadingTimeOut: 3000,
-                    levelLoadingTimeOut: 3000,
+                    manifestLoadingTimeOut: 5000, // Increased to 5s
+                    fragLoadingTimeOut: 15000, // Increased to 15s
+                    levelLoadingTimeOut: 15000,
                     xhrSetup: function(xhr, url) {
                         // Hack to force some proxies to work better
                         if (url.includes('corsproxy.io')) {
@@ -360,7 +367,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                         if (proxyIndex < PROXY_LIST.length - 1) {
                             console.warn(`Proxy ${proxyIndex} failed (${data.details}). Switching to Proxy ${proxyIndex + 1}...`);
                             showStatus(`Erro HLS (${data.details}). Tentando método alternativo (${proxyIndex + 2})...`);
-                            attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                            
+                            if (retryTimeout) clearTimeout(retryTimeout);
+                            retryTimeout = setTimeout(() => {
+                                attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+                            }, 2000);
                         } else {
                             showError("Erro: Fonte indisponível. Tente abrir no App Externo.", {
                                 text: "🎬 Abrir no VLC / Player Externo",
@@ -427,6 +438,9 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         // MP4 Timeout Logic
         const mp4Timeout = setTimeout(() => {
             console.warn(`MP4 Load Timeout (${proxyIndex}). Switching...`);
+            // Only switch if we are NOT already switching (timeout fired late)
+            if (isSwitchingSource) return;
+
             if (proxyIndex < PROXY_LIST.length - 1) {
                 showStatus(`Tempo esgotado. Tentando método alternativo (${proxyIndex + 2})...`);
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
@@ -436,7 +450,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     callback: () => window.open(streamUrl, '_blank')
                 });
             }
-        }, 20000); // Increased to 20s to be extra safe with slow proxies
+        }, 25000); // Increased to 25s
 
         video.addEventListener('loadedmetadata', () => {
             clearTimeout(mp4Timeout); // Clear timeout on success
