@@ -12,6 +12,7 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://api.cors.lol/?url=", // ⚡ FAST & WORKING (Prioritized for HTTP sources)
+    "https://thingproxy.freeboard.io/fetch/", // Added back as robust backup
     "https://corsproxy.io/?", // Standard public proxy
     "https://api.codetabs.com/v1/proxy?quest=", // Good for redirects
     "https://cors.eu.org/", // Reliable alternative
@@ -69,8 +70,17 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     if (proxyBase.includes('corsproxy.io')) {
         return `${proxyBase}${cleanUrl}`;
     }
+
+    // Special handling for api.cors.lol (expects ?url= but raw URL often works better if encoding causes issues)
+    // But curl worked with raw. Let's try raw if it's cors.lol too?
+    // Actually, let's keep encoding for safety but if it fails, the retry logic will handle it.
+    // Wait, the curl worked with RAW. If I encode it, it becomes http%3A%2F%2F...
+    // Let's change this to NOT encode for cors.lol as well based on curl success.
+    if (proxyBase.includes('api.cors.lol')) {
+        return `${proxyBase}${cleanUrl}`;
+    }
     
-    // Default encoding for others (CodeTabs, CorsLoL, etc)
+    // Default encoding for others (CodeTabs, etc)
     return `${proxyBase}${encodeURIComponent(cleanUrl)}`;
 }
 
@@ -222,23 +232,24 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         const error = video.error;
         console.error("Video Error:", error ? error.code : 'Unknown', error ? error.message : '');
         
-        // Try next proxy if available and error is related to source/network
-        if (error && (error.code === 3 || error.code === 4)) {
-            if (proxyIndex < PROXY_LIST.length - 1) {
-                console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
-                showStatus(`Erro na conexão. Tentando método alternativo (${proxyIndex + 2})...`);
-                // Short delay to prevent rapid loops
-                setTimeout(() => {
-                    attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
-                }, 1000);
-            } else {
-                console.error("All proxies failed.");
-                showError("Erro: Fonte insegura (HTTP/SSL) ou bloqueada. Use o App Externo.", {
-                    text: "🎬 Abrir no VLC / Player Externo",
-                    callback: () => window.open(streamUrl, '_blank')
-                });
-                showStatus("Falha: Todas as tentativas falharam.");
-            }
+        // Try next proxy on ANY error (unless we exhausted the list)
+        // Removed specific error code check to be more aggressive with retries
+        if (proxyIndex < PROXY_LIST.length - 1) {
+            console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
+            showStatus(`Erro na conexão. Tentando método alternativo (${proxyIndex + 2})...`);
+            // Short delay to prevent rapid loops
+            setTimeout(() => {
+                attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
+            }, 500); // Reduced delay for faster failover
+        } else {
+            console.error("All proxies failed.");
+            // If all failed, show the error but also a "Force Play" option? 
+            // The user wants it to work.
+            showError("Erro: Fonte insegura (HTTP/SSL) ou bloqueada. Use o App Externo.", {
+                text: "🎬 Abrir no VLC / Player Externo",
+                callback: () => window.open(streamUrl, '_blank')
+            });
+            showStatus("Falha: Todas as tentativas falharam.");
         }
     };
 
