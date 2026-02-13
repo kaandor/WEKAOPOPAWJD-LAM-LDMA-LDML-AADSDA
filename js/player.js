@@ -12,10 +12,11 @@ let currentHls = null; // Global reference for cleanup
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "DIRECT_HTTPS", // Try upgrading to HTTPS first (Fastest if supported)
-    "https://api.codetabs.com/v1/proxy?quest=", // Good backup
-    "https://corsproxy.io/?", // Best public proxy
-    "https://api.allorigins.win/raw?url=", // Backup
+    "https://corsproxy.io/?", // Best public proxy (Moved back up for MP4 support)
     "https://cors.eu.org/", // Reliable alternative
+    "https://proxy.cors.sh/", // New robust proxy
+    "https://api.codetabs.com/v1/proxy?quest=", // Good backup but can be slow for MP4
+    "https://api.allorigins.win/raw?url=", // Backup
     "https://thingproxy.freeboard.io/fetch/", // Fallback
     "https://api.cors.lol/?url=" // Another backup
 ];
