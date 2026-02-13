@@ -420,7 +420,7 @@ export const api = {
             
             if (res.status === 404) return null; // File doesn't exist yet
             if (res.status === 401) {
-                console.warn("Repo Read Skipped: Unauthorized (401)");
+                // console.warn("Repo Read Skipped: Unauthorized (401)");
                 return null;
             }
             if (!res.ok) throw new Error(`Repo Read Error ${res.status}`);

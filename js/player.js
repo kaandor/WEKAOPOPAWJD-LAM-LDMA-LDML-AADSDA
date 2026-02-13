@@ -11,12 +11,11 @@ let currentHls = null; // Global reference for cleanup
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://corsproxy.io/?", // Best public proxy (Restored)
+    "https://corsproxy.io/?", // Standard public proxy
     "https://api.codetabs.com/v1/proxy?quest=", // Good for redirects
     "https://cors.eu.org/", // Reliable alternative
     "https://proxy.cors.sh/", // New robust proxy
     "https://api.allorigins.win/raw?url=", // Backup
-    "https://thingproxy.freeboard.io/fetch/", // Fallback
     "https://api.cors.lol/?url=", // Another backup
     "DIRECT_HTTPS" // Try upgrading to HTTPS last
 ];
@@ -234,7 +233,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 }, 1000);
             } else {
                 console.error("All proxies failed.");
-                showError("Erro: Não foi possível reproduzir no navegador. Tente abrir no App Externo.", {
+                showError("Erro: Fonte insegura (HTTP/SSL) ou bloqueada. Use o App Externo.", {
                     text: "🎬 Abrir no VLC / Player Externo",
                     callback: () => window.open(streamUrl, '_blank')
                 });
@@ -418,12 +417,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 showStatus(`Tempo esgotado. Tentando método alternativo (${proxyIndex + 2})...`);
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
             } else {
-                showError("Erro: Tempo limite excedido. Tente abrir no App Externo.", {
+                showError("Erro: Tempo limite excedido (Proxy Lento). Tente abrir no App Externo.", {
                     text: "🎬 Abrir no VLC / Player Externo",
                     callback: () => window.open(streamUrl, '_blank')
                 });
             }
-        }, 8000); // 8 seconds timeout
+        }, 15000); // Increased to 15s to allow slow proxies to connect
 
         video.addEventListener('loadedmetadata', () => {
             clearTimeout(mp4Timeout); // Clear timeout on success
