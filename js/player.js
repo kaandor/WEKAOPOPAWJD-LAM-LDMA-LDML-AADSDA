@@ -14,11 +14,8 @@ let retryTimeout = null; // Global retry timer to prevent double-firing
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://api.cors.lol/?url=", // ⚡ FAST & WORKING (Prioritized)
-    "https://api.allorigins.win/raw?url=", // Backup (Reliable)
-    "https://proxy.cors.sh/", // Robust alternative
-    "https://thingproxy.freeboard.io/fetch/", // Backup
-    "https://api.codetabs.com/v1/proxy/?quest=", // Fixed URL (needs trailing slash)
-    "https://cors.eu.org/", // Sometimes blocked but worth keeping
+    "https://cors.eu.org/", // Backup
+    "https://proxy.cors.sh/", // Robust (Rate Limited often)
     "DIRECT_HTTPS" // Try upgrading to HTTPS last
 ];
 
@@ -420,7 +417,11 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
     } else {
         // Direct file (MP4/MKV)
         console.log(`[attachSource] Setting video.src to ${finalUrl}`);
+        
+        // Set Cross-Origin to anonymous to handle CORS headers correctly (api.cors.lol supports this)
+        video.crossOrigin = "anonymous";
         video.src = finalUrl;
+        video.load(); // Important to reset
         
         // MP4 Timeout Logic
         const mp4Timeout = setTimeout(() => {
@@ -434,7 +435,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             } else {
                 showError("Erro: Tempo limite excedido. Tente novamente mais tarde.");
             }
-        }, 25000); // Increased to 25s
+        }, 40000); // Increased to 40s for large files
 
         video.addEventListener('loadedmetadata', () => {
             clearTimeout(mp4Timeout); // Clear timeout on success
