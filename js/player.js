@@ -249,7 +249,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         } else {
             console.error("All proxies failed.");
             showError("Erro: Não foi possível carregar o vídeo. Tente novamente mais tarde.");
-            showStatus("Falha: Todas as tentativas falharam.");
+            // showStatus("Falha: Todas as tentativas falharam."); // Removed per user request
         }
     };
 
@@ -364,7 +364,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                             }, 2000);
                         } else {
                             showError("Erro: Não foi possível carregar o vídeo. Tente novamente mais tarde.");
-                            showStatus("Falha: Erro crítico HLS em todos os métodos.");
+                            // showStatus("Falha: Erro crítico HLS em todos os métodos."); // Removed per user request
                         }
                         return;
                     }
