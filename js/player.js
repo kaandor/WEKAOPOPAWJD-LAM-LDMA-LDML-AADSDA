@@ -14,6 +14,7 @@ let retryTimeout = null; // Global retry timer to prevent double-firing
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
     "https://api.cors.lol/?url=", // ⚡ FAST & WORKING (Prioritized)
+    "https://api.allorigins.win/raw?url=", // Backup (Reliable)
     "https://proxy.cors.sh/", // Robust alternative
     "https://thingproxy.freeboard.io/fetch/", // Backup
     "https://api.codetabs.com/v1/proxy/?quest=", // Fixed URL (needs trailing slash)
@@ -66,12 +67,7 @@ function getProxiedStreamUrl(url, proxyIndex = 0) {
     // Avoid double proxying
     if (url.includes('api.codetabs.com') || url.includes('thingproxy.freeboard.io') || url.includes('proxy.cors.sh')) return url;
     
-    // Special handling for api.cors.lol (expects ?url= but raw URL often works better if encoding causes issues)
-    if (proxyBase.includes('api.cors.lol')) {
-        return `${proxyBase}${cleanUrl}`;
-    }
-    
-    // Default encoding for others (CodeTabs, etc)
+    // Default encoding for all proxies (including cors.lol as it supports it)
     return `${proxyBase}${encodeURIComponent(cleanUrl)}`;
 }
 
@@ -255,10 +251,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
             }, 2000); 
         } else {
             console.error("All proxies failed.");
-            showError("Erro: Fonte insegura (HTTP/SSL) ou bloqueada. Use o App Externo.", {
-                text: "🎬 Abrir no VLC / Player Externo",
-                callback: () => window.open(streamUrl, '_blank')
-            });
+            showError("Erro: Não foi possível carregar o vídeo. Tente novamente mais tarde.");
             showStatus("Falha: Todas as tentativas falharam.");
         }
     };
@@ -373,10 +366,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                             }, 2000);
                         } else {
-                            showError("Erro: Fonte indisponível. Tente abrir no App Externo.", {
-                                text: "🎬 Abrir no VLC / Player Externo",
-                                callback: () => window.open(streamUrl, '_blank')
-                            });
+                            showError("Erro: Não foi possível carregar o vídeo. Tente novamente mais tarde.");
                             showStatus("Falha: Erro crítico HLS em todos os métodos.");
                         }
                         return;
@@ -405,10 +395,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     showStatus(`Erro Nativo. Tentando método alternativo (${proxyIndex + 2})...`);
                     attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
                  } else {
-                    showError("Erro: Formato não suportado. Tente abrir no App Externo.", {
-                        text: "🎬 Abrir no VLC / Player Externo",
-                        callback: () => window.open(streamUrl, '_blank')
-                    });
+                    showError("Erro: Formato não suportado.");
                     showStatus("Falha: Erro Nativo em todos os métodos.");
                  }
             });
@@ -445,10 +432,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                 showStatus(`Tempo esgotado. Tentando método alternativo (${proxyIndex + 2})...`);
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
             } else {
-                showError("Erro: Tempo limite excedido (Proxy Lento). Tente abrir no App Externo.", {
-                    text: "🎬 Abrir no VLC / Player Externo",
-                    callback: () => window.open(streamUrl, '_blank')
-                });
+                showError("Erro: Tempo limite excedido. Tente novamente mais tarde.");
             }
         }, 25000); // Increased to 25s
 
