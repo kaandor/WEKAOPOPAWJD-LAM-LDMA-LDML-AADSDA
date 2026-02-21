@@ -7,6 +7,28 @@ applyGlobalTheme();
 // Sessão atual (pode ser null se usuário não estiver logado)
 let session = api.session.read() || null;
 
+profiles = res.data;
+if (!Array.isArray(profiles) && profiles && profiles.profiles) {
+  profiles = profiles.profiles;
+}
+
+const user = session && session.user ? session.user : null;
+const key = user ? `klyx.profiles.${user.id}` : "klyx.profiles";
+
+const userForPlan = session && session.user ? session.user : null;
+const plan = userForPlan && userForPlan.plan ? userForPlan.plan : "premium"
+
+profiles = res.data;
+if (!Array.isArray(profiles) && profiles && profiles.profiles) {
+  profiles = profiles.profiles;
+}
+
+const user = session && session.user ? session.user : null;
+const key = user ? `klyx.profiles.${user.id}` : "klyx.profiles";
+
+const userForPlan = session && session.user ? session.user : null;
+const plan = userForPlan && userForPlan.plan ? userForPlan.plan : "premium";
+
 // Elements
 const grid = document.getElementById("profilesGrid");
 const manageBtn = document.getElementById("manageProfilesBtn");
