@@ -93,44 +93,39 @@ export async function mountAppShell({ currentPath }) {
           <span class="connection-dot" id="connectionStatusDot" title="Checking connection..."></span>
         </a>
         <nav class="nav" aria-label="Primary">
-          <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home" translate="no">
-            <span class="nav-icon">${icons.home}</span>
-            <span class="nav-text">Início</span>
-          </a>
-          <a href="./movies.html" data-path="/movies" translate="no">
-            <span class="nav-icon">${icons.movies}</span>
-            <span class="nav-text">Filmes</span>
-          </a>
-          <a href="./series.html" data-path="/series" translate="no">
-            <span class="nav-icon">${icons.series}</span>
-            <span class="nav-text">Séries</span>
-          </a>
-          <a href="./live-tv.html" data-path="/live-tv" translate="no">
-            <span class="nav-icon">${icons.live}</span>
-            <span class="nav-text">TV ao Vivo</span>
-          </a>
-          <!-- Search disabled by user request -->
-          <!-- <a href="/search" data-path="/search">
-            <span class="nav-icon">${icons.search}</span>
-            <span class="nav-text">Buscar</span>
-          </a> -->
-        </nav>
-        <div class="header-actions">
-          <div class="profile-dropdown-container">
-            <button id="switchProfileBtn" class="profile-avatar-btn" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
-            <div id="profileDropdown" class="profile-dropdown hidden">
-              <a href="./profile.html" class="dropdown-item">
-                <span class="dropdown-icon">${icons.profile}</span>
-                Perfil
-              </a>
-              <a href="./settings.html" class="dropdown-item">
-                <span class="dropdown-icon">${icons.settings}</span>
-                Configurações
-              </a>
-              <a href="./profile-selection.html" class="dropdown-item">
-                <span class="dropdown-icon">${icons.switch}</span>
-                Trocar Perfil
-              </a>
+  <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home focusable" translate="no">
+    <span class="nav-icon">${icons.home}</span>
+    <span class="nav-text">Início</span>
+  </a>
+  <a href="./movies.html" data-path="/movies" class="focusable" translate="no">
+    <span class="nav-icon">${icons.movies}</span>
+    <span class="nav-text">Filmes</span>
+  </a>
+  <a href="./series.html" data-path="/series" class="focusable" translate="no">
+    <span class="nav-icon">${icons.series}</span>
+    <span class="nav-text">Séries</span>
+  </a>
+</nav>
+<div class="header-actions">
+  <div class="profile-dropdown-container">
+    <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
+    <div id="profileDropdown" class="profile-dropdown hidden">
+      <a href="./settings.html" class="dropdown-item focusable">
+        <span class="dropdown-icon">${icons.settings}</span>
+        Configurações
+      </a>
+      <div class="dropdown-divider"></div>
+      <button id="logoutBtn" class="dropdown-item dropdown-danger focusable" type="button">
+        <span class="dropdown-icon">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </span>
+        Sair
+      </button>
+    </div>
+  </div>
+</div>
               <div class="dropdown-divider"></div>
               <button id="logoutBtn" class="dropdown-item dropdown-danger" type="button">
                 <span class="dropdown-icon">
