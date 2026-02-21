@@ -1,5 +1,5 @@
 import { api } from "./api.js?v=20260204-fix1";
-import { applyGlobalTheme } from "./ui.js?v=20260204-fix1";
+import "./ui.js?v=20260204-fix1";
 
 applyGlobalTheme();
 let session = api.session.read() || null;
