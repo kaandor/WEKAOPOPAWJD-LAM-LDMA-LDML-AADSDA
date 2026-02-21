@@ -16,7 +16,6 @@ const logoutBtn = document.getElementById("logoutBtn");
 const profileModal = document.getElementById("profileModal");
 const modalTitle = document.getElementById("modalTitle");
 const profileNameInput = document.getElementById("profileName");
-// Age input removido
 const kidProfileSection = document.getElementById("kidProfileSection");
 const profileIsKid = document.getElementById("profileIsKid");
 const pinSection = document.getElementById("pinSection");
@@ -28,7 +27,7 @@ const deleteProfileBtn = document.getElementById("deleteProfileBtn");
 const cancelProfileBtn = document.getElementById("cancelProfileBtn");
 const saveProfileBtn = document.getElementById("saveProfileBtn");
 
-// PIN Verification Modal (criado dinamicamente)
+// PIN Verification Modal (Created dynamically)
 let pinVerificationCallback = null;
 const pinModal = document.createElement("div");
 pinModal.id = "pinVerificationModal";
@@ -107,13 +106,11 @@ export async function initProfileSelection() {
     session = api.session.read() || null;
     await loadProfiles();
     setupEventListeners();
-    // Pre-generate default grid (Adult)
     generateIconGrid(false);
 }
 
 async function loadProfiles() {
     try {
-        // Force Cloud Sync (Hive Mind) - Best Effort
         const loadingDiv = document.createElement("div");
         loadingDiv.id = "sync-loading";
         loadingDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#9333ea;color:white;padding:5px 10px;border-radius:4px;z-index:9999;font-size:12px;";
@@ -131,36 +128,31 @@ async function loadProfiles() {
         const res = await api.profiles.list();
         if (res.ok) {
             profiles = res.data;
-            if (!Array.isArray(profiles) && profiles?.profiles) {
+            if (!Array.isArray(profiles) && profiles && profiles.profiles) {
                 profiles = profiles.profiles;
             }
-            // Safety check: Ensure profiles is an array
             if (!Array.isArray(profiles)) {
                 console.warn("Profiles data invalid, resetting to empty array:", profiles);
                 profiles = [];
             }
         } else {
             console.error("Error loading profiles", res);
-            profiles = []; // Ensure empty array on error
+            profiles = [];
         }
         
-        // Always render, even if empty (will show Add Profile button)
         render();
         
     } catch (e) {
         console.error("Critical error loading profiles", e);
         profiles = [];
-        render(); // Fallback render
+        render();
     }
 }
 
 function render() {
     grid.innerHTML = "";
-    
-    // Filter out invalid profiles to prevent ghost slots
     profiles = profiles.filter(p => p && p.id);
 
-    // Se não tiver nenhum perfil, cria um padrão imediatamente
     if (profiles.length === 0) {
         console.warn("No profiles found! Creating default 'Perfil 1'...");
         const defaultProfile = {
@@ -172,32 +164,28 @@ function render() {
         };
         profiles.push(defaultProfile);
         
-        // Salva imediatamente em storage
-        const user = session?.user || null;
+        const user = session && session.user ? session.user : null;
         const key = user ? `klyx.profiles.${user.id}` : "klyx.profiles";
         localStorage.setItem(key, JSON.stringify(profiles));
         
-        // Sincroniza com o Cloud DB
         if (api.cloud && api.cloud.syncUp) {
             console.log("⚡ Syncing default profile to Cloud DB...");
             api.cloud.syncUp().catch(e => console.error("Default profile sync failed", e));
         }
     }
     
-    // Limite baseado no plano
-    const user = session?.user || null;
-    const plan = user?.plan || "premium"; // Default to premium
+    const user = session && session.user ? session.user : null;
+    const plan = user && user.plan ? user.plan : "premium";
     const maxProfiles = plan === "individual" ? 1 : 4;
     
     profiles.forEach(p => {
-        if (!p) return; // Skip invalid profiles
+        if (!p) return;
 
         const card = document.createElement("div");
         card.className = `profile-card ${isManageMode ? 'edit-mode' : ''}`;
         
         const avatar = document.createElement("div");
         avatar.className = "avatar";
-        // Fallback for missing avatar
         const avatarUrl = p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name || 'User'}`;
         avatar.style.backgroundImage = `url('${avatarUrl}')`;
         
@@ -222,7 +210,6 @@ function render() {
         grid.append(card);
     });
     
-    // Botão "Adicionar Perfil"
     if (profiles.length < maxProfiles) {
         const addCard = document.createElement("div");
         addCard.className = "profile-card";
@@ -243,7 +230,6 @@ function render() {
         grid.append(addCard);
     }
     
-    // Estado do botão Gerenciar Perfis
     if (isManageMode) {
         manageBtn.textContent = "Concluir";
         manageBtn.classList.add("active");
@@ -270,12 +256,9 @@ function selectProfile(profile) {
     api.profiles.setCurrent(profile.id);
     localStorage.setItem("klyx_profile_name", profile.name);
     localStorage.setItem("klyx_profile_avatar", profile.avatar);
-    
-    // Redirect
     window.location.href = "./dashboard.html";
 }
 
-// Modal Functions
 function openCreateModal() {
     currentEditingProfileId = null;
     modalTitle.textContent = "Adicionar Perfil";
@@ -352,7 +335,7 @@ async function saveProfile() {
                     await api.cloud.syncUp();
                 }
             } else {
-                alert(res.data?.error || "Erro ao salvar perfil");
+                alert(res.data && res.data.error ? res.data.error : "Erro ao salvar perfil");
             }
         } catch (e) {
             console.error(e);
@@ -384,7 +367,7 @@ async function deleteProfile() {
                 await api.cloud.syncUp();
             }
         } else {
-            alert(res.data?.error || "Erro ao excluir perfil");
+            alert(res.data && res.data.error ? res.data.error : "Erro ao excluir perfil");
         }
     } catch (e) {
         console.error(e);
@@ -392,7 +375,6 @@ async function deleteProfile() {
     }
 }
 
-// Icon Selector
 function generateIconGrid(isKid) {
     iconGrid.innerHTML = "";
     const icons = getAvailableIcons(isKid);
@@ -418,18 +400,13 @@ function closeIconModal() {
     iconSelectorModal.classList.add("hidden");
 }
 
-// Event Listeners
 function setupEventListeners() {
-    if (!manageBtn) {
-        console.error("Manage Profiles button not found!");
-        return;
+    if (manageBtn) {
+        manageBtn.addEventListener("click", () => {
+            isManageMode = !isManageMode;
+            render();
+        });
     }
-
-    manageBtn.addEventListener("click", () => {
-        console.log("Manage Profiles clicked. Mode:", !isManageMode);
-        isManageMode = !isManageMode;
-        render();
-    });
     
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
@@ -464,4 +441,3 @@ function setupEventListeners() {
         });
     }
 }
-// init() chamado pelo módulo que importa
