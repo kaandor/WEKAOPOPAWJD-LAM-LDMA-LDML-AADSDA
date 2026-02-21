@@ -10,7 +10,7 @@
     <title>KLYX — Quem está assistindo?</title>
     <link rel="stylesheet" href="./css/global.css?v=20260220-logo1" />
     <link rel="stylesheet" href="./css/netflix-ui.css?v=20260220-logo1" />
-    <style>
+    <script>
       .profile-gate .logo {
           display: block;
           margin: 0 auto 2rem auto;
@@ -563,11 +563,10 @@
     </div>
 
     <script type="module">
-      import { initProfileSelection } from "./js/profile-selection.js?v=20260211-fix7";
-      import { applyGlobalTheme } from "./js/ui.js?v=20260211-fix7";
-      
-      applyGlobalTheme();
-      initProfileSelection();
-    </script>
+  import { initProfileSelection } from "./js/profile-selection.js?v=20260211-fix7";
+  import "./js/ui.js?v=20260211-fix7";
+  
+  initProfileSelection();
+</script>
   </body>
 </html>
