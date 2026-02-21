@@ -1,12 +1,73 @@
 <!doctype html>
 <html lang="en">
-  <head> ... </head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Entrar</title>
+    <style>
+      body {
+        background-color: #0b0e14;
+        color: #fff;
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .brand-logo {
+        max-width: 320px;
+        width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto 20px;
+      }
+      .auth-card {
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+      }
+      .input {
+        background: #1f2937;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        box-sizing: border-box;
+      }
+      .btn-primary {
+        background: #A855F7;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/login.css?v=20260204-fix3" />
+  </head>
   <body>
     <div class="auth-shell">
       <div id="loginCard" class="auth-card">
         <div class="auth-top" style="justify-content: center;">
           <div class="brand" style="text-align: center;">
-            <!-- Logo Klyx -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" class="brand-logo" style="margin: 0 auto; display: block; width: 100%; max-width: 320px; height: auto;">
+              <path d="M20 15 L 20 65 L 60 40 Z" fill="none" stroke="#A855F7" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+              <text x="75" y="52" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="42" fill="currentColor">Klyx</text>
+              <rect x="155" y="15" width="6" height="6" rx="1" fill="#A855F7" />
+              <rect x="163" y="8" width="6" height="6" rx="1" fill="#A855F7" />
+              <rect x="148" y="22" width="4" height="4" rx="1" fill="#A855F7" opacity="0.8" />
+            </svg>
           </div>
         </div>
 
@@ -17,7 +78,9 @@
 
         <div class="auth-actions" style="margin-top: 20px;">
           <button type="button" class="btn btn-github" id="githubLoginBtn">
-            <!-- Ícone GitHub -->
+            <svg height="24" viewBox="0 0 16 16" version="1.1" width="24" aria-hidden="true">
+              <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
             Entrar com GitHub
           </button>
         </div>
@@ -32,7 +95,7 @@
       import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260204-fix3";
       import { handleLoginSuccess } from "./js/ui.js?v=20260204-fix3";
 
-      // limpar sessão se ?logout
+      // ?logout=true limpa sessão
       if (new URLSearchParams(window.location.search).has('logout')) {
         localStorage.removeItem('klyx.session');
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -41,6 +104,7 @@
       redirectIfAuthed();
       applyTheme();
 
+      // Botão GitHub
       const githubBtn = document.getElementById('githubLoginBtn');
       if (githubBtn) {
         githubBtn.addEventListener('click', async () => {
@@ -50,6 +114,7 @@
 
           const res = await api.auth.loginWithGithub();
 
+          // Se loginWithGithub redirecionar, este trecho nunca roda (tudo bem)
           if (res && !res.ok) {
             const error = document.getElementById("error");
             error.textContent = res.data.error;
@@ -60,6 +125,7 @@
         });
       }
 
+      // Callback do GitHub (code/state na URL)
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const state = urlParams.get('state');
@@ -70,32 +136,30 @@
           githubBtn.disabled = true;
         }
 
-        api.auth.handleGithubCallback(code, state)
-          .then(res => {
-            if (!res.ok) {
-              const error = document.getElementById("error");
-              error.textContent = res.data.error || 'Falha na autenticação com GitHub.';
-              error.classList.remove("hidden");
-              if (githubBtn) {
-                githubBtn.innerHTML = 'Entrar com GitHub';
-                githubBtn.disabled = false;
-              }
-              return;
-            }
-
-            handleLoginSuccess(res.data);
-            window.location.href = "./profile-selection.html";
-          })
-          .catch(err => {
-            console.error('GitHub Callback Error', err);
+        api.auth.handleGithubCallback(code, state).then(res => {
+          if (!res.ok) {
             const error = document.getElementById("error");
-            error.textContent = 'Erro inesperado ao autenticar com GitHub.';
+            error.textContent = res.data.error || 'Falha na autenticação com GitHub.';
             error.classList.remove("hidden");
             if (githubBtn) {
               githubBtn.innerHTML = 'Entrar com GitHub';
               githubBtn.disabled = false;
             }
-          });
+            return;
+          }
+
+          handleLoginSuccess(res.data);
+          window.location.href = "./profile-selection.html";
+        }).catch(err => {
+          console.error('GitHub Callback Error', err);
+          const error = document.getElementById("error");
+          error.textContent = 'Erro inesperado ao autenticar com GitHub.';
+          error.classList.remove("hidden");
+          if (githubBtn) {
+            githubBtn.innerHTML = 'Entrar com GitHub';
+            githubBtn.disabled = false;
+          }
+        });
       }
     </script>
   </body>
