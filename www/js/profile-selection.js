@@ -1,9 +1,6 @@
 import { api } from "./api.js?v=20260204-fix1";
 import "./ui.js?v=20260204-fix1";
 
-applyGlobalTheme();
-let session = api.session.read() || null;
-
 const grid = document.getElementById("profilesGrid");
 const manageBtn = document.getElementById("manageProfilesBtn");
 const logoutBtn = document.getElementById("logoutBtn");
