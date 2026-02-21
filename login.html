@@ -1,1 +1,18 @@
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0;url=./www/login.html" />
+    <title>Redirecionando...</title>
+  </head>
+  <body>
+    <p>Redirecionando para a tela de login...</p>
+    <script>
+      try {
+        window.location.replace("./www/login.html");
+      } catch (e) {
+        window.location.href = "./www/login.html";
+      }
+    </script>
+  </body>
+</html>
