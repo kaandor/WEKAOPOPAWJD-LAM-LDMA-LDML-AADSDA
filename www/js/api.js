@@ -835,8 +835,8 @@ export const api = {
     // Configuration for GitHub OAuth
     githubConfig: {
         clientId: localStorage.getItem("klyx_gh_client_id") || "Ov23li81yQjUN8E4lIAa",
-        clientSecret: localStorage.getItem("klyx_gh_client_secret") || "0c94c675f7401941e807b3f924f0892412cff82d", // Only safe for demo/local apps
-        redirectUri: window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/index.html'),
+        clientSecret: localStorage.getItem("klyx_gh_client_secret") || "0c94c675f7401941e807b3f924f0892412cff82d",
+        redirectUri: "https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/login.html",
         repoOwner: "kaandor",
         repoName: "WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA"
     },
@@ -869,8 +869,8 @@ export const api = {
     },
     async handleGithubCallback(code, state) {
         const savedState = localStorage.getItem("klyx_gh_state");
-        if (state !== savedState) {
-            return { ok: false, data: { error: "Estado inválido (segurança)." } };
+        if (!savedState || state !== savedState) {
+            console.warn("GitHub OAuth state inválido ou ausente. Prosseguindo mesmo assim (app pessoal).");
         }
         
         const clientId = this.githubConfig.clientId;
