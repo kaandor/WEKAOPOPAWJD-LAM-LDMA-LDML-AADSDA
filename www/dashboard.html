@@ -29,15 +29,18 @@
     <script type="module">
       import { mountAppShell } from "./js/router.js?v=20260211-fix7";
       import { initDashboard } from "./js/ui.js?v=20260211-fix7";
-      
-      try {
-        await mountAppShell({ currentPath: "/dashboard" });
-        await initDashboard();
-      } catch (e) {
-        console.error("Dashboard Init Error:", e);
-        const content = document.getElementById("dashboardContent");
-        if (content) content.innerHTML = `<div style="padding: 20px; color: #ff4444;">Erro ao carregar dashboard: ${e.message} <br> <button onclick="localStorage.clear(); window.location.reload();" style="margin-top:10px; padding: 5px 10px;">Limpar Cache e Recarregar</button></div>`;
-      }
+      (async () => {
+        try {
+          await mountAppShell({ currentPath: "/dashboard" });
+          await initDashboard();
+        } catch (e) {
+          console.error("Dashboard Init Error:", e);
+          const content = document.getElementById("dashboardContent");
+          if (content) {
+            content.innerHTML = `<div style="padding: 20px; color: #ff4444;">Erro ao carregar dashboard: ${e.message} <br> <button onclick="localStorage.clear(); window.location.reload();" style="margin-top:10px; padding: 5px 10px;">Limpar Cache e Recarregar</button></div>`;
+          }
+        }
+      })();
     </script>
   </body>
 </html>
