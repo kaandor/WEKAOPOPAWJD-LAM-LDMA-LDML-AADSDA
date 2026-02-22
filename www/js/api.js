@@ -1333,7 +1333,37 @@ export const api = {
   },
   live: {
       async get(id) {
-          return { ok: false, data: { error: "Live TV not implemented in demo" } };
+          try {
+              const data = await getLocalData(LIST_CONFIG.LIVE_FILE);
+              if (!data) {
+                  return { ok: false, data: { error: "Lista de canais indisponível." } };
+              }
+              
+              const channels = Array.isArray(data.channels) ? data.channels : (Array.isArray(data) ? data : []);
+              if (!channels || channels.length === 0) {
+                  return { ok: false, data: { error: "Nenhum canal encontrado." } };
+              }
+              
+              const channel = channels.find(c => c && c.id === id);
+              if (!channel) {
+                  return { ok: false, data: { error: "Canal não encontrado." } };
+              }
+              
+              return {
+                  ok: true,
+                  data: {
+                      id: channel.id,
+                      title: channel.title,
+                      meta: channel.category || "Canal ao vivo",
+                      streamUrl: channel.stream_url,
+                      category: channel.category,
+                      thumbnail: channel.thumbnail_url || channel.logo || ""
+                  }
+              };
+          } catch (e) {
+              console.error("Erro ao carregar canal ao vivo", e);
+              return { ok: false, data: { error: "Erro ao carregar canal ao vivo." } };
+          }
       }
   },
   playback: {
@@ -1417,23 +1447,85 @@ export const api = {
   content: {
     async getHome() { 
         try {
-            const [moviesRes, seriesRes] = await Promise.all([
+            const [moviesRes, seriesRes, liveRes] = await Promise.all([
                 api.movies.list(),
-                api.content.getSeries()
+                api.content.getSeries(),
+                getLocalData(LIST_CONFIG.LIVE_FILE)
             ]);
 
             const allMovies = moviesRes.ok ? moviesRes.data : [];
             const allSeries = seriesRes.ok ? (seriesRes.data.series || []) : [];
+            const liveChannels = liveRes && Array.isArray(liveRes.channels) ? liveRes.channels : (Array.isArray(liveRes) ? liveRes : []);
             
             const getItems = (items, count = 100, filterFn = null) => {
                 let filtered = filterFn ? items.filter(filterFn) : items;
                 return filtered.slice(0, count);
             };
 
-            const dailyGames = allMovies.filter(m => {
-                const cat = (m.category || "").toLowerCase();
-                return cat.includes("jogos do dia");
-            });
+            let dailyGames = [];
+
+            if (liveChannels && liveChannels.length > 0) {
+                const jogosKeywords = [
+                    "hora do jogo",
+                    "jogos do dia",
+                    "jogos de hoje"
+                ];
+
+                const jogosChannels = liveChannels.filter(ch => {
+                    const cat = (ch.category || "").toLowerCase();
+                    return jogosKeywords.some(k => cat.includes(k));
+                });
+
+                dailyGames = jogosChannels.slice(0, 13).map(ch => ({
+                    id: ch.id,
+                    title: ch.title,
+                    poster: ch.thumbnail_url || ch.logo || "",
+                    category: ch.category || "Jogos do Dia",
+                    type: "live"
+                }));
+            }
+
+            if (!dailyGames || dailyGames.length === 0) {
+                dailyGames = allMovies.filter(m => {
+                    const cat = (m.category || "").toLowerCase();
+                    return cat.includes("jogos do dia");
+                });
+            }
+
+            if (dailyGames.length === 0) {
+                const todayKey = new Date().toISOString().slice(0, 10);
+                const sportsKeywords = [
+                    "jogo",
+                    "jogos",
+                    "torneio",
+                    "competição",
+                    "competicao",
+                    "futebol",
+                    "basquete",
+                    "luta",
+                    "mma",
+                    "ringue"
+                ];
+
+                const sportsMovies = allMovies.filter(m => {
+                    const cat = (m.category || "").toLowerCase();
+                    const title = (m.title || "").toLowerCase();
+                    const combined = cat + " " + title;
+                    return sportsKeywords.some(k => combined.includes(k));
+                });
+
+                const scored = sportsMovies.map(movie => {
+                    const key = todayKey + "|" + (movie.id || "") + "|" + (movie.title || "");
+                    let hash = 0;
+                    for (let i = 0; i < key.length; i++) {
+                        hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+                    }
+                    return { movie, hash };
+                });
+
+                scored.sort((a, b) => a.hash - b.hash);
+                dailyGames = scored.slice(0, 30).map(x => x.movie);
+            }
 
             const rails = {
                 topMovies: getItems(allMovies, 100),

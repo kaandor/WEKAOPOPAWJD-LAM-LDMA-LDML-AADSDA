@@ -188,11 +188,16 @@ export async function initDashboard() {
                             const itemType = item.type || type; // Use item type if mixed
                             // If mixed and still unknown, default to movie, but try to guess
                             const finalType = (itemType === 'mixed') ? 'movie' : itemType;
-                            
                             const isSeries = finalType === 'series';
-                            const clickAction = isSeries 
-                                ? `window.showSeriesModal('${item.id}')` 
-                                : `window.showMovieModal('${item.id}')`;
+                            const isLive = finalType === 'live';
+                            let clickAction;
+                            if (isLive) {
+                                clickAction = `window.location.href='./player.html?type=live&id=${item.id}'`;
+                            } else if (isSeries) {
+                                clickAction = `window.showSeriesModal('${item.id}')`;
+                            } else {
+                                clickAction = `window.showMovieModal('${item.id}')`;
+                            }
 
                             return `
                             <div class="card focusable" data-id="${item.id}" tabindex="0" 
@@ -264,7 +269,7 @@ export async function initDashboard() {
         }
 
         html += renderRail("Top Filmes", data.rails.topMovies, "movie");
-        html += renderRail("Jogos do Dia", data.rails.dailyGames, "movie");
+        html += renderRail("Jogos do Dia", data.rails.dailyGames, "mixed");
         html += renderRail("Top Séries", data.rails.topSeries, "series");
         html += renderRail("Adicionados Recentemente", data.rails.recentMovies, "movie");
         html += renderRail("Filmes de Terror", data.rails.horrorMovies, "movie");
