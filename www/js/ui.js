@@ -217,6 +217,8 @@ export async function initDashboard() {
             const cwRes = await api.playback.getContinueWatching();
             if (cwRes.ok && cwRes.data.length > 0) {
                 // Fetch all content to match IDs
+                // Optimization: In a real app, we would have an endpoint for this. 
+                // Here we load lists from cache.
                 const [moviesRes, seriesRes] = await Promise.all([
                     api.movies.list(),
                     api.content.getSeries()
@@ -262,6 +264,7 @@ export async function initDashboard() {
         }
 
         html += renderRail("Top Filmes", data.rails.topMovies, "movie");
+        html += renderRail("Jogos do Dia", data.rails.dailyGames, "movie");
         html += renderRail("Top Séries", data.rails.topSeries, "series");
         html += renderRail("Adicionados Recentemente", data.rails.recentMovies, "movie");
         html += renderRail("Filmes de Terror", data.rails.horrorMovies, "movie");

@@ -1415,9 +1415,7 @@ export const api = {
     }
   },
   content: {
-    // Keep these for ui.js compatibility
     async getHome() { 
-        // Dynamic Home Generation (Bypassing static home.json limits)
         try {
             const [moviesRes, seriesRes] = await Promise.all([
                 api.movies.list(),
@@ -1427,16 +1425,53 @@ export const api = {
             const allMovies = moviesRes.ok ? moviesRes.data : [];
             const allSeries = seriesRes.ok ? (seriesRes.data.series || []) : [];
             
-            // Helper to get random or sliced items
             const getItems = (items, count = 100, filterFn = null) => {
                 let filtered = filterFn ? items.filter(filterFn) : items;
                 return filtered.slice(0, count);
             };
 
+            const todayKey = new Date().toISOString().slice(0, 10);
+            const sportsKeywords = [
+                "jogos do dia",
+                "jogo",
+                "futebol",
+                "esporte",
+                "esportes",
+                "nba",
+                "nfl",
+                "mlb",
+                "premiere",
+                "champions",
+                "libertadores",
+                "copa",
+                "brasileirão",
+                "brasileirao"
+            ];
+
+            const sportsMovies = allMovies.filter(m => {
+                const cat = (m.category || "").toLowerCase();
+                const title = (m.title || "").toLowerCase();
+                const combined = cat + " " + title;
+                return sportsKeywords.some(k => combined.includes(k));
+            });
+
+            const scored = sportsMovies.map(movie => {
+                const key = todayKey + "|" + (movie.id || "") + "|" + (movie.title || "");
+                let hash = 0;
+                for (let i = 0; i < key.length; i++) {
+                    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+                }
+                return { movie, hash };
+            });
+
+            scored.sort((a, b) => a.hash - b.hash);
+            const dailyGames = scored.slice(0, 30).map(x => x.movie);
+
             const rails = {
                 topMovies: getItems(allMovies, 100),
                 topSeries: getItems(allSeries, 100),
-                recentMovies: getItems(allMovies, 100, m => true).reverse().slice(0, 100), // Simple "recent" simulation
+                dailyGames,
+                recentMovies: getItems(allMovies, 100, m => true).reverse().slice(0, 100),
                 horrorMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("terror")),
                 comedyMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("comédia")),
                 actionMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("ação"))
@@ -1445,7 +1480,6 @@ export const api = {
             return { ok: true, data: { rails } };
         } catch (e) {
             console.error("Dynamic Home Error", e);
-            // Fallback to static file if dynamic fails
             const data = await getLocalData("home.json");
             return { ok: true, data };
         }
