@@ -216,36 +216,38 @@ main.page {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 28px;               /* espaço entre Início / Filmes / Séries */
   box-shadow: none;
 }
 
 .nav a {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;      /* ícone + texto lado a lado */
   align-items: center;
   justify-content: center;
+  gap: 12px;
   text-decoration: none;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  padding: 8px 12px;
-  border-radius: 12px;
-  min-width: 60px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 999px;     /* pill grande */
+  min-width: 160px;         /* largura fixa para manter o formato */
   background: transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;      /* não quebra o texto com zoom */
 }
 
 .nav a:hover {
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .nav a[aria-current="page"] {
-  color: var(--accent);
-  background: transparent;
-  opacity: 1;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.12);   /* pill mais forte no item ativo */
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .nav a[aria-current="page"] .nav-icon {
@@ -253,16 +255,22 @@ main.page {
 }
 
 .nav-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: block;
   margin: 0 auto;
 }
 
 .nav-text {
   display: block;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
+  font-size: 14px;
+}
+
+/* No desktop não precisa dar padding-bottom extra no main */
+main.page {
+  padding-bottom: 0;
 }
 
 /* MOBILE: bolha flutuante no rodapé */
