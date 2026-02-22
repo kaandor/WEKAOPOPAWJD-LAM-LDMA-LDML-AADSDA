@@ -1430,42 +1430,10 @@ export const api = {
                 return filtered.slice(0, count);
             };
 
-            const todayKey = new Date().toISOString().slice(0, 10);
-            const sportsKeywords = [
-                "jogos do dia",
-                "jogo",
-                "futebol",
-                "esporte",
-                "esportes",
-                "nba",
-                "nfl",
-                "mlb",
-                "premiere",
-                "champions",
-                "libertadores",
-                "copa",
-                "brasileirão",
-                "brasileirao"
-            ];
-
-            const sportsMovies = allMovies.filter(m => {
+            const dailyGames = allMovies.filter(m => {
                 const cat = (m.category || "").toLowerCase();
-                const title = (m.title || "").toLowerCase();
-                const combined = cat + " " + title;
-                return sportsKeywords.some(k => combined.includes(k));
+                return cat.includes("jogos do dia");
             });
-
-            const scored = sportsMovies.map(movie => {
-                const key = todayKey + "|" + (movie.id || "") + "|" + (movie.title || "");
-                let hash = 0;
-                for (let i = 0; i < key.length; i++) {
-                    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-                }
-                return { movie, hash };
-            });
-
-            scored.sort((a, b) => a.hash - b.hash);
-            const dailyGames = scored.slice(0, 30).map(x => x.movie);
 
             const rails = {
                 topMovies: getItems(allMovies, 100),
