@@ -107,24 +107,7 @@ export async function mountAppShell({ currentPath }) {
   </a>
 </nav>
 <div class="header-actions">
-  <div class="profile-dropdown-container">
-    <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
-    <div id="profileDropdown" class="profile-dropdown hidden">
-      <a href="./settings.html" class="dropdown-item focusable">
-        <span class="dropdown-icon">${icons.settings}</span>
-        Configurações
-      </a>
-      <div class="dropdown-divider"></div>
-      <button id="logoutBtn" class="dropdown-item dropdown-danger focusable" type="button">
-        <span class="dropdown-icon">
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-        </span>
-        Sair
-      </button>
-    </div>
-  </div>
+  <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
 </div>
               <div class="dropdown-divider"></div>
               <button id="logoutBtn" class="dropdown-item dropdown-danger" type="button">
@@ -149,9 +132,8 @@ export async function mountAppShell({ currentPath }) {
   });
 
   // Profile Dropdown Logic
-  const profileBtn = document.getElementById("switchProfileBtn");
-  const dropdown = document.getElementById("profileDropdown");
   
+ 
   // Toggle dropdown
   profileBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
