@@ -280,9 +280,9 @@ main.page {
     -webkit-backdrop-filter: blur(25px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50px;
-    padding: 6px 12px;
+    padding: 10px 24px;   /* <- um pouco mais de “respiro” */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    gap: 10px;
+    gap: 24px;            /* <- ícones mais afastados */
     z-index: 1000;
   }
 
