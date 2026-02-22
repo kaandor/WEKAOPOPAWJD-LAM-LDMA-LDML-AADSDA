@@ -836,7 +836,7 @@ export const api = {
     githubConfig: {
         clientId: localStorage.getItem("klyx_gh_client_id") || "Ov23li81yQjUN8E4lIAa",
         clientSecret: localStorage.getItem("klyx_gh_client_secret") || "0c94c675f7401941e807b3f924f0892412cff82d",
-        redirectUri: "https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/login.html",
+        redirectUri: "https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/index.html",
         repoOwner: "kaandor",
         repoName: "WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA"
     },
