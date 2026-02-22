@@ -89,16 +89,26 @@ export async function mountAppShell({ currentPath }) {
           </a>
         </nav>
         <div class="header-actions">
-          <button
-  id="switchProfileBtn"
-  class="profile-avatar-btn focusable"
-  type="button"
-  title="${escapeHtml(userLabel)}"
-  style="background-color: ${avatarColor};"
-  onclick="window.location.href='./profile-selection.html'"
->
-  ${avatarHtml}
-</button>
+          <div class="profile-dropdown-container">
+            <button
+              id="switchProfileBtn"
+              class="profile-avatar-btn focusable"
+              type="button"
+              title="${escapeHtml(userLabel)}"
+              style="background-color: ${avatarColor};"
+            >
+              ${avatarHtml}
+            </button>
+            <div id="profileDropdown" class="profile-dropdown hidden">
+              <button id="openSettingsBtn" class="dropdown-item" type="button">
+                Configurações
+              </button>
+              <div class="dropdown-divider"></div>
+              <button id="logoutBtn" class="dropdown-item dropdown-danger" type="button">
+                Sair
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -110,7 +120,33 @@ export async function mountAppShell({ currentPath }) {
     if (path === currentPath) a.setAttribute("aria-current", "page");
   });
 
- 
+  const profileBtn = document.getElementById("switchProfileBtn");
+  const dropdown = document.getElementById("profileDropdown");
+  const settingsBtn = document.getElementById("openSettingsBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  profileBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdown?.classList.toggle("hidden");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!profileBtn?.contains(e.target) && !dropdown?.contains(e.target)) {
+      dropdown?.classList.add("hidden");
+    }
+  });
+
+  settingsBtn?.addEventListener("click", () => {
+    window.location.href = "./settings.html";
+  });
+
+  logoutBtn?.addEventListener("click", async () => {
+    localStorage.removeItem("klyx_profile_id");
+    localStorage.removeItem("klyx_profile_name");
+    localStorage.removeItem("klyx_profile_avatar");
+    await api.auth.logout();
+    window.location.href = "./login.html";
+  });
 }
 
 function escapeHtml(value) {
