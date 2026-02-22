@@ -89,9 +89,16 @@ export async function mountAppShell({ currentPath }) {
           </a>
         </nav>
         <div class="header-actions">
-          <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(
-            userLabel
-          )}" style="background-color: ${avatarColor};">${avatarHtml}</button>
+          <button
+  id="switchProfileBtn"
+  class="profile-avatar-btn focusable"
+  type="button"
+  title="${escapeHtml(userLabel)}"
+  style="background-color: ${avatarColor};"
+  onclick="window.location.href='./profile-selection.html'"
+>
+  ${avatarHtml}
+</button>
         </div>
       </div>
     </div>
@@ -103,10 +110,7 @@ export async function mountAppShell({ currentPath }) {
     if (path === currentPath) a.setAttribute("aria-current", "page");
   });
 
-  const switchBtn = document.getElementById("switchProfileBtn");
-  switchBtn?.addEventListener("click", () => {
-    window.location.href = "./profile-selection.html";
-  });
+ 
 }
 
 function escapeHtml(value) {
