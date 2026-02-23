@@ -855,13 +855,12 @@ export const api = {
     },
     // Configuration for Google OAuth (Device Flow)
     googleConfig: {
-        clientId: localStorage.getItem("klyx_google_client_id") || "YOUR_GOOGLE_CLIENT_ID",
+        clientId: localStorage.getItem("klyx_google_client_id") || "685740602799-tgdmkg3msmn5a83ism7aefppb13rpt7h.apps.googleusercontent.com",
         scope: "openid email profile"
     },
     async setGoogleKeys(clientId) {
         this.googleConfig.clientId = clientId;
         localStorage.setItem("klyx_google_client_id", clientId);
-        console.log("Google Client ID updated");
     },
     async loginWithGithub() {
         const clientId = this.githubConfig.clientId;
@@ -1210,126 +1209,62 @@ export const api = {
         await api.cloud.syncDown();
         return { ok: true, data: { user: finalUser, tokens: { accessToken } } };
     },
-    async startGoogleDeviceFlow() {
+    async loginWithGoogle() {
         const clientId = this.googleConfig.clientId;
-        const scope = this.googleConfig.scope;
-        const deviceUrl = "https://oauth2.googleapis.com/device/code";
-        const proxies = [
-            { name: "ThingProxy", url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`, method: "POST" },
-            { name: "CodeTabs", url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, method: "GET" },
-            { name: "AllOrigins", url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, method: "GET" },
-            { name: "CorsLoL", url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`, method: "GET" }
-        ];
-        const body = new URLSearchParams();
-        body.append("client_id", clientId);
-        body.append("scope", scope);
-        let data = null;
-        let lastErr = null;
-        for (const proxy of proxies) {
-            try {
-                let fetchUrl = deviceUrl;
-                let opts = {};
-                if (proxy.method === "POST") {
-                    fetchUrl = proxy.url(deviceUrl);
-                    opts = {
-                        method: "POST",
-                        headers: {
-                            "Accept": "application/json",
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: body.toString()
-                    };
-                } else {
-                    const full = `${deviceUrl}?${body.toString()}`;
-                    fetchUrl = proxy.url(full);
-                    opts = { method: "GET", headers: { "Accept": "application/json" } };
-                }
-                const res = await fetch(fetchUrl, opts);
-                if (!res.ok) throw new Error(`Device code status ${res.status}`);
-                const txt = await res.text();
-                try {
-                    data = JSON.parse(txt);
-                } catch {
-                    const p = new URLSearchParams(txt);
-                    data = Object.fromEntries(p.entries());
-                }
-                if (data && data.device_code) break;
-                throw new Error("Resposta inválida do Device Flow Google");
-            } catch (e) {
-                lastErr = e;
-            }
+        if (!clientId || clientId === "YOUR_GOOGLE_CLIENT_ID") {
+            return { ok: false, data: { error: "Google Client ID não configurado." } };
         }
-        if (!data) return { ok: false, data: { error: `Falha ao iniciar Device Flow Google (${lastErr?.message})` } };
-        try { sessionStorage.setItem("klyx_google_device_code", data.device_code); } catch(_) {}
-        return { ok: true, data };
+        const state = Math.random().toString(36).slice(2);
+        try {
+            localStorage.setItem("klyx_google_state", state);
+        } catch (_) {}
+        const redirectUri = this.githubConfig.redirectUri;
+        const base = "https://accounts.google.com/o/oauth2/v2/auth";
+        const params = new URLSearchParams();
+        params.set("client_id", clientId);
+        params.set("redirect_uri", redirectUri);
+        params.set("response_type", "token");
+        params.set("scope", this.googleConfig.scope);
+        params.set("include_granted_scopes", "true");
+        params.set("prompt", "select_account");
+        params.set("state", state);
+        const url = `${base}?${params.toString()}`;
+        window.location.href = url;
+        return new Promise(() => {});
     },
-    async pollGoogleDeviceToken() {
-        const clientId = this.googleConfig.clientId;
-        const deviceCode = sessionStorage.getItem("klyx_google_device_code");
-        if (!deviceCode) return { ok: false, data: { error: "Device code ausente" } };
-        const tokenUrl = "https://oauth2.googleapis.com/token";
-        const body = new URLSearchParams();
-        body.append("client_id", clientId);
-        body.append("device_code", deviceCode);
-        body.append("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
-        const proxies = [
-            { name: "ThingProxy", url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`, method: "POST" },
-            { name: "CodeTabs", url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, method: "GET" },
-            { name: "AllOrigins", url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, method: "GET" },
-            { name: "CorsLoL", url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`, method: "GET" }
-        ];
-        let data = null;
-        let lastErr = null;
-        for (const proxy of proxies) {
-            try {
-                let fetchUrl = tokenUrl;
-                let opts = {};
-                if (proxy.method === "POST") {
-                    fetchUrl = proxy.url(tokenUrl);
-                    opts = {
-                        method: "POST",
-                        headers: {
-                            "Accept": "application/json",
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: body.toString()
-                    };
-                } else {
-                    const full = `${tokenUrl}?${body.toString()}`;
-                    fetchUrl = proxy.url(full);
-                    opts = { method: "GET", headers: { "Accept": "application/json" } };
-                }
-                const res = await fetch(fetchUrl, opts);
-                if (!res.ok) throw new Error(`Device token status ${res.status}`);
-                const txt = await res.text();
-                try { data = JSON.parse(txt); } catch { 
-                    const p = new URLSearchParams(txt);
-                    data = Object.fromEntries(p.entries());
-                }
-                break;
-            } catch (e) { lastErr = e; }
+    async handleGoogleCallbackFromHash(hash) {
+        if (!hash || hash.indexOf("access_token") === -1) {
+            return { ok: false, data: { error: "Callback Google inválido." } };
         }
-        if (!data) return { ok: false, data: { error: `Falha ao obter token (${lastErr?.message})` } };
-        if (data.error) {
-            return { ok: false, data: { error: data.error_description || data.error } };
+        const stripped = hash.startsWith("#") ? hash.substring(1) : hash;
+        const params = new URLSearchParams(stripped);
+        const accessToken = params.get("access_token");
+        if (!accessToken) {
+            return { ok: false, data: { error: "Token Google ausente." } };
         }
-        const accessToken = data.access_token;
-        // Get user info from Google
-        const userRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: { "Authorization": `Bearer ${accessToken}` }
+        const googleState = params.get("state");
+        try {
+            const expected = localStorage.getItem("klyx_google_state");
+            if (expected && googleState && expected !== googleState) {
+                return { ok: false, data: { error: "State Google inválido." } };
+            }
+        } catch (_) {}
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${accessToken}` }
         });
-        const gUser = await userRes.json();
+        if (!res.ok) {
+            return { ok: false, data: { error: "Falha ao buscar usuário Google." } };
+        }
+        const gUser = await res.json();
         const finalUser = {
-            id: gUser.sub || ("g_" + Date.now()),
+            id: gUser.sub || "g_" + Date.now(),
             name: gUser.name || gUser.email || "Usuário Google",
             email: gUser.email || null,
             avatar: gUser.picture || null,
             provider: "google"
         };
-        // Store session with provider google; skip GitHub cloud sync by marking offline token
-        const session = { user: finalUser, provider: "google", tokens: { accessToken: "offline" } };
+        const session = { user: finalUser, provider: "google", tokens: { accessToken: "google" } };
         writeSession(session);
-        // Do NOT call GitHub syncDown for Google; local-only until cloud route is implemented
         return { ok: true, data: { user: finalUser } };
     },
     async me() {

@@ -121,7 +121,6 @@
 
       applyTheme();
 
-      // GitHub / Google Buttons
       const githubBtn = document.getElementById('githubLoginBtn');
       const googleBtn = document.getElementById('googleLoginBtn');
       if (githubBtn) {
@@ -145,48 +144,18 @@
               }
           });
       }
-      // Google Login Handler (Device Flow)
       if (googleBtn) {
           googleBtn.addEventListener('click', async () => {
               const originalText = googleBtn.innerHTML;
               googleBtn.innerHTML = 'Conectando...';
               googleBtn.disabled = true;
-              const r = await api.auth.startGoogleDeviceFlow();
-              if (!r.ok) {
-                  const error = document.getElementById("error");
-                  error.textContent = r.data.error;
-                  error.classList.remove("hidden");
-                  googleBtn.innerHTML = originalText;
-                  googleBtn.disabled = false;
-                  return;
-              }
-              const { user_code, verification_uri, verification_uri_complete, interval } = r.data;
+              const res = await api.auth.loginWithGoogle();
+              if (!res || res.ok) return;
               const error = document.getElementById("error");
+              error.textContent = res.data.error || "Falha no login Google.";
               error.classList.remove("hidden");
-              error.style.color = "#ccc";
-              error.innerHTML = `Abra <a href="${verification_uri}" target="_blank">${verification_uri}</a> e digite o código: <b>${user_code}</b>`;
-              
-              const confirmBtn = document.createElement('button');
-              confirmBtn.className = "btn btn-google";
-              confirmBtn.style.marginTop = "8px";
-              confirmBtn.innerText = "Confirmar";
-              confirmBtn.onclick = async () => {
-                  confirmBtn.disabled = true;
-                  confirmBtn.innerText = "Confirmando...";
-                  const pr = await api.auth.pollGoogleDeviceToken();
-                  if (pr.ok) {
-                      handleLoginSuccess(pr.data.user);
-                  } else {
-                      confirmBtn.disabled = false;
-                      confirmBtn.innerText = "Confirmar";
-                      const e2 = document.createElement('div');
-                      e2.style.color = "#ff8373";
-                      e2.style.marginTop = "6px";
-                      e2.innerText = pr.data.error || "Ainda pendente. Aguarde alguns segundos e clique Confirmar novamente.";
-                      error.appendChild(e2);
-                  }
-              };
-              error.appendChild(confirmBtn);
+              googleBtn.innerHTML = originalText;
+              googleBtn.disabled = false;
           });
       }
 
@@ -194,6 +163,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const state = urlParams.get('state');
+      const hash = window.location.hash;
       
       if (code && state) {
           if (githubBtn) {
@@ -234,75 +204,25 @@
               }
           });
       }
+      if (hash && hash.indexOf("access_token") !== -1) {
+          api.auth.handleGoogleCallbackFromHash(hash).then(res => {
+              if (res.ok && res.data && res.data.user) {
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                  handleLoginSuccess(res.data.user);
+              } else if (res && !res.ok) {
+                  const error = document.getElementById("error");
+                  error.textContent = res.data.error || "Falha no callback Google.";
+                  error.classList.remove("hidden");
+              }
+          });
+      }
       
       // Only redirect if already authenticated AND no OAuth code present
       if (!code && !state) {
         redirectIfAuthed();
       }
       
-      // Optional Fallback: Device Flow UI
       const errorDiv = document.getElementById("error");
-      function showDeviceFlowPrompt() {
-        const wrap = document.createElement('div');
-        wrap.style.marginTop = "10px";
-        const btn = document.createElement('button');
-        btn.className = "btn btn-github";
-        btn.innerText = "Login com código (Device Flow)";
-        btn.onclick = async () => {
-            btn.disabled = true;
-            btn.innerText = "Gerando código...";
-            const r = await api.auth.startGithubDeviceFlow();
-            if (!r.ok) {
-                btn.disabled = false;
-                btn.innerText = "Login com código (Device Flow)";
-                const m = document.createElement('div');
-                m.style.color = "#ff8373";
-                m.style.marginTop = "6px";
-                m.innerText = r.data.error || "Falha ao iniciar Device Flow";
-                wrap.appendChild(m);
-                return;
-            }
-            const { user_code, verification_uri, verification_uri_complete, interval } = r.data;
-            const info = document.createElement('div');
-            info.style.marginTop = "8px";
-            info.style.color = "#ccc";
-            info.innerHTML = `Abra <a href="${verification_uri}" target="_blank">${verification_uri}</a> e digite o código: <b>${user_code}</b>`;
-            wrap.appendChild(info);
-            // Poll token
-            const pollBtn = document.createElement('button');
-            pollBtn.className = "btn btn-github";
-            pollBtn.style.marginTop = "8px";
-            pollBtn.innerText = "Confirmar";
-            pollBtn.onclick = async () => {
-                pollBtn.disabled = true;
-                pollBtn.innerText = "Confirmando...";
-                const pr = await api.auth.pollGithubDeviceToken();
-                if (pr.ok) {
-                    handleLoginSuccess(pr.data.user);
-                } else {
-                    pollBtn.disabled = false;
-                    pollBtn.innerText = "Confirmar";
-                    const e2 = document.createElement('div');
-                    e2.style.color = "#ff8373";
-                    e2.style.marginTop = "6px";
-                    e2.innerText = pr.data.error || "Ainda pendente. Aguarde alguns segundos e clique Confirmar novamente.";
-                    wrap.appendChild(e2);
-                }
-            };
-            wrap.appendChild(pollBtn);
-        };
-        wrap.appendChild(btn);
-        errorDiv.appendChild(wrap);
-      }
-      // Show fallback when present error block becomes visible later
-      const observer = new MutationObserver((mut) => {
-        const isVisible = !errorDiv.classList.contains('hidden');
-        if (isVisible && !errorDiv.dataset.deviceFlowShown) {
-            errorDiv.dataset.deviceFlowShown = "1";
-            showDeviceFlowPrompt();
-        }
-      });
-      observer.observe(errorDiv, { attributes: true, attributeFilter: ['class'] });
 
       // Helper to get or generate MAC
       function getOrGenerateMac() {
