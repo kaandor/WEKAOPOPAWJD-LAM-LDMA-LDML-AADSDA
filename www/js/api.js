@@ -251,8 +251,9 @@ export const api = {
   },
   settings: {
     save(settings) {
-        const user = readSession().user;
-        if (!user) return;
+        const session = readSession();
+        const user = session && session.user;
+        if (!user) return {};
         
         // Merge with existing
         const current = JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
@@ -266,9 +267,14 @@ export const api = {
         return updated;
     },
     get() {
-        const user = readSession().user;
+        const session = readSession();
+        const user = session && session.user;
         if (!user) return {};
-        return JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
+        try {
+            return JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
+        } catch(_) {
+            return {};
+        }
     }
   },
   cloud: {
@@ -525,7 +531,7 @@ export const api = {
     // SYNC DOWN: Cloud -> Local (Updated for Repo DB + Encryption)
     async syncDown() {
         const token = this._getToken();
-        if (!token || token.startsWith("klyx_")) return;
+        if (!token || token.startsWith("klyx_") || token === "offline") return;
 
         // Dispatch Event: Sync Start
         window.dispatchEvent(new CustomEvent('klyx-sync-start'));
@@ -625,7 +631,7 @@ export const api = {
     // SYNC UP: Local -> Cloud (Updated for Repo DB + Encryption)
     async syncUp() {
         const token = this._getToken();
-        if (!token || token.startsWith("klyx_")) return;
+        if (!token || token.startsWith("klyx_") || token === "offline") return;
 
         window.dispatchEvent(new CustomEvent('klyx-sync-start'));
         console.log("☁️ Syncing Up to Repo DB (Encrypted)...");
@@ -847,26 +853,31 @@ export const api = {
         localStorage.setItem("klyx_gh_client_secret", clientSecret);
         console.log("GitHub Keys updated");
     },
+    // Configuration for Google OAuth (Device Flow)
+    googleConfig: {
+        clientId: localStorage.getItem("klyx_google_client_id") || "YOUR_GOOGLE_CLIENT_ID",
+        scope: "openid email profile"
+    },
+    async setGoogleKeys(clientId) {
+        this.googleConfig.clientId = clientId;
+        localStorage.setItem("klyx_google_client_id", clientId);
+        console.log("Google Client ID updated");
+    },
     async loginWithGithub() {
         const clientId = this.githubConfig.clientId;
         if (!clientId) {
             return { ok: false, data: { error: "GitHub Client ID não configurado. Por favor configure as chaves." } };
         }
         
-        // Generate state for security
         const state = Math.random().toString(36).substring(7);
         localStorage.setItem("klyx_gh_state", state);
+        try { localStorage.setItem("klyx_proxy_index", "0"); } catch(_) {}
         
         console.log("GitHub Auth Redirect URI:", this.githubConfig.redirectUri);
 
-        // Redirect to GitHub
-        // Important: do NOT send redirect_uri here, so GitHub uses the app's
-        // configured callback URL and avoids the 'redirect_uri not associated'
-        // warning banner. The callback is still enforced when exchanging the token.
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=user:email,public_repo&state=${state}`;
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email,public_repo&state=${state}`;
         window.location.href = authUrl;
         
-        // This promise will never resolve because of the redirect, which is expected
         return new Promise(() => {});
     },
     async handleGithubCallback(code, state) {
@@ -881,7 +892,16 @@ export const api = {
         if (!clientSecret) {
              return { ok: false, data: { error: "GitHub Client Secret faltando." } };
         }
-        
+
+        // Single-attempt guard per code to avoid rate-limit and duplicate calls
+        try {
+            const attemptKey = `klyx_oauth_attempt_${code}`;
+            if (sessionStorage.getItem(attemptKey) === "done") {
+                return { ok: false, data: { error: "Tentativa já realizada com este código. Atualize a página e gere um novo code." } };
+            }
+            sessionStorage.setItem(attemptKey, "done");
+        } catch(_) {}
+
         try {
             // Exchange code for token via CORS proxy
             // GitHub requires POST. Direct calls fail CORS. We use a proxy chain.
@@ -892,13 +912,23 @@ export const api = {
             // We prioritize CodeTabs and CorsProxyIO. Added AllOrigins with improved parsing logic.
             const proxies = [
                 {
-                    name: "CodeTabs",
-                    url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                    name: "ThingProxy",
+                    url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+                    method: "POST"
+                },
+                {
+                    name: "VercelAuth",
+                    url: () => `https://klyx-api.vercel.app/api/token`,
+                    method: "POST"
+                },
+                {
+                    name: "IsomorphicGitCORS",
+                    url: (url) => `https://cors.isomorphic-git.org/${url}`,
                     method: "GET"
                 },
                 {
-                    name: "CorsProxyIO",
-                    url: (url) => `https://corsproxy.io/?${url}`,
+                    name: "CodeTabs",
+                    url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
                     method: "GET"
                 },
                 {
@@ -907,21 +937,19 @@ export const api = {
                     method: "GET"
                 },
                 {
-                    name: "VercelAuth",
-                    url: () => `https://klyx-api.vercel.app/api/token`,
-                    method: "POST"
-                },
-                {
                     name: "CorsLoL",
                     url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
                     method: "GET"
-                },
-                {
-                    name: "ThingProxy",
-                    url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
-                    method: "POST"
                 }
             ];
+
+            // Rotate proxies across retries to avoid many calls in uma única tentativa
+            let proxyIndex = 0;
+            try {
+                proxyIndex = parseInt(localStorage.getItem("klyx_proxy_index") || "0", 10);
+                if (Number.isNaN(proxyIndex)) proxyIndex = 0;
+            } catch(_) {}
+            const selected = proxies[proxyIndex % proxies.length];
 
             // Prepare parameters
             const params = new URLSearchParams();
@@ -933,26 +961,13 @@ export const api = {
             let data = null;
             let lastError = null;
 
-            for (const proxy of proxies) {
+            // SINGLE proxy attempt per page load (rotate across retries)
+            {
+                const proxy = selected;
                 let fetchUrl;
                 let fetchOptions;
 
-                if (proxy.method === "GET") {
-                    // For GET proxies, append params to GitHub URL, then encode
-                    const fullGithubUrl = `${tokenUrl}?${params.toString()}`;
-                    
-                    // Special handling for CorsProxyIO (needs unencoded)
-                    // The proxy.url function handles the wrapping, but we need to ensure we don't double encode
-                    fetchUrl = proxy.url(fullGithubUrl);
-                    
-                    fetchOptions = {
-                        method: "GET",
-                        headers: {
-                            "Accept": "application/json"
-                        }
-                    };
-                } else {
-                    // For POST proxies
+                if (proxy.method === "POST") {
                     fetchUrl = proxy.url(tokenUrl);
                     fetchOptions = {
                         method: "POST",
@@ -962,14 +977,22 @@ export const api = {
                         },
                         body: params.toString()
                     };
+                } else {
+                    const fullGithubUrl = `${tokenUrl}?${params.toString()}`;
+                    fetchUrl = proxy.url(fullGithubUrl);
+                    fetchOptions = {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        }
+                    };
                 }
 
                 try {
                     console.log(`Trying proxy (${proxy.name}): ${fetchUrl}`);
                     
-                    // Add timeout to prevent hanging (increased to 20s for slow proxies)
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+                    const timeoutId = setTimeout(() => controller.abort(), 20000);
                     
                     const response = await fetch(fetchUrl, {
                         ...fetchOptions,
@@ -980,81 +1003,46 @@ export const api = {
                     if (!response.ok) {
                         const errText = await response.text().catch(() => response.statusText);
                         console.warn(`Proxy ${proxy.name} error ${response.status}: ${errText}`);
-                        
-                        // Special check for corsproxy.io 403 error (paywall)
-                        if (response.status === 403 && fetchUrl.includes('corsproxy.io')) {
-                             throw new Error(`CorsProxy Paywall: ${errText}`);
-                        }
-
-                        // If 401/403, it's likely a config error (revoked secret), not a proxy error.
-                        // Stop trying other proxies if we got a response from GitHub.
-                        if (response.status === 401 || response.status === 403) {
-                             // Double check it's not a proxy error message in disguise
-                             if (errText.includes('corsproxy') || errText.includes('proxy') || errText.includes('Forbidden')) {
-                                 // Continue to next proxy
-                                 throw new Error(`Proxy Blocked: ${errText}`);
-                             }
-                             throw new Error(`GitHub Error ${response.status}: ${errText}`);
-                        }
-                        throw new Error(`Proxy status: ${response.status}`);
+                        throw new Error(`Proxy ${proxy.name} status: ${response.status} ${errText.substring(0,120)}`);
                     }
                     
-                    // Parse response with fallback for non-JSON (GitHub default)
                     const responseText = await response.text();
                     try {
                         data = JSON.parse(responseText);
                     } catch (e) {
-                        // Not JSON, assume form-encoded string (e.g. CodeTabs ignoring Accept header)
-                        // GitHub returns: access_token=...&scope=...&token_type=bearer
-                        console.log(`Proxy ${proxy.name} returned non-JSON, checking form-encoded...`);
-                        const params = new URLSearchParams(responseText);
-                        if (params.has('access_token')) {
-                            data = Object.fromEntries(params.entries());
+                        const p = new URLSearchParams(responseText);
+                        if (p.has('access_token')) {
+                            data = Object.fromEntries(p.entries());
                         } else {
-                            // If it's not a token response, maybe it's an error in plain text
                             throw new Error(`Invalid response format: ${responseText.substring(0, 100)}...`);
                         }
                     }
                     
-                    // Handle Proxy Wrappers (AllOrigins, CorsLoL)
-                    // Some proxies wrap the actual content in a JSON object
-                    if (data.contents) {
-                         if (typeof data.contents === 'string') {
-                             try { 
-                                 // Try to parse contents as JSON
-                                 data = JSON.parse(data.contents); 
-                             } catch(e) { 
-                                 // If JSON parse fails, it might be form-encoded
-                                 console.log("Wrapper contents not JSON, trying form-encoded parse:", data.contents);
-                                 const params = new URLSearchParams(data.contents);
-                                 if (params.has('access_token')) {
-                                     data = Object.fromEntries(params.entries());
-                                 } else {
-                                     // If we can't parse contents, and it's not a token, it might be the data itself?
-                                     // But for token endpoint, we expect an object or form params.
-                                     // Keep data as is if it has access_token property (unlikely if string)
-                                 }
-                             }
-                         } else {
-                             // Contents is already an object
-                             data = data.contents;
-                         }
+                    if (data && data.contents) {
+                        if (typeof data.contents === 'string') {
+                            const p2 = new URLSearchParams(data.contents);
+                            if (p2.has('access_token')) {
+                                data = Object.fromEntries(p2.entries());
+                            } else {
+                                data = JSON.parse(data.contents);
+                            }
+                        } else {
+                            data = data.contents;
+                        }
                     }
 
-                    if (data && !data.error) break; // Success
                     if (data && data.error) throw new Error(`GitHub API Error: ${data.error_description || data.error}`);
-
                 } catch (err) {
-                    console.warn(`Proxy failed (${proxy.name}):`, err);
                     lastError = err;
-                    if (err.message.includes("GitHub Error") && !err.message.includes("Proxy")) throw err;
                 }
             }
 
             if (!data) {
-                // If all proxies failed, show a more descriptive error
                 console.error("All proxies failed. Last error:", lastError);
-                return { ok: false, data: { error: `Falha na conexão (Proxies). Tente novamente. (${lastError?.message})` } };
+                try {
+                    localStorage.setItem("klyx_proxy_index", String((proxyIndex + 1) % proxies.length));
+                } catch(_) {}
+                return { ok: false, data: { error: `Falha na troca de token (${selected.name}). Tente novamente. (${lastError?.message})` } };
             }
             
             if (data.error) {
@@ -1102,6 +1090,247 @@ export const api = {
             console.error(e);
             return { ok: false, data: { error: `Falha na conexão com GitHub (${e.message}).` } };
         }
+    },
+    async startGithubDeviceFlow() {
+        const clientId = this.githubConfig.clientId;
+        const deviceUrl = "https://github.com/login/device/code";
+        const scope = "user:email,public_repo";
+        const proxies = [
+            { name: "ThingProxy", url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`, method: "POST" },
+            { name: "CodeTabs", url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "AllOrigins", url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "CorsLoL", url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`, method: "GET" }
+        ];
+        const body = new URLSearchParams();
+        body.append("client_id", clientId);
+        body.append("scope", scope);
+        let data = null;
+        let lastErr = null;
+        for (const proxy of proxies) {
+            try {
+                let fetchUrl = deviceUrl;
+                let opts = {};
+                if (proxy.method === "POST") {
+                    fetchUrl = proxy.url(deviceUrl);
+                    opts = {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: body.toString()
+                    };
+                } else {
+                    const full = `${deviceUrl}?${body.toString()}`;
+                    fetchUrl = proxy.url(full);
+                    opts = { method: "GET", headers: { "Accept": "application/json" } };
+                }
+                const res = await fetch(fetchUrl, opts);
+                if (!res.ok) throw new Error(`Device code status ${res.status}`);
+                const txt = await res.text();
+                try {
+                    data = JSON.parse(txt);
+                } catch {
+                    const p = new URLSearchParams(txt);
+                    data = Object.fromEntries(p.entries());
+                }
+                if (data && data.device_code) break;
+                throw new Error("Resposta inválida do Device Flow");
+            } catch (e) {
+                lastErr = e;
+            }
+        }
+        if (!data) return { ok: false, data: { error: `Falha ao iniciar Device Flow (${lastErr?.message})` } };
+        try { sessionStorage.setItem("klyx_device_code", data.device_code); } catch(_) {}
+        return { ok: true, data };
+    },
+    async pollGithubDeviceToken() {
+        const clientId = this.githubConfig.clientId;
+        const deviceCode = sessionStorage.getItem("klyx_device_code");
+        if (!deviceCode) return { ok: false, data: { error: "Device code ausente" } };
+        const tokenUrl = "https://github.com/login/oauth/access_token";
+        const body = new URLSearchParams();
+        body.append("client_id", clientId);
+        body.append("device_code", deviceCode);
+        body.append("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
+        const proxies = [
+            { name: "ThingProxy", url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`, method: "POST" },
+            { name: "CodeTabs", url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "AllOrigins", url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "CorsLoL", url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`, method: "GET" }
+        ];
+        let data = null;
+        let lastErr = null;
+        for (const proxy of proxies) {
+            try {
+                let fetchUrl = tokenUrl;
+                let opts = {};
+                if (proxy.method === "POST") {
+                    fetchUrl = proxy.url(tokenUrl);
+                    opts = {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: body.toString()
+                    };
+                } else {
+                    const full = `${tokenUrl}?${body.toString()}`;
+                    fetchUrl = proxy.url(full);
+                    opts = { method: "GET", headers: { "Accept": "application/json" } };
+                }
+                const res = await fetch(fetchUrl, opts);
+                if (!res.ok) throw new Error(`Device token status ${res.status}`);
+                const txt = await res.text();
+                try { data = JSON.parse(txt); } catch { 
+                    const p = new URLSearchParams(txt);
+                    data = Object.fromEntries(p.entries());
+                }
+                break;
+            } catch (e) { lastErr = e; }
+        }
+        if (!data) return { ok: false, data: { error: `Falha ao obter token (${lastErr?.message})` } };
+        if (data.error) {
+            return { ok: false, data: { error: data.error_description || data.error } };
+        }
+        const accessToken = data.access_token;
+        const userRes = await fetch("https://api.github.com/user", {
+            headers: { "Authorization": `token ${accessToken}` }
+        });
+        const ghUser = await userRes.json();
+        const finalUser = {
+            id: ghUser.id,
+            name: ghUser.name || ghUser.login,
+            email: ghUser.email || ghUser.login + "@users.noreply.github.com",
+            avatar: ghUser.avatar_url
+        };
+        const session = { user: finalUser, tokens: { accessToken } };
+        writeSession(session);
+        await api.cloud.syncDown();
+        return { ok: true, data: { user: finalUser, tokens: { accessToken } } };
+    },
+    async startGoogleDeviceFlow() {
+        const clientId = this.googleConfig.clientId;
+        const scope = this.googleConfig.scope;
+        const deviceUrl = "https://oauth2.googleapis.com/device/code";
+        const proxies = [
+            { name: "ThingProxy", url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`, method: "POST" },
+            { name: "CodeTabs", url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "AllOrigins", url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "CorsLoL", url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`, method: "GET" }
+        ];
+        const body = new URLSearchParams();
+        body.append("client_id", clientId);
+        body.append("scope", scope);
+        let data = null;
+        let lastErr = null;
+        for (const proxy of proxies) {
+            try {
+                let fetchUrl = deviceUrl;
+                let opts = {};
+                if (proxy.method === "POST") {
+                    fetchUrl = proxy.url(deviceUrl);
+                    opts = {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: body.toString()
+                    };
+                } else {
+                    const full = `${deviceUrl}?${body.toString()}`;
+                    fetchUrl = proxy.url(full);
+                    opts = { method: "GET", headers: { "Accept": "application/json" } };
+                }
+                const res = await fetch(fetchUrl, opts);
+                if (!res.ok) throw new Error(`Device code status ${res.status}`);
+                const txt = await res.text();
+                try {
+                    data = JSON.parse(txt);
+                } catch {
+                    const p = new URLSearchParams(txt);
+                    data = Object.fromEntries(p.entries());
+                }
+                if (data && data.device_code) break;
+                throw new Error("Resposta inválida do Device Flow Google");
+            } catch (e) {
+                lastErr = e;
+            }
+        }
+        if (!data) return { ok: false, data: { error: `Falha ao iniciar Device Flow Google (${lastErr?.message})` } };
+        try { sessionStorage.setItem("klyx_google_device_code", data.device_code); } catch(_) {}
+        return { ok: true, data };
+    },
+    async pollGoogleDeviceToken() {
+        const clientId = this.googleConfig.clientId;
+        const deviceCode = sessionStorage.getItem("klyx_google_device_code");
+        if (!deviceCode) return { ok: false, data: { error: "Device code ausente" } };
+        const tokenUrl = "https://oauth2.googleapis.com/token";
+        const body = new URLSearchParams();
+        body.append("client_id", clientId);
+        body.append("device_code", deviceCode);
+        body.append("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
+        const proxies = [
+            { name: "ThingProxy", url: (url) => `https://thingproxy.freeboard.io/fetch/${url}`, method: "POST" },
+            { name: "CodeTabs", url: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "AllOrigins", url: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, method: "GET" },
+            { name: "CorsLoL", url: (url) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`, method: "GET" }
+        ];
+        let data = null;
+        let lastErr = null;
+        for (const proxy of proxies) {
+            try {
+                let fetchUrl = tokenUrl;
+                let opts = {};
+                if (proxy.method === "POST") {
+                    fetchUrl = proxy.url(tokenUrl);
+                    opts = {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: body.toString()
+                    };
+                } else {
+                    const full = `${tokenUrl}?${body.toString()}`;
+                    fetchUrl = proxy.url(full);
+                    opts = { method: "GET", headers: { "Accept": "application/json" } };
+                }
+                const res = await fetch(fetchUrl, opts);
+                if (!res.ok) throw new Error(`Device token status ${res.status}`);
+                const txt = await res.text();
+                try { data = JSON.parse(txt); } catch { 
+                    const p = new URLSearchParams(txt);
+                    data = Object.fromEntries(p.entries());
+                }
+                break;
+            } catch (e) { lastErr = e; }
+        }
+        if (!data) return { ok: false, data: { error: `Falha ao obter token (${lastErr?.message})` } };
+        if (data.error) {
+            return { ok: false, data: { error: data.error_description || data.error } };
+        }
+        const accessToken = data.access_token;
+        // Get user info from Google
+        const userRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { "Authorization": `Bearer ${accessToken}` }
+        });
+        const gUser = await userRes.json();
+        const finalUser = {
+            id: gUser.sub || ("g_" + Date.now()),
+            name: gUser.name || gUser.email || "Usuário Google",
+            email: gUser.email || null,
+            avatar: gUser.picture || null,
+            provider: "google"
+        };
+        // Store session with provider google; skip GitHub cloud sync by marking offline token
+        const session = { user: finalUser, provider: "google", tokens: { accessToken: "offline" } };
+        writeSession(session);
+        // Do NOT call GitHub syncDown for Google; local-only until cloud route is implemented
+        return { ok: true, data: { user: finalUser } };
     },
     async me() {
         const session = readSession();
@@ -1748,7 +1977,8 @@ export const api = {
   },
   settings: {
       _getKey() {
-          const user = readSession().user;
+          const session = readSession();
+          const user = session && session.user;
           return user ? `klyx_preferences_${user.id}` : "klyx_preferences_guest";
       },
       get() {

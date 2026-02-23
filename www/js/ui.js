@@ -3,17 +3,26 @@ import { api } from "./api.js?v=20260211-fix7";
 // --- THEME APPLICATION + CLOUD SYNC ---
 // Start cloud polling silently (sem bolinha verde)
 if (api.session.read()?.user) {
-    api.cloud.startPolling();
+    const token = api.session.read()?.tokens?.accessToken;
+    if (token && token !== "offline" && !String(token).startsWith("klyx_")) {
+        api.cloud.startPolling();
+    }
 }
 
 export function applyGlobalTheme() {
     try {
-        if (api.settings && typeof api.settings.get === 'function') {
-            const prefs = api.settings.get();
-            applyTheme(prefs.theme);
-        } else {
-            console.warn("api.settings not available yet");
+        const read = api.session && typeof api.session.read === 'function' ? api.session.read : null;
+        const session = read ? read() : null;
+        if (!session || !session.user) {
+            applyTheme();
+            return;
         }
+        if (!api.settings || typeof api.settings.get !== 'function') {
+            applyTheme();
+            return;
+        }
+        const prefs = api.settings.get();
+        applyTheme(prefs.theme);
     } catch (e) { console.warn("Theme apply error", e); }
 }
 
@@ -380,6 +389,7 @@ export async function initMovies() {
     ensureProfilePlacement();
     window.addEventListener("resize", ensureProfilePlacement);
     const container = document.getElementById("moviesGrid");
+    const catalog = document.getElementById("moviesCatalog");
     const categorySelectId = "movieCategory";
     const searchInput = document.getElementById("movieSearch");
 
@@ -450,6 +460,41 @@ export async function initMovies() {
 
         // Initial Render
         render();
+        try {
+            const ad1 = document.createElement("ins");
+            ad1.className = "adsbygoogle";
+            ad1.style.display = "block";
+            ad1.style.width = "100%";
+            ad1.style.minHeight = "90px";
+            ad1.setAttribute("data-ad-client","ca-pub-5929082469611228");
+            ad1.setAttribute("data-ad-slot","1234567890");
+            ad1.setAttribute("data-ad-format","auto");
+            ad1.setAttribute("data-full-width-responsive","true");
+            if (catalog) catalog.appendChild(ad1);
+            (window.adsbygoogle=window.adsbygoogle||[]).push({});
+            const ad2 = document.createElement("ins");
+            ad2.className = "adsbygoogle";
+            ad2.style.display = "block";
+            ad2.style.width = "100%";
+            ad2.style.minHeight = "90px";
+            ad2.setAttribute("data-ad-client","ca-pub-5929082469611228");
+            ad2.setAttribute("data-ad-slot","1234567891");
+            ad2.setAttribute("data-ad-format","auto");
+            ad2.setAttribute("data-full-width-responsive","true");
+            container.parentElement.appendChild(ad2);
+            (window.adsbygoogle=window.adsbygoogle||[]).push({});
+            const ad3 = document.createElement("ins");
+            ad3.className = "adsbygoogle";
+            ad3.style.display = "block";
+            ad3.style.width = "100%";
+            ad3.style.minHeight = "90px";
+            ad3.setAttribute("data-ad-client","ca-pub-5929082469611228");
+            ad3.setAttribute("data-ad-slot","1234567892");
+            ad3.setAttribute("data-ad-format","auto");
+            ad3.setAttribute("data-full-width-responsive","true");
+            container.parentElement.appendChild(ad3);
+            (window.adsbygoogle=window.adsbygoogle||[]).push({});
+        } catch(e) {}
 
     } catch (e) {
         console.error("Movies error:", e);
@@ -534,6 +579,43 @@ export async function initSeries() {
 
         // Initial Render
         render();
+        try {
+            const children = Array.from(container.children);
+            const indexes = [];
+            if (children.length > 0) {
+                indexes.push(Math.floor(Math.random()*children.length));
+                let i2 = Math.floor(Math.random()*children.length);
+                if (i2 === indexes[0]) i2 = (i2+1) % children.length;
+                indexes.push(i2);
+            }
+            const mk = (slot) => {
+                const ins = document.createElement("ins");
+                ins.className = "adsbygoogle";
+                ins.style.display = "block";
+                ins.style.width = "100%";
+                ins.style.minHeight = "90px";
+                ins.setAttribute("data-ad-client","ca-pub-5929082469611228");
+                ins.setAttribute("data-ad-slot",slot);
+                ins.setAttribute("data-ad-format","auto");
+                ins.setAttribute("data-full-width-responsive","true");
+                return ins;
+            };
+            if (children.length === 0) {
+                const adA = mk("2234567890");
+                const adB = mk("2234567891");
+                container.appendChild(adA);
+                (window.adsbygoogle=window.adsbygoogle||[]).push({});
+                container.appendChild(adB);
+                (window.adsbygoogle=window.adsbygoogle||[]).push({});
+            } else {
+                const adA = mk("2234567890");
+                container.insertBefore(adA, children[indexes[0]]);
+                (window.adsbygoogle=window.adsbygoogle||[]).push({});
+                const adB = mk("2234567891");
+                container.insertBefore(adB, children[indexes[1]]);
+                (window.adsbygoogle=window.adsbygoogle||[]).push({});
+            }
+        } catch(e) {}
 
     } catch (e) {
         console.error("Series error:", e);
@@ -684,7 +766,24 @@ function setupSelectDropdown(selectId) {
 export async function initSettings() {
     console.log("Settings Initialized");
     
-    // Load current values
+    const legacySection = document.querySelector(".section.two-col");
+    if (legacySection) {
+        const panels = legacySection.querySelectorAll(".panel");
+        panels.forEach(p => {
+            if (p.id !== "settingsPanel") p.remove();
+        });
+        legacySection.classList.remove("two-col");
+    }
+    const legacyMac = document.getElementById("deviceMac");
+    const legacyKey = document.getElementById("deviceKey");
+    const legacySub = document.getElementById("subscriptionStatus");
+    [legacyMac, legacyKey, legacySub].forEach(el => {
+        if (el) {
+            const panel = el.closest(".panel");
+            if (panel && panel.id !== "settingsPanel") panel.remove();
+        }
+    });
+    
     const prefs = api.settings.get();
     if (prefs.theme) {
         const themeEl = document.getElementById("theme");
@@ -696,11 +795,9 @@ export async function initSettings() {
         if (langEl) langEl.value = prefs.language;
     }
 
-    // Apply Custom Dropdowns
     setupSelectDropdown("theme");
     setupSelectDropdown("language");
 
-    // Settings Saving
     const saveBtn = document.getElementById("saveSettings");
     if (saveBtn) {
         saveBtn.onclick = () => {
@@ -710,10 +807,7 @@ export async function initSettings() {
                 
                 console.log("Saving settings...", { theme, language });
 
-                // Save to Cloud
                 api.settings.save({ theme, language });
-                
-                // Apply immediately
                 applyTheme(theme);
                 
                 const saveStatus = document.getElementById("settingsStatus");
@@ -725,48 +819,6 @@ export async function initSettings() {
             } catch (e) {
                 console.error("Save Settings Error:", e);
                 alert("Erro ao salvar configurações: " + e.message);
-            }
-        };
-    }
-    
-    // Device Info from LocalStorage
-    const macEl = document.getElementById("deviceMac");
-    if (macEl) {
-        macEl.textContent = localStorage.getItem('klyx_device_mac') || "00:1A:2B:3C:4D:5E";
-    }
-    const keyEl = document.getElementById("deviceKey");
-    if (keyEl) {
-        keyEl.textContent = localStorage.getItem('klyx_device_key') || "1234-5678";
-    }
-    const statusEl = document.getElementById("subscriptionStatus");
-    if (statusEl) {
-        statusEl.textContent = "Ativo";
-        statusEl.style.background = "#4ade80";
-        statusEl.style.color = "#000";
-    }
-
-    // Reset Data Logic
-    const resetBtn = document.getElementById("resetData");
-    if (resetBtn) {
-        resetBtn.onclick = async () => {
-            const confirmReset = confirm("TEM CERTEZA? Isso apagará todos os perfis e histórico deste dispositivo E da nuvem. Use apenas para corrigir problemas ou começar do zero.");
-            
-            if (confirmReset) {
-                resetBtn.textContent = "Apagando...";
-                resetBtn.disabled = true;
-                
-                try {
-                    if (api.activity) api.activity.log("DATA_RESET", { confirmed: true });
-                    await api.cloud.reset();
-                    alert("Dados apagados com sucesso! O aplicativo será reiniciado.");
-                    // Force logout/reload
-                    api.session.clear();
-                    window.location.href = "./index.html";
-                } catch (e) {
-                    alert("Erro ao apagar dados: " + e.message);
-                    resetBtn.textContent = "Tentar Novamente";
-                    resetBtn.disabled = false;
-                }
             }
         };
     }

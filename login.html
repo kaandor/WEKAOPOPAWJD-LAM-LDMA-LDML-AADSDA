@@ -2,16 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0;url=./www/login.html" />
     <title>Redirecionando...</title>
   </head>
   <body>
     <p>Redirecionando para a tela de login...</p>
     <script>
       try {
-        window.location.replace("./www/login.html");
+        const search = window.location.search || "";
+        const target = "./index.html" + search;
+        window.location.replace(target);
       } catch (e) {
-        window.location.href = "./www/login.html";
+        const search = window.location.search || "";
+        const target = "./index.html" + search;
+        window.location.href = target;
       }
     </script>
   </body>

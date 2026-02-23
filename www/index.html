@@ -83,6 +83,15 @@
                 </svg>
                 Entrar com GitHub
             </button>
+            <button type="button" class="btn btn-google" id="googleLoginBtn" style="margin-top:10px">
+                <svg width="24" height="24" viewBox="0 0 48 48">
+                  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.9 0-12.5-5.6-12.5-12.5S17.1 11 24 11c3.2 0 6.2 1.2 8.5 3.2l5.7-5.7C34.6 5.6 29.6 3.5 24 3.5 12.3 3.5 2.5 13.3 2.5 25S12.3 46.5 24 46.5c11.7 0 21.5-9.8 21.5-21.5 0-1.7-.2-3.5-.6-4.9z"/>
+                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.1 19 13 24 13c3.2 0 6.2 1.2 8.5 3.2l5.7-5.7C34.6 5.6 29.6 3.5 24 3.5 15.6 3.5 8.4 8.2 6.3 14.7z"/>
+                  <path fill="#4CAF50" d="M24 46.5c5.3 0 10.1-2 13.7-5.4l-6.3-5.2c-2.1 1.4-4.8 2.2-7.5 2.2-5.3 0-9.8-3.4-11.4-8.2l-6.6 5.1C8.4 41.8 15.6 46.5 24 46.5z"/>
+                  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.1-3.4 5.6-6.3 7.2l6.3 5.2C39.9 37.9 42.5 32.1 42.5 25c0-1.7-.2-3.5-.6-4.9z"/>
+                </svg>
+                Entrar com Google
+            </button>
         </div>
 
         <div id="error" class="error hidden"></div>
@@ -91,6 +100,15 @@
     </div>
 
     <script type="module">
+      // Force fresh scripts on login page to avoid cached SW/old assets blocking OAuth
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.unregister());
+          });
+        }
+      } catch(_) {}
+      
       import { api } from "./js/api.js?v=20260222-loginfix";
       import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260222-loginfix";
       import { handleLoginSuccess } from "./js/ui.js?v=20260222-loginfix";
@@ -101,11 +119,11 @@
           window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      redirectIfAuthed();
       applyTheme();
 
-      // GitHub Login Handler
+      // GitHub / Google Buttons
       const githubBtn = document.getElementById('githubLoginBtn');
+      const googleBtn = document.getElementById('googleLoginBtn');
       if (githubBtn) {
           githubBtn.addEventListener('click', async () => {
               const originalText = githubBtn.innerHTML;
@@ -114,7 +132,10 @@
               
               const res = await api.auth.loginWithGithub();
               
-              // Note: If loginWithGithub initiates a redirect, this part won't be reached
+              if (res && res.ok && res.data && res.data.user) {
+                  handleLoginSuccess(res.data.user);
+                  return;
+              }
               if (res && !res.ok) {
                   const error = document.getElementById("error");
                   error.textContent = res.data.error;
@@ -124,8 +145,52 @@
               }
           });
       }
+      // Google Login Handler (Device Flow)
+      if (googleBtn) {
+          googleBtn.addEventListener('click', async () => {
+              const originalText = googleBtn.innerHTML;
+              googleBtn.innerHTML = 'Conectando...';
+              googleBtn.disabled = true;
+              const r = await api.auth.startGoogleDeviceFlow();
+              if (!r.ok) {
+                  const error = document.getElementById("error");
+                  error.textContent = r.data.error;
+                  error.classList.remove("hidden");
+                  googleBtn.innerHTML = originalText;
+                  googleBtn.disabled = false;
+                  return;
+              }
+              const { user_code, verification_uri, verification_uri_complete, interval } = r.data;
+              const error = document.getElementById("error");
+              error.classList.remove("hidden");
+              error.style.color = "#ccc";
+              error.innerHTML = `Abra <a href="${verification_uri}" target="_blank">${verification_uri}</a> e digite o código: <b>${user_code}</b>`;
+              
+              const confirmBtn = document.createElement('button');
+              confirmBtn.className = "btn btn-google";
+              confirmBtn.style.marginTop = "8px";
+              confirmBtn.innerText = "Confirmar";
+              confirmBtn.onclick = async () => {
+                  confirmBtn.disabled = true;
+                  confirmBtn.innerText = "Confirmando...";
+                  const pr = await api.auth.pollGoogleDeviceToken();
+                  if (pr.ok) {
+                      handleLoginSuccess(pr.data.user);
+                  } else {
+                      confirmBtn.disabled = false;
+                      confirmBtn.innerText = "Confirmar";
+                      const e2 = document.createElement('div');
+                      e2.style.color = "#ff8373";
+                      e2.style.marginTop = "6px";
+                      e2.innerText = pr.data.error || "Ainda pendente. Aguarde alguns segundos e clique Confirmar novamente.";
+                      error.appendChild(e2);
+                  }
+              };
+              error.appendChild(confirmBtn);
+          });
+      }
 
-      // Check for GitHub Callback (OAuth Code Flow)
+      // Check for GitHub Callback (OAuth Code Flow) BEFORE any auto-redirects
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const state = urlParams.get('state');
@@ -169,6 +234,75 @@
               }
           });
       }
+      
+      // Only redirect if already authenticated AND no OAuth code present
+      if (!code && !state) {
+        redirectIfAuthed();
+      }
+      
+      // Optional Fallback: Device Flow UI
+      const errorDiv = document.getElementById("error");
+      function showDeviceFlowPrompt() {
+        const wrap = document.createElement('div');
+        wrap.style.marginTop = "10px";
+        const btn = document.createElement('button');
+        btn.className = "btn btn-github";
+        btn.innerText = "Login com código (Device Flow)";
+        btn.onclick = async () => {
+            btn.disabled = true;
+            btn.innerText = "Gerando código...";
+            const r = await api.auth.startGithubDeviceFlow();
+            if (!r.ok) {
+                btn.disabled = false;
+                btn.innerText = "Login com código (Device Flow)";
+                const m = document.createElement('div');
+                m.style.color = "#ff8373";
+                m.style.marginTop = "6px";
+                m.innerText = r.data.error || "Falha ao iniciar Device Flow";
+                wrap.appendChild(m);
+                return;
+            }
+            const { user_code, verification_uri, verification_uri_complete, interval } = r.data;
+            const info = document.createElement('div');
+            info.style.marginTop = "8px";
+            info.style.color = "#ccc";
+            info.innerHTML = `Abra <a href="${verification_uri}" target="_blank">${verification_uri}</a> e digite o código: <b>${user_code}</b>`;
+            wrap.appendChild(info);
+            // Poll token
+            const pollBtn = document.createElement('button');
+            pollBtn.className = "btn btn-github";
+            pollBtn.style.marginTop = "8px";
+            pollBtn.innerText = "Confirmar";
+            pollBtn.onclick = async () => {
+                pollBtn.disabled = true;
+                pollBtn.innerText = "Confirmando...";
+                const pr = await api.auth.pollGithubDeviceToken();
+                if (pr.ok) {
+                    handleLoginSuccess(pr.data.user);
+                } else {
+                    pollBtn.disabled = false;
+                    pollBtn.innerText = "Confirmar";
+                    const e2 = document.createElement('div');
+                    e2.style.color = "#ff8373";
+                    e2.style.marginTop = "6px";
+                    e2.innerText = pr.data.error || "Ainda pendente. Aguarde alguns segundos e clique Confirmar novamente.";
+                    wrap.appendChild(e2);
+                }
+            };
+            wrap.appendChild(pollBtn);
+        };
+        wrap.appendChild(btn);
+        errorDiv.appendChild(wrap);
+      }
+      // Show fallback when present error block becomes visible later
+      const observer = new MutationObserver((mut) => {
+        const isVisible = !errorDiv.classList.contains('hidden');
+        if (isVisible && !errorDiv.dataset.deviceFlowShown) {
+            errorDiv.dataset.deviceFlowShown = "1";
+            showDeviceFlowPrompt();
+        }
+      });
+      observer.observe(errorDiv, { attributes: true, attributeFilter: ['class'] });
 
       // Helper to get or generate MAC
       function getOrGenerateMac() {

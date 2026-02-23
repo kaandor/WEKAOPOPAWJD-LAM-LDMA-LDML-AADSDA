@@ -1,5 +1,6 @@
 import { requireAuth } from "./auth.js";
 import { api } from "./api.js?v=20260213-final-fix";
+import { initInput } from "./input.js";
 
 function icon() {
   return `
@@ -11,28 +12,27 @@ function icon() {
 }
 
 export async function mountAppShell({ currentPath }) {
-  console.log("Klyx Router v7 Loaded");
-
+  console.log('Klyx Router v7 Loaded - Force Update');
+  initInput(); // Initialize TV Navigation globally
   const session = await requireAuth();
   if (!session) return;
 
+  // Check profile selection
   const profileId = localStorage.getItem("klyx_profile_id");
   if (!profileId && !window.location.pathname.includes("profile-selection")) {
-    window.location.href = "./profile-selection.html";
-    return;
+      window.location.href = "./profile-selection.html";
+      return;
   }
 
   const header = document.getElementById("app-header");
   if (!header) return;
 
-  const profileName =
-    localStorage.getItem("klyx_profile_name") ||
-    session.user.display_name ||
-    session.user.email;
+  const profileName = localStorage.getItem("klyx_profile_name") || session.user.display_name || session.user.email;
   const profileAvatar = localStorage.getItem("klyx_profile_avatar");
   const userLabel = profileName;
   const initial = userLabel ? userLabel.charAt(0).toUpperCase() : "?";
-
+  
+  // Calculate avatar color
   function hashStr(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -40,22 +40,20 @@ export async function mountAppShell({ currentPath }) {
     }
     return Math.abs(hash);
   }
-
   const hue = profileName ? hashStr(profileName) % 360 : 0;
   const avatarColor = `hsl(${hue}, 70%, 30%)`;
 
-  const avatarHtml = profileAvatar
-    ? `<img src="${escapeHtml(
-        profileAvatar
-      )}" alt="${escapeHtml(
-        userLabel
-      )}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"> <span style="display:none">${initial}</span>`
+  // Avatar HTML
+  const avatarHtml = profileAvatar 
+    ? `<img src="${escapeHtml(profileAvatar)}" alt="${escapeHtml(userLabel)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"> <span style="display:none">${initial}</span>`
     : initial;
-
+  
   const icons = {
     home: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>`,
     movies: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>`,
-    series: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`
+    series: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
+    search: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>`,
+    profile: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>`
   };
 
   header.innerHTML = `
@@ -87,28 +85,13 @@ export async function mountAppShell({ currentPath }) {
             <span class="nav-icon">${icons.series}</span>
             <span class="nav-text">Séries</span>
           </a>
+          <a href="./profile-selection.html" data-path="/profiles" class="nav-item-profile focusable" translate="no">
+            <span class="nav-icon">${icons.profile}</span>
+            <span class="nav-text">Perfis</span>
+          </a>
         </nav>
         <div class="header-actions">
-          <div class="profile-dropdown-container">
-            <button
-              id="switchProfileBtn"
-              class="profile-avatar-btn focusable"
-              type="button"
-              title="${escapeHtml(userLabel)}"
-              style="background-color: ${avatarColor};"
-            >
-              ${avatarHtml}
-            </button>
-            <div id="profileDropdown" class="profile-dropdown hidden">
-              <button id="openSettingsBtn" class="dropdown-item" type="button">
-                Configurações
-              </button>
-              <div class="dropdown-divider"></div>
-              <button id="logoutBtn" class="dropdown-item dropdown-danger" type="button">
-                Sair
-              </button>
-            </div>
-          </div>
+          <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
         </div>
       </div>
     </div>
@@ -120,33 +103,7 @@ export async function mountAppShell({ currentPath }) {
     if (path === currentPath) a.setAttribute("aria-current", "page");
   });
 
-  const profileBtn = document.getElementById("switchProfileBtn");
-  const dropdown = document.getElementById("profileDropdown");
-  const settingsBtn = document.getElementById("openSettingsBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  profileBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dropdown?.classList.toggle("hidden");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!profileBtn?.contains(e.target) && !dropdown?.contains(e.target)) {
-      dropdown?.classList.add("hidden");
-    }
-  });
-
-  settingsBtn?.addEventListener("click", () => {
-    window.location.href = "./settings.html";
-  });
-
-  logoutBtn?.addEventListener("click", async () => {
-    localStorage.removeItem("klyx_profile_id");
-    localStorage.removeItem("klyx_profile_name");
-    localStorage.removeItem("klyx_profile_avatar");
-    await api.auth.logout();
-    window.location.href = "./login.html";
-  });
+  const switchBtn = document.getElementById("switchProfileBtn");
 }
 
 function escapeHtml(value) {
