@@ -860,8 +860,10 @@ export const api = {
         console.log("GitHub Auth Redirect URI:", this.githubConfig.redirectUri);
 
         // Redirect to GitHub
-        // Request 'public_repo' scope to allow writing to the database folder
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(this.githubConfig.redirectUri)}&scope=user:email,public_repo&state=${state}`;
+        // Important: do NOT send redirect_uri here, so GitHub uses the app's
+        // configured callback URL and avoids the 'redirect_uri not associated'
+        // warning banner. The callback is still enforced when exchanging the token.
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=user:email,public_repo&state=${state}`;
         window.location.href = authUrl;
         
         // This promise will never resolve because of the redirect, which is expected

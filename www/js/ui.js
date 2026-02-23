@@ -147,6 +147,10 @@ if (window.location.pathname.includes("live-tv.html")) {
     window.location.href = "./dashboard.html";
 }
 
+export async function initLive() {
+    window.location.href = "./dashboard.html";
+}
+
 export function handleLoginSuccess(user) {
     console.log("Login successful:", user);
     window.location.href = "./profile-selection.html";
