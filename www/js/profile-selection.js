@@ -25,6 +25,10 @@ const deleteProfileBtn = document.getElementById("deleteProfileBtn");
 const cancelProfileBtn = document.getElementById("cancelProfileBtn");
 const saveProfileBtn = document.getElementById("saveProfileBtn");
 
+const iconSelectorModal = document.getElementById("iconSelectorModal");
+const iconGrid = document.getElementById("iconGrid");
+const cancelIconBtn = document.getElementById("cancelIconBtn");
+
 let currentEditingProfileId = null;
 let selectedAvatarUrl = "";
 
@@ -254,10 +258,8 @@ async function deleteProfile() {
   }
 }
 
-// Geração de ícones para o seletor (se usado)
 function generateIconGrid(isKid) {
   const icons = getAvailableIcons(isKid);
-  const iconGrid = document.getElementById("iconGrid");
   if (!iconGrid) return;
 
   iconGrid.innerHTML = "";
@@ -270,9 +272,21 @@ function generateIconGrid(isKid) {
       if (modalAvatarPreview) {
         modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
       }
+      if (iconSelectorModal) {
+        iconSelectorModal.classList.add("hidden");
+      }
     };
     iconGrid.append(div);
   });
+
+  if (iconSelectorModal) {
+    iconSelectorModal.classList.remove("hidden");
+  }
+}
+
+  if (iconSelectorModal) {
+    iconSelectorModal.classList.remove("hidden");
+  }
 }
 
 // Eventos
@@ -301,6 +315,14 @@ function setupEventListeners() {
     changeAvatarBtn.addEventListener("click", () => {
       const isKid = profileIsKid ? profileIsKid.checked : false;
       generateIconGrid(isKid);
+    });
+  }
+
+  if (cancelIconBtn) {
+    cancelIconBtn.addEventListener("click", () => {
+      if (iconSelectorModal) {
+        iconSelectorModal.classList.add("hidden");
+      }
     });
   }
 
