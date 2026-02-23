@@ -86,9 +86,9 @@ export async function mountAppShell({ currentPath }) {
             <span class="nav-text">Séries</span>
           </a>
           <a href="./profile-selection.html" data-path="/profiles" class="nav-item-profile focusable" translate="no">
-            <span class="nav-icon">${icons.profile}</span>
-            <span class="nav-text">Perfis</span>
-          </a>
+  <span class="nav-icon">${icons.profile}</span>
+  <span class="nav-text">Perfis</span>
+</a>
         </nav>
         <div class="header-actions">
           <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
