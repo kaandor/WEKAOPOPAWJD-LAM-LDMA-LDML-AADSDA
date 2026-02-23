@@ -178,10 +178,20 @@ export async function initDashboard() {
             throw new Error(res.data?.error || "Erro ao carregar dados");
         }
 
-        const data = res.data;
+        let data = res.data;
         if (!data.rails) {
-            content.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
-            return;
+            try {
+                const fallback = await fetch('./assets/data/home.json').then(r => r.json());
+                if (fallback && fallback.rails) {
+                    data = fallback;
+                } else {
+                    content.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
+                    return;
+                }
+            } catch (_) {
+                content.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
+                return;
+            }
         }
 
         let html = '';
