@@ -865,9 +865,10 @@ export const api = {
         localStorage.setItem("klyx_gh_client_secret", clientSecret);
         console.log("GitHub Keys updated");
     },
-    // Configuration for Google OAuth (Device Flow)
+    // Configuration for Google OAuth
     googleConfig: {
         clientId: localStorage.getItem("klyx_google_client_id") || "685740602799-tgdmkg3msmn5a83ism7aefppb13rpt7h.apps.googleusercontent.com",
+        redirectUri: "https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/index.html",
         scope: "openid email profile"
     },
     async setGoogleKeys(clientId) {
@@ -1207,7 +1208,7 @@ export const api = {
         try {
             localStorage.setItem("klyx_google_state", state);
         } catch (_) {}
-        const redirectUri = this.githubConfig.redirectUri;
+        const redirectUri = this.googleConfig.redirectUri;
         const base = "https://accounts.google.com/o/oauth2/v2/auth";
         const params = new URLSearchParams();
         params.set("client_id", clientId);
