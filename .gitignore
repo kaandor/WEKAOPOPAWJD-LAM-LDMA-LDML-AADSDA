@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+Thumbs.db
+.env
+<<<<<<< HEAD
+assets/data/episodes.json
+=======
+
+ICE PLAYER/
+*.rar
+APK/
+>>>>>>> 3d2bb16123365ebca574119850055d15560110b5

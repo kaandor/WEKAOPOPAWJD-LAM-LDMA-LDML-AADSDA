@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuração Firebase KLYX</title>
+    <link rel="stylesheet" href="./css/global.css" />
+    <style>
+        body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+        button { padding: 10px 20px; cursor: pointer; background: #e50914; color: white; border: none; border-radius: 4px; font-size: 16px; margin-right: 10px; }
+        button.secondary { background: #333; }
+        #log { margin-top: 20px; white-space: pre-wrap; background: #222; padding: 10px; border-radius: 4px; font-family: monospace; min-height: 200px; }
+        .warning { color: #ffcc00; margin-bottom: 20px; border: 1px solid #ffcc00; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>
+        <img src="./assets/logos/klyx-logo.png" alt="KLYX" style="height: 40px; vertical-align: middle;">
+        <span class="connection-dot" id="connectionStatusDot" title="Checking connection..."></span>
+        Configuração Inicial do Banco de Dados
+    </h1>
+    
+    <div class="warning">
+        <strong>Atenção:</strong> Certifique-se de que as Regras de Segurança (Rules) do seu Firebase Realtime Database estão configuradas como <code>".read": true, ".write": true</code> para permitir esta configuração inicial. Depois você pode restringir.
+    </div>
+
+    <p>Use este utilitário para enviar os dados locais (arquivos JSON) para o seu Firebase Realtime Database.</p>
+    <p><strong>URL do Banco:</strong> https://klix-iptv-default-rtdb.firebaseio.com/</p>
+    
+    <button onclick="startMigration()">1. Enviar Catálogo Local para Firebase</button>
+    <button class="secondary" onclick="checkConnection()">2. Testar Conexão</button>
+    <button class="secondary" onclick="createAdminUser()">3. Criar Usuário Admin de Teste</button>
+    
+    <div id="log">Log de operações aparecerá aqui...</div>
+
+    <script>
+        const FIREBASE_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
+        const logEl = document.getElementById('log');
+
+        function log(msg) {
+            logEl.textContent += '\n' + msg;
+            console.log(msg);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function checkConnection() {
+            log("Testando conexão com Firebase...");
+            const connectionDot = document.getElementById("connectionStatusDot");
+            try {
+                const res = await fetch(`${FIREBASE_URL}/.json?shallow=true`);
+                if (res.ok) {
+                    log("✅ Conexão BEM-SUCEDIDA! O banco está acessível.");
+                    if(connectionDot) {
+                        connectionDot.classList.add("connected");
+                        connectionDot.title = "Connected";
+                    }
+                } else {
+                    log(`❌ Erro de conexão: ${res.status} ${res.statusText}. Verifique as Regras de Segurança.`);
+                    if(connectionDot) connectionDot.classList.remove("connected");
+                }
+            } catch (e) {
+                log(`❌ Erro de rede: ${e.message}`);
+                if(connectionDot) connectionDot.classList.remove("connected");
+            }
+        }
+
+        // Auto check on load
+        checkConnection();
+
+        async function uploadFile(localPath, firebasePath) {
+            log(`📂 Lendo arquivo local: ${localPath}...`);
+            try {
+                const res = await fetch(localPath);
+                if (!res.ok) throw new Error(`Arquivo não encontrado: ${localPath}`);
+                const data = await res.json();
+                
+                log(`☁️ Enviando para Firebase: /${firebasePath}...`);
+                const fbRes = await fetch(`${FIREBASE_URL}/${firebasePath}.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data)
+                });
+                
+                if (fbRes.ok) log(`✅ Sucesso: ${firebasePath} atualizado!`);
+                else log(`❌ Erro Firebase: ${fbRes.status} ${fbRes.statusText}`);
+                
+            } catch (e) {
+                log(`❌ Falha: ${e.message}`);
+            }
+        }
+
+        async function startMigration() {
+            logEl.textContent = "🚀 Iniciando migração de dados...\n";
+            
+            await uploadFile('./assets/data/home.json', 'catalog/home');
+            await uploadFile('./assets/data/movies.json', 'catalog/movies');
+            await uploadFile('./assets/data/series.json', 'catalog/series');
+            await uploadFile('./assets/data/episodes.json', 'catalog/episodes');
+            await uploadFile('./assets/data/live.json', 'catalog/live');
+            
+            log("\n🏁 Processo finalizado! Se todos os passos deram ✅, o app agora vai ler esses dados do Firebase.");
+        }
+
+        async function createAdminUser() {
+            const email = "admin@klyx.app";
+            // Substituindo . por , e @ por _at_ conforme lógica do api.js
+            const emailKey = email.replace(/\./g, ',').replace(/@/g, '_at_');
+            const password = "admin";
+            
+            log(`Creating test user: ${email} / ${password}`);
+            
+            const user = {
+                id: emailKey,
+                email: email,
+                password: password,
+                display_name: "Admin User",
+                created_at: new Date().toISOString(),
+                profiles: {
+                    p1: { id: "p1", name: "Admin", avatar: "avatar1.png", is_kid: false }
+                }
+            };
+
+            try {
+                const res = await fetch(`${FIREBASE_URL}/users/${emailKey}.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify(user)
+                });
+                if (res.ok) log("✅ Usuário criado com sucesso!");
+                else log("❌ Erro ao criar usuário.");
+            } catch(e) {
+                log(`❌ Erro: ${e.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

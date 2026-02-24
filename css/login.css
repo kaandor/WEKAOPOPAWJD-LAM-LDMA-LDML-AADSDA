@@ -1,0 +1,213 @@
+
+body {
+    background-color: #0b0e14;
+    color: #e5e5e5;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background-image: radial-gradient(circle at center, #1f2937 0%, #0b0e14 100%);
+    background-size: cover;
+    background-position: center;
+}
+
+.auth-shell {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.auth-card {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    min-height: auto;
+    padding: 60px 48px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+}
+
+.brand-logo {
+    height: 45px;
+    margin-bottom: 20px;
+}
+
+.auth-title h1 {
+    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 28px;
+    text-align: left;
+}
+
+.auth-title p {
+    display: none; /* Hide subtitle to match Netflix minimal style */
+}
+
+.field {
+    margin-bottom: 16px;
+}
+
+.field label {
+    display: none; /* Hide labels, use placeholders */
+}
+
+.input {
+    background: #333;
+    border-radius: 4px;
+    border: 0;
+    color: #fff;
+    height: 50px;
+    line-height: 50px;
+    padding: 16px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input::placeholder {
+    color: #8c8c8c;
+}
+
+.btn-primary {
+    background-color: #e50914; /* Netflix Red */
+    border-radius: 4px;
+    border: none;
+    box-shadow: 0 1px 0 rgba(0,0,0,.45);
+    color: #fff;
+    cursor: pointer;
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 12px;
+    padding: 16px;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background-color: #f40612;
+}
+
+/* GitHub Button */
+.btn-github {
+    background-color: #24292e;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 10px 0;
+    padding: 16px;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+.btn-github:hover {
+    background-color: #2f363d;
+}
+
+.btn-github svg {
+    margin-right: 10px;
+    fill: white;
+}
+
+/* Google Button */
+.btn-google {
+    background-color: #ffffff;
+    border-radius: 4px;
+    border: none;
+    color: #757575;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 10px 0;
+    padding: 16px;
+    width: 100%;
+    transition: background-color 0.2s;
+    font-family: 'Roboto', sans-serif;
+}
+
+.btn-google:hover {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+.btn-google svg {
+    margin-right: 10px;
+}
+
+.auth-actions a.btn {
+    color: #737373;
+    font-size: 16px;
+    text-decoration: none;
+    margin-top: 16px;
+    display: block;
+}
+
+.auth-actions a.btn:hover {
+    text-decoration: underline;
+    color: #fff;
+}
+
+.error {
+    background: #e87c03;
+    border-radius: 4px;
+    font-size: 14px;
+    margin: 0 0 16px;
+    padding: 10px 20px;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+#connectionStatusDot {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #4b5563;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
+    display: none;
+}
+
+#connectionStatusDot.syncing {
+    display: inline-block;
+    background: #fbbf24;
+    animation: klyx-sync-pulse 1s infinite;
+}
+
+#connectionStatusDot.synced {
+    display: inline-block;
+    background: #22c55e;
+    animation: none;
+}
+
+#connectionStatusDot.error {
+    display: inline-block;
+    background: #ef4444;
+    animation: none;
+}
+
+@keyframes klyx-sync-pulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "KLYX Player",
+  "short_name": "KLYX",
+  "start_url": "./dashboard.html",
+  "display": "fullscreen",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./assets/logos/klyx-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/logos/klyx-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

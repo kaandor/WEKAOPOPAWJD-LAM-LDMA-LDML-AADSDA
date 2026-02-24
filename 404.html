@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Page Not Found</title>
+    <script>
+        // Smart Redirect for Klyx App
+        // If the user tries to access a path that doesn't exist in root but might exist in www, redirect them.
+        (function() {
+            var currentPath = window.location.pathname;
+            var repoName = "/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA"; // Your repo name
+            
+            // If we are at the root or a subpath that is not www
+            if (!currentPath.includes('/www/')) {
+                // Check if it's likely a file request (ends in .html)
+                if (currentPath.endsWith('.html')) {
+                    // Try to redirect to the same file in www
+                    var fileName = currentPath.split('/').pop();
+                    window.location.href = repoName + "/www/" + fileName;
+                } else {
+                    // Default fallback to app home
+                    window.location.href = repoName + "/www/index.html";
+                }
+            } else {
+                // If we are already in www and 404'd, go to login/index
+                window.location.href = "./index.html";
+            }
+        })();
+    </script>
+</head>
+<body>
+    <style>
+        body { background-color: #0b0e14; color: white; font-family: system-ui, sans-serif; text-align: center; padding-top: 50px; }
+        a { color: #A855F7; }
+    </style>
+    <h2>404 - Arquivo não encontrado</h2>
+    <p>Redirecionando para o aplicativo...</p>
+    <p><a href="./www/index.html">Clique aqui se não for redirecionado</a></p>
+</body>
+</html>

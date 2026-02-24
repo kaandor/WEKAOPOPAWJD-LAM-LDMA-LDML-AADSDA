@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Filmes</title>
+    <link rel="stylesheet" href="./css/global.css?v=20260220-zindex4" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260211-fix6" />
+    <meta name="google-adsense-account" content="ca-pub-5929082469611228" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5929082469611228" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header id="app-header"></header>
+      <main class="page">
+        <div class="container">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+            <div>
+              <h1 style="margin: 0;">Filmes</h1>
+              <div class="subtext" style="margin-top: 5px;">Navegue pelos filmes e comece a assistir instantaneamente.</div>
+            </div>
+            
+            <div class="toolbar toolbar-page">
+              <select id="movieCategory" class="select">
+                <option value="">Todas as categorias</option>
+              </select>
+              <input id="movieSearch" class="search-input" placeholder="Pesquisar filmes por nome" />
+              <div id="toolbarProfileAnchor" class="toolbar-profile-anchor"></div>
+            </div>
+          </div>
+          
+          <!-- Rows Container -->
+          <div id="moviesCatalog" style="margin-bottom: 24px; display: flex; flex-direction: column; gap: 24px;"></div>
+
+          <div class="section">
+            <div id="moviesGrid" class="grid-cards"></div>
+          </div>
+
+          <!-- Page banner ads abaixo da grade para não criar espaço vazio no topo -->
+          <ins class="adsbygoogle" style="display:block;width:100%;min-height:90px;margin-top:24px" data-ad-client="ca-pub-5929082469611228" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+          
+          <ins class="adsbygoogle" style="display:block;width:100%;min-height:90px" data-ad-client="ca-pub-5929082469611228" data-ad-slot="1234567891" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+          
+          <ins class="adsbygoogle" style="display:block;width:100%;min-height:90px" data-ad-client="ca-pub-5929082469611228" data-ad-slot="1234567892" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+
+          <!-- Loading Spinner -->
+          <div id="loading" style="text-align: center; padding: 40px; display: none;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      import { mountAppShell } from "./js/router.js?v=20260211-fix7";
+      import { initMovies } from "./js/ui.js?v=20260220-layout1";
+      (async () => {
+        try {
+          await mountAppShell({ currentPath: "/movies" });
+          await initMovies();
+        } catch (e) {
+          console.error("Movies Init Error:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>
+
