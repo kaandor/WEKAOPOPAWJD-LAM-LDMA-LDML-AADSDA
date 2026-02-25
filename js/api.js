@@ -540,49 +540,110 @@ export const api = {
         }
     },
 
-    // SYNC DOWN: Cloud -> Local (Updated for Repo DB + Encryption)
+    // --- FIREBASE DB IMPLEMENTATION (Google Users) ---
+    async _getFirebaseData(userId) {
+        try {
+            const url = `${FIREBASE_DB_URL}/users/${userId}/full_sync.json`;
+            const res = await fetch(url);
+            if (res.status === 404) return null;
+            if (!res.ok) throw new Error(`Firebase Read Error ${res.status}`);
+            
+            const data = await res.json();
+            return data;
+        } catch (e) {
+            console.error("Firebase Read Error", e);
+            return null;
+        }
+    },
+
+    async _writeFirebaseData(userId, data) {
+        try {
+            const url = `${FIREBASE_DB_URL}/users/${userId}/full_sync.json`;
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error(`Firebase Write Error ${res.status}`);
+            return await res.json();
+        } catch (e) {
+            console.error("Firebase Write Error", e);
+            throw e;
+        }
+    },
+
+    // SYNC DOWN: Cloud -> Local (Updated for Repo DB + Encryption + Firebase)
     async syncDown() {
         const token = this._getToken();
-        if (!token || token.startsWith("klyx_") || token === "offline" || repoAuthFailed) return;
-
+        const session = readSession();
+        if (!token || token === "offline" || repoAuthFailed) return;
+        
         // Dispatch Event: Sync Start
         window.dispatchEvent(new CustomEvent('klyx-sync-start'));
 
-        // We need user email to find the file
-        let user = readSession().user;
-        if (!user || !user.email) {
-             try {
-                 const userRes = await fetch("https://api.github.com/user", {
-                    headers: { "Authorization": `token ${token}` }
-                 });
-                 if (userRes.ok) {
-                     const ghUser = await userRes.json();
-                     user = { email: ghUser.email || ghUser.login + "@github.com", id: "u" + ghUser.id };
-                 }
-             } catch(e) { console.warn("Failed to fetch user for sync", e); return; }
-        }
-        
-        if (!user) {
-            window.dispatchEvent(new CustomEvent('klyx-sync-end'));
-            return;
-        }
+        let cloudData = null;
+        let sha = null;
+        let userId = session?.user?.id;
 
-        const repoFile = await this._getRepoFile(token, user.email);
-        
-        if (repoFile) {
-            // Check SHA to avoid unnecessary overwrites (Optimistic Sync)
-            const lastSha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
-            if (lastSha === repoFile.sha) {
-                // No changes on cloud
+        // STRATEGY SELECTION
+        if (session && session.provider === "google") {
+            // --- GOOGLE STRATEGY (Firebase) ---
+            if (!userId) { window.dispatchEvent(new CustomEvent('klyx-sync-end')); return; }
+            
+            console.log("☁️ Syncing Down from Google Database (Firebase)...");
+            cloudData = await this._getFirebaseData(userId);
+            
+            // Firebase doesn't use SHA, but we can check updatedAt
+            if (cloudData) {
+                const lastUpdate = localStorage.getItem(`klyx_firebase_last_update_${userId}`);
+                if (lastUpdate && cloudData.updatedAt === lastUpdate) {
+                    window.dispatchEvent(new CustomEvent('klyx-sync-end'));
+                    return;
+                }
+                localStorage.setItem(`klyx_firebase_last_update_${userId}`, cloudData.updatedAt);
+            }
+            
+        } else {
+            // --- GITHUB STRATEGY (Repo DB) ---
+            if (token.startsWith("klyx_")) return; // Legacy token check
+
+            // We need user email to find the file
+            let user = session?.user;
+            if (!user || !user.email) {
+                 try {
+                     const userRes = await fetch("https://api.github.com/user", {
+                        headers: { "Authorization": `token ${token}` }
+                     });
+                     if (userRes.ok) {
+                         const ghUser = await userRes.json();
+                         user = { email: ghUser.email || ghUser.login + "@github.com", id: "u" + ghUser.id };
+                         userId = user.id;
+                     }
+                 } catch(e) { console.warn("Failed to fetch user for sync", e); return; }
+            }
+            
+            if (!user) {
                 window.dispatchEvent(new CustomEvent('klyx-sync-end'));
                 return;
             }
 
-            const cloudData = repoFile.data;
-            
-            // Store SHA for next update
-            localStorage.setItem(`klyx_repodb_sha_${user.id}`, repoFile.sha);
-            
+            const repoFile = await this._getRepoFile(token, user.email);
+            if (repoFile) {
+                sha = repoFile.sha;
+                cloudData = repoFile.data;
+                
+                // Check SHA
+                const lastSha = localStorage.getItem(`klyx_repodb_sha_${userId}`);
+                if (lastSha === sha) {
+                    window.dispatchEvent(new CustomEvent('klyx-sync-end'));
+                    return;
+                }
+                localStorage.setItem(`klyx_repodb_sha_${userId}`, sha);
+            }
+        }
+        
+        // COMMON RESTORE LOGIC
+        if (cloudData) {
             // Restore to LocalStorage (Expanded Data)
             const profiles = cloudData.profiles || [];
             const progress = cloudData.progress || {};
@@ -593,14 +654,16 @@ export const api = {
             const accountStatus = cloudData.accountStatus || "active";
             const preferences = cloudData.preferences || {};
             
-            localStorage.setItem(`klyx.profiles.${user.id}`, JSON.stringify(profiles));
-            localStorage.setItem(`klyx_progress_${user.id}`, JSON.stringify(progress));
-            localStorage.setItem(`klyx_activity_log_${user.id}`, JSON.stringify(activityLog));
-            localStorage.setItem(`klyx_favorites_${user.id}`, JSON.stringify(favorites));
-            localStorage.setItem(`klyx_support_stats_${user.id}`, JSON.stringify(supportStats));
-            localStorage.setItem(`klyx_subscription_${user.id}`, JSON.stringify(subscription));
-            localStorage.setItem(`klyx_account_status_${user.id}`, accountStatus);
-            localStorage.setItem(`klyx_preferences_${user.id}`, JSON.stringify(preferences));
+            if (userId) {
+                localStorage.setItem(`klyx.profiles.${userId}`, JSON.stringify(profiles));
+                localStorage.setItem(`klyx_progress_${userId}`, JSON.stringify(progress));
+                localStorage.setItem(`klyx_activity_log_${userId}`, JSON.stringify(activityLog));
+                localStorage.setItem(`klyx_favorites_${userId}`, JSON.stringify(favorites));
+                localStorage.setItem(`klyx_support_stats_${userId}`, JSON.stringify(supportStats));
+                localStorage.setItem(`klyx_subscription_${userId}`, JSON.stringify(subscription));
+                localStorage.setItem(`klyx_account_status_${userId}`, accountStatus);
+                localStorage.setItem(`klyx_preferences_${userId}`, JSON.stringify(preferences));
+            }
             
             // Sync Account-Bound Device Identity
             if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
@@ -608,12 +671,12 @@ export const api = {
                 localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
             }
             
-            console.log("☁️ Sync Down Complete (New Encrypted Data Received)");
+            console.log("☁️ Sync Down Complete (Data Restored)");
             
             // Dispatch Event: Data Updated (UI should reload if needed)
             window.dispatchEvent(new CustomEvent('klyx-data-updated'));
         } else {
-            console.log("☁️ No Repo DB file found. Creating INITIAL encrypted file...");
+            console.log("☁️ No Cloud Data found. Creating INITIAL data...");
             // Immediately trigger syncUp to create the file
             await this.syncUp();
         }
@@ -640,15 +703,21 @@ export const api = {
         this._syncTimer = null;
     },
 
-    // SYNC UP: Local -> Cloud (Updated for Repo DB + Encryption)
+    // SYNC UP: Local -> Cloud (Updated for Repo DB + Encryption + Firebase)
     async syncUp() {
         const token = this._getToken();
-        if (!token || token.startsWith("klyx_") || token === "offline" || repoAuthFailed) return;
+        const session = readSession();
+        
+        if (!session || !session.user) return;
+        
+        // Validation: GitHub needs valid token, Google just needs session
+        if (session.provider !== "google") {
+            if (!token || token.startsWith("klyx_") || token === "offline" || repoAuthFailed) return;
+        }
 
         window.dispatchEvent(new CustomEvent('klyx-sync-start'));
-        console.log("☁️ Syncing Up to Repo DB (Encrypted)...");
-        const user = readSession().user;
-        if (!user) return;
+        
+        const user = session.user;
 
         // Gather Local Data (Expanded)
         const profiles = JSON.parse(localStorage.getItem(`klyx.profiles.${user.id}`) || "[]");
@@ -667,7 +736,7 @@ export const api = {
         
         const data = {
             updatedAt: new Date().toISOString(),
-            githubUser: user, // Include GitHub User Data snapshot
+            githubUser: user, // Include User Data snapshot
             profiles,
             progress,
             activityLog,
@@ -679,29 +748,46 @@ export const api = {
             deviceIdentity
         };
 
-        // Try to get SHA first (optimistic locking)
-        let sha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
-        
-        // If no SHA, check if file exists to get it
-        if (!sha) {
-            const existing = await this._getRepoFile(token, user.email);
-            if (existing) sha = existing.sha;
-        }
+        // STRATEGY SELECTION
+        if (session.provider === "google") {
+            // --- GOOGLE STRATEGY (Firebase) ---
+            console.log("☁️ Syncing Up to Google Database (Firebase)...");
+            try {
+                await this._writeFirebaseData(user.id, data);
+                console.log("☁️ Sync Up Complete (Saved to Firebase)");
+                // Update local tracker to prevent immediate re-download
+                localStorage.setItem(`klyx_firebase_last_update_${user.id}`, data.updatedAt);
+            } catch (e) {
+                console.error("Firebase Sync Up Failed", e);
+            }
+        } else {
+            // --- GITHUB STRATEGY (Repo DB) ---
+            console.log("☁️ Syncing Up to Repo DB (Encrypted)...");
+            
+            // Try to get SHA first (optimistic locking)
+            let sha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
+            
+            // If no SHA, check if file exists to get it
+            if (!sha) {
+                const existing = await this._getRepoFile(token, user.email);
+                if (existing) sha = existing.sha;
+            }
 
-        try {
-            const res = await this._writeRepoFile(token, user.email, data, sha);
-            // Update SHA
-            if (res && res.content && res.content.sha) {
-                localStorage.setItem(`klyx_repodb_sha_${user.id}`, res.content.sha);
-            }
-            console.log("☁️ Sync Up Complete (Saved Encrypted to Repo DB)");
-        } catch (e) {
-            console.error("Sync Up Failed", e);
-            if (e.message.includes("403") || e.message.includes("404")) {
-                 // alert("⚠️ Erro de Permissão: O GitHub não permitiu salvar os dados.");
-                 console.warn("Write permission denied or repo not found");
+            try {
+                const res = await this._writeRepoFile(token, user.email, data, sha);
+                // Update SHA
+                if (res && res.content && res.content.sha) {
+                    localStorage.setItem(`klyx_repodb_sha_${user.id}`, res.content.sha);
+                }
+                console.log("☁️ Sync Up Complete (Saved Encrypted to Repo DB)");
+            } catch (e) {
+                console.error("Sync Up Failed", e);
+                if (e.message.includes("403") || e.message.includes("404")) {
+                    console.warn("Write permission denied or repo not found");
+                }
             }
         }
+        
         window.dispatchEvent(new CustomEvent('klyx-sync-end'));
     },
 
@@ -720,20 +806,30 @@ export const api = {
         
         try {
             const token = this._getToken();
+            const session = readSession();
             
             // 1. Try to Wipe Cloud (Best Effort)
             if (token) {
                 try {
-                    const gist = await this._findGist(token);
-                    if (gist) {
-                         // Overwrite with empty data and explicitly NULL identity
-                        await this._updateGist(token, gist.id, {
-                            updatedAt: new Date().toISOString(),
-                            profiles: [],
-                            progress: {},
-                            deviceIdentity: { mac: null, key: null }
-                        });
-                        console.log("☁️ Cloud Data Wiped");
+                    if (session && session.provider === "google") {
+                         const userId = session.user.id;
+                         await fetch(`${FIREBASE_DB_URL}/users/${userId}/full_sync.json`, {
+                             method: "DELETE"
+                         });
+                         console.log("☁️ Google Cloud Data Wiped");
+                    } else {
+                        // GitHub Wipe
+                        const gist = await this._findGist(token);
+                        if (gist) {
+                             // Overwrite with empty data and explicitly NULL identity
+                            await this._updateGist(token, gist.id, {
+                                updatedAt: new Date().toISOString(),
+                                profiles: [],
+                                progress: {},
+                                deviceIdentity: { mac: null, key: null }
+                            });
+                            console.log("☁️ Cloud Data Wiped");
+                        }
                     }
                 } catch (cloudError) {
                     console.warn("⚠️ Cloud wipe failed (network/auth issue?), proceeding with local wipe anyway.", cloudError);
@@ -1322,21 +1418,119 @@ export const api = {
           if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
           
           const userId = session.user.id;
+          const localKey = `klyx_progress_${userId}`;
           
+          // PRIMARY: LocalStorage (Single Source of Truth, maintained by syncDown)
           try {
-               const url = `${FIREBASE_DB_URL}/users/${userId}/playback.json`;
-               const res = await fetch(url);
-               if (res.ok) {
-                   const data = await res.json();
-                   return { ok: true, data: data || {} };
+               const localData = JSON.parse(localStorage.getItem(localKey) || "{}");
+               // If we have local data, return it immediately
+               if (Object.keys(localData).length > 0) {
+                   return { ok: true, data: localData };
                }
           } catch (e) {
-              console.warn("Firebase list failed", e);
+              console.warn("Local progress read failed", e);
           }
           
-          // Fallback
-          const localKey = `klyx_progress_${userId}`;
-          return { ok: true, data: JSON.parse(localStorage.getItem(localKey) || "{}") };
+          // FALLBACK: Cloud (Only if local is empty/missing, e.g. fresh login before sync completes)
+          // Google Users -> Firebase
+          if (session.provider === "google") {
+              try {
+                   const url = `${FIREBASE_DB_URL}/users/${userId}/full_sync/progress.json`;
+                   const res = await fetch(url);
+                   if (res.ok) {
+                       const data = await res.json();
+                       return { ok: true, data: data || {} };
+                   }
+              } catch (e) {
+                  console.warn("Firebase list failed", e);
+              }
+          }
+          
+          return { ok: true, data: {} };
+      },
+
+      async getContinueWatching() {
+        const res = await this.getAllProgress();
+        if (!res.ok || !res.data) return { ok: true, data: [] };
+
+        const progressMap = res.data;
+        const items = Object.entries(progressMap).map(([id, data]) => ({
+            id,
+            ...data
+        }));
+
+        // Sort by updatedAt desc
+        items.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+        return { ok: true, data: items };
+      }
+  },
+  favorites: {
+      async add(item) {
+          const session = readSession();
+          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          const userId = session.user.id;
+          const key = `klyx_favorites_${userId}`;
+          
+          let list = [];
+          try {
+              list = JSON.parse(localStorage.getItem(key) || "[]");
+          } catch(_) {}
+          
+          if (!list.find(i => i.id === item.id)) {
+              // Store minimal data
+              list.push({
+                  id: item.id,
+                  title: item.title,
+                  poster: item.poster,
+                  type: item.type || 'movie',
+                  addedAt: new Date().toISOString()
+              });
+              localStorage.setItem(key, JSON.stringify(list));
+              // Trigger sync
+              api.cloud.scheduleSyncUp();
+          }
+          return { ok: true };
+      },
+      async remove(id) {
+          const session = readSession();
+          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          const userId = session.user.id;
+          const key = `klyx_favorites_${userId}`;
+          
+          let list = [];
+          try {
+              list = JSON.parse(localStorage.getItem(key) || "[]");
+          } catch(_) {}
+          
+          const initialLen = list.length;
+          list = list.filter(i => i.id !== id);
+          
+          if (list.length !== initialLen) {
+              localStorage.setItem(key, JSON.stringify(list));
+              // Trigger sync
+              api.cloud.scheduleSyncUp();
+          }
+          return { ok: true };
+      },
+      has(id) {
+          const session = readSession();
+          if (!session || !session.user) return false;
+          const userId = session.user.id;
+          const key = `klyx_favorites_${userId}`;
+          try {
+              const list = JSON.parse(localStorage.getItem(key) || "[]");
+              return !!list.find(i => i.id === id);
+          } catch(_) { return false; }
+      },
+      list() {
+          const session = readSession();
+          if (!session || !session.user) return [];
+          const userId = session.user.id;
+          const key = `klyx_favorites_${userId}`;
+          try {
+              return JSON.parse(localStorage.getItem(key) || "[]");
+          } catch(_) { return []; }
       }
   },
   movies: {

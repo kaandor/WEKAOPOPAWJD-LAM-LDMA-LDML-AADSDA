@@ -1,4 +1,4 @@
-const CACHE_NAME = 'klyx-cache-v8';
+const CACHE_NAME = 'klyx-cache-v9-force-refresh';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
