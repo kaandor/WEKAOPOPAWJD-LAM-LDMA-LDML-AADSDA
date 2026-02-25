@@ -35,7 +35,7 @@ let videoElement;
 let adPromiseResolve;
 
 let adRetryCount = 0;
-const MAX_RETRIES = 2; // Reduzido para evitar loop infinito
+const MAX_RETRIES = 3; // Permitir 3 tentativas para cobrir as 3 tags VAST
 
 // List of VAST Tags for Random Rotation
 // PRIORIDADE: Tags Reais do Google AdSense/Ad Manager usando seu ID
@@ -276,7 +276,10 @@ async function setupIMAAds(videoElem) {
                     retryBtn.onclick = () => {
                         retryBtn.remove();
                         showStatus("Carregando anúncio...");
-                        adRetryCount = 0; // Reset retries
+                        
+                        // Incrementa para tentar a próxima tag
+                        adRetryCount++; 
+                        // NÃO reseta o contador. Isso mantém o "Modo Manual" (1 tentativa por clique)
                         
                         // CRITICAL: Initialize container on User Click to satisfy User Gesture requirements
                         try { 
