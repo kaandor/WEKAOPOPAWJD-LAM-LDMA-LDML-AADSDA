@@ -34,6 +34,9 @@ let adDisplayContainer;
 let videoElement;
 let adPromiseResolve;
 
+let adRetryCount = 0;
+const MAX_RETRIES = 5; // Aumentado para 5 tentativas
+
 // List of VAST Tags for Random Rotation
 // PRIORIDADE: Tags Reais do Google AdSense/Ad Manager usando seu ID
 // FALLBACK: Tags de Teste (apenas se o real falhar)
@@ -41,26 +44,20 @@ const VAST_TAGS = [
     // 1. PRIMARY: Production AdSense for Video Tag (Tentativa de monetização real)
     `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=video_text_image&max_ad_duration=30000&adtest=off`,
     
-    // 2. SECONDARY: Production Tag (Generic format)
-    `https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=`,
+    // 2. SECONDARY: Production Tag (Generic format) - Usando o mesmo client ID
+    `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=standard&adtest=off`,
     
-    // 3. FALLBACK: Google Sample Tag (Garante que ALGO apareça se o real falhar)
-    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_preroll_skippable&sz=640x480&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator='
+    // 3. TERTIARY: Another variation
+    `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=skippable_video&adtest=off`
 ];
 
 function getRandomVastTag() {
     // Check if adRetryCount is defined, otherwise assume 0
     const retry = (typeof adRetryCount !== 'undefined') ? adRetryCount : 0;
 
-    // Sempre tenta a tag REAL primeiro (índice 0) na primeira tentativa
-    if (retry === 0) {
-        return VAST_TAGS[0] + '&timestamp=' + Date.now();
-    } else {
-        // Fallback para as outras tags
-        const fallbackTags = VAST_TAGS.slice(1);
-        const tag = fallbackTags[Math.floor(Math.random() * fallbackTags.length)];
-        return tag + '&timestamp=' + Date.now();
-    }
+    // Tenta rotacionar entre as tags de produção
+    const index = retry % VAST_TAGS.length;
+    return VAST_TAGS[index] + '&timestamp=' + Date.now();
 }
 
 // Helper: Obfuscate Metadata (Stealth Mode)
@@ -178,15 +175,33 @@ async function setupIMAAds(videoElem) {
                 
                 adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onAdsManagerLoaded, false);
                 adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
-                    console.warn("[IMA] Loader Error:", e);
+                    console.error("IMA AD ERROR:", e.getError ? e.getError() : e);
                     
                     if (adRetryCount < MAX_RETRIES) {
                         adRetryCount++;
-                        console.log(`[IMA] Retrying ad (${adRetryCount}/${MAX_RETRIES})...`);
-                        showStatus("Tentando outro anúncio...");
-                        requestAds(); // Recursive retry
+                        const delay = 1000 * adRetryCount;
+                        showStatus(`Falha no anúncio. Tentativa ${adRetryCount}/${MAX_RETRIES} em ${delay/1000}s...`);
+                        
+                        setTimeout(() => {
+                            if (adsManager) {
+                                try { adsManager.destroy(); } catch(err) {}
+                            }
+                            requestAds();
+                        }, delay);
                     } else {
-                        onAdError(e); // This calls resolve
+                        // STRICT AD GATING: DO NOT PLAY MOVIE IF ADS FAIL
+                        showStatus("Não foi possível carregar o anúncio. Recarregando...");
+                        
+                        // Reset and try again after a longer delay (infinite loop as requested)
+                        adRetryCount = 0;
+                        setTimeout(() => {
+                            if (adsManager) {
+                                try { adsManager.destroy(); } catch(err) {}
+                            }
+                            requestAds();
+                        }, 5000);
+                        
+                        // onAdError(e); // DISABLE FALLBACK TO CONTENT
                     }
                 }, false);
 
