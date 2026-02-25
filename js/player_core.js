@@ -34,6 +34,22 @@ let adDisplayContainer;
 let videoElement;
 let adPromiseResolve;
 
+// List of VAST Tags for Random Rotation
+const VAST_TAGS = [
+    // Single Inline Linear
+    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=',
+    // Single Skippable Inline
+    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_preroll_skippable&sz=640x480&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=',
+    // VMAP Pre-roll
+    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/vmap_ad_samples&sz=640x480&cust_params=sample_ar%3Dpreonly&ciu_szs=300x250%2C728x90&gdfp_req=1&ad_rule=1&output=vmap&unviewed_position_start=1&env=vp&impl=s&correlator='
+];
+
+function getRandomVastTag() {
+    const tag = VAST_TAGS[Math.floor(Math.random() * VAST_TAGS.length)];
+    // Add timestamp to prevent caching
+    return tag + '&timestamp=' + Date.now();
+}
+
 // Helper: Obfuscate Metadata (Stealth Mode)
 function obfuscateMetadata() {
     try {
@@ -64,10 +80,13 @@ function restoreMetadata() {
 async function setupIMAAds(videoElem) {
     videoElement = videoElem;
     console.log("[IMA] Setting up ads...");
+    showStatus("Carregando Anúncio...");
 
     // Create a robust promise that resolves no matter what
     return new Promise((resolve) => {
         let isResolved = false;
+        let adRetryCount = 0;
+        const MAX_RETRIES = 1;
         
         // Safety Resolver
         const safeResolve = () => {
@@ -84,11 +103,12 @@ async function setupIMAAds(videoElem) {
             return;
         }
 
-        // 2. Set a safety timeout (3 seconds max for ads to start)
-        // If ads don't start in 3s, we force content playback
-        setTimeout(() => {
+        // 2. Set a safety timeout (8 seconds max for ads to start - increased for reliability)
+        // If ads don't start in 8s, we force content playback
+        const adTimeout = setTimeout(() => {
             if (!isResolved) {
-                console.warn("[IMA] Ad setup timed out. Forcing content.");
+                console.warn("[IMA] Ad setup timed out (8s). Forcing content.");
+                showStatus("Anúncio demorou muito. Iniciando filme...");
                 if (adsManager) {
                     try { adsManager.destroy(); } catch(e) {}
                 }
@@ -99,72 +119,84 @@ async function setupIMAAds(videoElem) {
                 
                 safeResolve();
             }
-        }, 3000); // 3 seconds timeout
+        }, 8000); // 8 seconds timeout (Increased from 3s)
 
-        adPromiseResolve = safeResolve;
-        
-        // Hide loading overlay immediately if we are starting ads logic
-        // But we keep it until ad actually starts or fails? 
-        // Better to keep it until we know for sure.
-        // if (window.finishLoading) window.finishLoading(); 
-
-        const adContainer = document.createElement('div');
-        adContainer.id = 'ad-container';
-        adContainer.style.position = 'absolute';
-        adContainer.style.top = '0';
-        adContainer.style.left = '0';
-        adContainer.style.width = '100%';
-        adContainer.style.height = '100%';
-        adContainer.style.zIndex = '21000'; // Higher than loading-overlay (20000)
-        adContainer.style.background = 'black'; // Prevent seeing behind
-        videoElement.parentNode.insertBefore(adContainer, videoElement.nextSibling);
-
-        // Ads Klyx Branding
-        const branding = document.createElement('div');
-        branding.textContent = "Ads Klyx";
-        branding.style.position = 'absolute';
-        branding.style.top = '10px';
-        branding.style.left = '10px';
-        branding.style.color = 'rgba(255, 255, 255, 0.7)';
-        branding.style.background = 'rgba(0, 0, 0, 0.5)';
-        branding.style.padding = '4px 8px';
-        branding.style.borderRadius = '4px';
-        branding.style.fontSize = '12px';
-        branding.style.zIndex = '21001';
-        branding.style.pointerEvents = 'none'; // Click through to ad
-        branding.style.fontFamily = 'sans-serif';
-        adContainer.appendChild(branding);
-
-        try {
-            adDisplayContainer = new google.ima.AdDisplayContainer(adContainer, videoElement);
-            adsLoader = new google.ima.AdsLoader(adDisplayContainer);
-            
-            adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onAdsManagerLoaded, false);
-            adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
-                console.warn("[IMA] Loader Error:", e);
-                onAdError(e); // This calls resolve
-            }, false);
-
-            const adsRequest = new google.ima.AdsRequest();
-            
-            // Stealth Mode - DISABLED TEMPORARILY TO FIX AD LOADING
-            // obfuscateMetadata();
-            
-            // Construct VAST Tag
-            // We use the Google Sample Tag to GUARANTEE ads appear (User requirement: "Youtube style", "Skip button")
-            // Since the user's domain is likely not approved for AdSense for Video yet.
-            adsRequest.adTagUrl = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=';
-
-            adsRequest.linearAdSlotWidth = videoElement.clientWidth;
-            adsRequest.linearAdSlotHeight = videoElement.clientHeight;
-            adsRequest.nonLinearAdSlotWidth = videoElement.clientWidth;
-            adsRequest.nonLinearAdSlotHeight = videoElement.clientHeight / 3;
-
-            adsLoader.requestAds(adsRequest);
-        } catch (e) {
-            console.error("[IMA] Setup Exception:", e);
+        adPromiseResolve = () => {
+            clearTimeout(adTimeout);
             safeResolve();
-        }
+        };
+        
+        // Function to request ads (encapsulated for retry)
+        const requestAds = () => {
+            // Remove existing container if retrying
+            const existingContainer = document.getElementById('ad-container');
+            if (existingContainer) existingContainer.remove();
+
+            const adContainer = document.createElement('div');
+            adContainer.id = 'ad-container';
+            adContainer.style.position = 'absolute';
+            adContainer.style.top = '0';
+            adContainer.style.left = '0';
+            adContainer.style.width = '100%';
+            adContainer.style.height = '100%';
+            adContainer.style.zIndex = '21000'; // Higher than loading-overlay (20000)
+            adContainer.style.background = 'black'; // Prevent seeing behind
+            videoElement.parentNode.insertBefore(adContainer, videoElement.nextSibling);
+
+            // Ads Klyx Branding
+            const branding = document.createElement('div');
+            branding.textContent = "Ads Klyx";
+            branding.style.position = 'absolute';
+            branding.style.top = '10px';
+            branding.style.left = '10px';
+            branding.style.color = 'rgba(255, 255, 255, 0.7)';
+            branding.style.background = 'rgba(0, 0, 0, 0.5)';
+            branding.style.padding = '4px 8px';
+            branding.style.borderRadius = '4px';
+            branding.style.fontSize = '12px';
+            branding.style.zIndex = '21001';
+            branding.style.pointerEvents = 'none'; // Click through to ad
+            branding.style.fontFamily = 'sans-serif';
+            adContainer.appendChild(branding);
+
+            try {
+                adDisplayContainer = new google.ima.AdDisplayContainer(adContainer, videoElement);
+                adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+                
+                adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onAdsManagerLoaded, false);
+                adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
+                    console.warn("[IMA] Loader Error:", e);
+                    
+                    if (adRetryCount < MAX_RETRIES) {
+                        adRetryCount++;
+                        console.log(`[IMA] Retrying ad (${adRetryCount}/${MAX_RETRIES})...`);
+                        showStatus("Tentando outro anúncio...");
+                        requestAds(); // Recursive retry
+                    } else {
+                        onAdError(e); // This calls resolve
+                    }
+                }, false);
+
+                const adsRequest = new google.ima.AdsRequest();
+                
+                // Random VAST Tag
+                adsRequest.adTagUrl = getRandomVastTag();
+                console.log("[IMA] Requesting Ad Tag:", adsRequest.adTagUrl);
+
+                adsRequest.linearAdSlotWidth = videoElement.clientWidth;
+                adsRequest.linearAdSlotHeight = videoElement.clientHeight;
+                adsRequest.nonLinearAdSlotWidth = videoElement.clientWidth;
+                adsRequest.nonLinearAdSlotHeight = videoElement.clientHeight / 3;
+
+                adsLoader.requestAds(adsRequest);
+            } catch (e) {
+                console.error("[IMA] Setup Exception:", e);
+                safeResolve();
+            }
+        };
+
+        // Start first request
+        requestAds();
     });
 }
 
@@ -207,6 +239,7 @@ function onAdEvent(adEvent) {
             const container = document.getElementById('ad-container');
             if (container) container.remove();
             
+            showStatus("Anúncio finalizado. Iniciando filme...");
             if (adPromiseResolve) adPromiseResolve();
             break;
     }
@@ -272,7 +305,11 @@ function getProxiedStreamUrl(url, index = 0) {
     if (!url) return '';
     const proxyBase = PROXY_LIST[index] || PROXY_LIST[0];
     const proxyName = ["Vercel", "CorsProxy", "CodeTabs", "AllOrigins"][index] || "Proxy";
-    showStatus(`Conectando via ${proxyName}...`);
+    
+    // Only show "Conectando" status if we are NOT in ad phase
+    // But since this is called during attachSource (post-ad), it's fine.
+    // However, we want to be more specific.
+    showStatus(`Conectando ao filme via ${proxyName}...`);
     
     // Clean URL (remove port 80 if present to avoid proxy issues)
     const cleanUrl = url.replace(':80/', '/');
