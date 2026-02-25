@@ -88,6 +88,11 @@ async function setupIMAAds(videoElem) {
                 if (adsManager) {
                     try { adsManager.destroy(); } catch(e) {}
                 }
+                
+                // Force remove container if it exists
+                const container = document.getElementById('ad-container');
+                if (container) container.remove();
+                
                 safeResolve();
             }
         }, 5000); // 5 seconds timeout
@@ -138,8 +143,8 @@ async function setupIMAAds(videoElem) {
 
             const adsRequest = new google.ima.AdsRequest();
             
-            // Stealth Mode
-            obfuscateMetadata();
+            // Stealth Mode - DISABLED TEMPORARILY TO FIX AD LOADING
+            // obfuscateMetadata();
             
             // Construct VAST Tag
             // We use the Google Sample Tag to GUARANTEE ads appear (User requirement: "Youtube style", "Skip button")
@@ -186,10 +191,18 @@ function onAdEvent(adEvent) {
         case google.ima.AdEvent.Type.LOADED:
             if (!adEvent.getAd().isLinear()) videoElement.play();
             break;
+        case google.ima.AdEvent.Type.STARTED:
+             // Ad started playing - clear any timeouts or loading screens if needed
+             if (window.finishLoading) window.finishLoading();
+             break;
         case google.ima.AdEvent.Type.COMPLETE:
         case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
             if (adsManager) adsManager.destroy();
             restoreMetadata();
+            // Remove container to prevent black screen overlay
+            const container = document.getElementById('ad-container');
+            if (container) container.remove();
+            
             if (adPromiseResolve) adPromiseResolve();
             break;
     }
@@ -199,6 +212,10 @@ function onAdError(adErrorEvent) {
     console.warn("[IMA] Ad Error:", adErrorEvent.getError ? adErrorEvent.getError() : adErrorEvent);
     if (adsManager) adsManager.destroy();
     restoreMetadata();
+    // Remove container to prevent black screen overlay
+    const container = document.getElementById('ad-container');
+    if (container) container.remove();
+
     if (adPromiseResolve) adPromiseResolve();
 }
 

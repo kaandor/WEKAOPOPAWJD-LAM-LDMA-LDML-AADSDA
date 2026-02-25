@@ -9,8 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Entrar</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260224-v3-final" />
-    <link rel="stylesheet" href="./css/login.css?v=20260224-v3-final" />
+    <link rel="stylesheet" href="./css/global.css?v=20260224-v4-final-fix" />
+    <link rel="stylesheet" href="./css/login.css?v=20260224-v4-final-fix" />
   </head>
   <body>
     <div class="auth-shell">
@@ -60,14 +60,17 @@
       try {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(regs => {
-            regs.forEach(r => r.unregister());
+            regs.forEach(r => {
+                console.log('Unregistering SW:', r);
+                r.unregister();
+            });
           });
         }
       } catch(_) {}
       
-      import { api } from "./js/api.js?v=20260224-v3-final";
-      import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260224-v3-final";
-      import { handleLoginSuccess } from "./js/ui.js?v=20260224-v3-final";
+      import { api } from "./js/api.js?v=20260224-v4-final-fix";
+      import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260224-v4-final-fix";
+      import { handleLoginSuccess } from "./js/ui.js?v=20260224-v4-final-fix";
 
       // Dev helper: ?logout=true clears session to allow seeing the login screen
       if (new URLSearchParams(window.location.search).has('logout')) {
