@@ -551,7 +551,7 @@ export const api = {
             const data = await res.json();
             return data;
         } catch (e) {
-            console.error("Firebase Read Error", e);
+            console.warn("Firebase Read Error (suppressed)", e);
             return null;
         }
     },

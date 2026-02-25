@@ -9,10 +9,14 @@ const qs = (key) => new URLSearchParams(window.location.search).get(key);
 let currentHls = null; // Global reference for cleanup
 let isSwitchingSource = false; // Lock to prevent race conditions during proxy switch
 let retryTimeout = null; // Global retry timer to prevent double-firing
+let loadingWatchdog = null; // Watchdog to detect stuck loading
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://klyx-api.vercel.app/api/proxy?url="
+    "https://klyx-api.vercel.app/api/proxy?url=",
+    "https://corsproxy.io/?",
+    "https://api.codetabs.com/v1/proxy?quest=",
+    "https://api.allorigins.win/raw?url="
 ];
 
 const AD_CLIENT = "ca-pub-5929082469611228";
@@ -80,8 +84,8 @@ async function setupIMAAds(videoElem) {
             return;
         }
 
-        // 2. Set a safety timeout (5 seconds max for ads to start)
-        // If ads don't start in 5s, we force content playback
+        // 2. Set a safety timeout (3 seconds max for ads to start)
+        // If ads don't start in 3s, we force content playback
         setTimeout(() => {
             if (!isResolved) {
                 console.warn("[IMA] Ad setup timed out. Forcing content.");
@@ -95,7 +99,7 @@ async function setupIMAAds(videoElem) {
                 
                 safeResolve();
             }
-        }, 5000); // 5 seconds timeout
+        }, 3000); // 3 seconds timeout
 
         adPromiseResolve = safeResolve;
         
@@ -237,25 +241,42 @@ function showStatus(msg) {
     if (!statusEl) {
         statusEl = document.createElement('div');
         statusEl.id = 'playerStatus';
-        statusEl.style.position = 'absolute';
-        statusEl.style.top = '10px';
-        statusEl.style.left = '10px';
-        statusEl.style.color = 'yellow';
-        statusEl.style.background = 'rgba(0,0,0,0.5)';
-        statusEl.style.padding = '5px';
-        statusEl.style.zIndex = '1000';
-        statusEl.style.fontSize = '12px';
+        statusEl.style.position = 'fixed';
+        statusEl.style.top = '20px';
+        statusEl.style.left = '50%';
+        statusEl.style.transform = 'translateX(-50%)';
+        statusEl.style.color = 'white';
+        statusEl.style.background = 'rgba(255, 0, 0, 0.8)'; // Red background for visibility
+        statusEl.style.padding = '10px 20px';
+        statusEl.style.zIndex = '21005'; // Above everything including ads/loading
+        statusEl.style.fontSize = '14px';
+        statusEl.style.borderRadius = '4px';
+        statusEl.style.fontWeight = 'bold';
+        statusEl.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+        statusEl.style.pointerEvents = 'none';
+        statusEl.style.transition = 'opacity 0.3s ease';
         document.body.appendChild(statusEl);
     }
     statusEl.textContent = msg;
+    statusEl.style.opacity = '1';
     console.log(`[PlayerStatus] ${msg}`);
+    
+    // Auto-hide after 5 seconds
+    if (window._statusTimer) clearTimeout(window._statusTimer);
+    window._statusTimer = setTimeout(() => {
+        if (statusEl) statusEl.style.opacity = '0';
+    }, 5000);
 }
 
-function getProxiedStreamUrl(url) {
+function getProxiedStreamUrl(url, index = 0) {
     if (!url) return '';
-    const proxyBase = PROXY_LIST[0];
-    showStatus("Tentando conectar via Vercel...");
+    const proxyBase = PROXY_LIST[index] || PROXY_LIST[0];
+    const proxyName = ["Vercel", "CorsProxy", "CodeTabs", "AllOrigins"][index] || "Proxy";
+    showStatus(`Conectando via ${proxyName}...`);
+    
+    // Clean URL (remove port 80 if present to avoid proxy issues)
     const cleanUrl = url.replace(':80/', '/');
+    
     return `${proxyBase}${encodeURIComponent(cleanUrl)}`;
 }
 
@@ -409,8 +430,17 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         currentHls = null;
     }
 
-    // Unlock after 1s to allow events to settle
-    setTimeout(() => { isSwitchingSource = false; }, 1000);
+    // Unlock after 100ms to allow events to settle but not block fast failures
+    setTimeout(() => { isSwitchingSource = false; }, 100);
+
+    // START LOADING WATCHDOG
+    if (loadingWatchdog) clearTimeout(loadingWatchdog);
+    loadingWatchdog = setTimeout(() => {
+        console.warn("[Watchdog] Video load timed out (12s). Forcing proxy switch.");
+        // Force unlock for watchdog
+        isSwitchingSource = false; 
+        handleVideoError({ code: 'TIMEOUT', message: 'Loading timed out' });
+    }, 12000); // 12 seconds max for loading (increased from 8s)
 
     if (!streamUrl) {
         console.error("No stream URL provided");
@@ -445,11 +475,12 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
              return;
         }
 
-        const error = video.error;
-        console.error("Video Error:", error ? error.code : 'Unknown', error ? error.message : '');
+        const code = (e && e.code) ? e.code : (video.error ? video.error.code : 'UNKNOWN');
+        const message = (e && e.message) ? e.message : (video.error ? video.error.message : '');
+        console.error("Video/HLS Error:", code, message);
         
         // Ignore AbortError (Code 1) as it's usually triggered by us switching sources
-        if (error && error.code === 1) {
+        if (code === 1 || code === 'ABORT_ERR') {
             console.warn("Ignoring AbortError (User/Script cancelled).");
             return;
         }
@@ -466,13 +497,13 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
         // Try next proxy on ANY error (unless we exhausted the list)
         if (proxyIndex < PROXY_LIST.length - 1) {
             console.warn(`Proxy ${proxyIndex} failed. Trying Proxy ${proxyIndex + 1}...`);
-            showStatus(`Erro na conexão. Tentando método alternativo (${proxyIndex + 2})...`);
+            showStatus(`Conexão instável. Tentando servidor ${proxyIndex + 2}...`);
             
             // Clear previous timeout and set new one (Debounce retry)
             if (retryTimeout) clearTimeout(retryTimeout);
             retryTimeout = setTimeout(() => {
                 attachSource({ video, streamUrl, streamUrlSub, streamType, ui, isLegendado }, proxyIndex + 1, startTime);
-            }, 2000); 
+            }, 500); // Reduced from 2000ms to 500ms for faster failover
         } else {
             console.error("All proxies failed.");
             showError(
@@ -484,9 +515,26 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
     // Remove existing error listeners (handled by assignment below)
     video.onerror = handleVideoError;
+    
+    // Clear watchdog on success events
+    const clearWatchdog = () => {
+        if (loadingWatchdog) {
+            console.log("[Watchdog] Video success/progress detected. Watchdog cleared.");
+            clearTimeout(loadingWatchdog);
+            loadingWatchdog = null;
+        }
+    };
+    video.onplaying = clearWatchdog;
+    video.ontimeupdate = clearWatchdog;
+    video.onloadedmetadata = clearWatchdog; // Key success indicator
+    video.onloadeddata = clearWatchdog;
 
     // Safe Play Helper to prevent AbortError & Handle Seek
     const safePlay = async () => {
+        // Clear Watchdog on successful play attempt (will be re-cleared on playing event)
+        // Note: We don't clear it here immediately because play() might hang. 
+        // We rely on 'playing' or 'timeupdate' events to clear it.
+        
         try {
             // Restore position if startTime is provided
             if (startTime > 0) {
@@ -571,18 +619,33 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
                     if (data.fatal) {
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.error("HLS Network Error");
-                                currentHls.startLoad();
+                                console.error("HLS Network Error - Switching Proxy");
+                                currentHls.destroy();
+                                handleVideoError({ code: 'HLS_NETWORK_ERROR' }); 
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.error("HLS Media Error");
+                                console.error("HLS Media Error - Recovering");
                                 currentHls.recoverMediaError();
                                 break;
                             default:
                                 currentHls.destroy();
-                                handleVideoError(); // Fallback to next proxy
+                                handleVideoError({ code: 'HLS_FATAL_ERROR' });
                                 break;
                         }
+                    } else {
+                        // Non-fatal errors that might require attention
+                         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                             // Check for fragment load errors (often CORS or 404/403 on segments)
+                             if (data.details === Hls.ErrorDetails.FRAG_LOAD_ERROR || 
+                                 data.details === Hls.ErrorDetails.FRAG_LOAD_TIMEOUT ||
+                                 data.details === Hls.ErrorDetails.KEY_LOAD_ERROR) {
+                                 
+                                 console.warn(`HLS Frag/Key Error (${data.details}). Attempting Proxy Switch...`);
+                                 // Force fatal behavior for these specific errors to trigger fallback
+                                 currentHls.destroy();
+                                 handleVideoError({ code: 'HLS_FRAG_ERROR', message: data.details });
+                             }
+                         }
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
