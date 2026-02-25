@@ -11,9 +11,9 @@
     <meta name="google-adsense-account" content="ca-pub-5929082469611228" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Player V2</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260224-v3-final" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260224-v3-final" />
-    <link rel="stylesheet" href="./css/player-mobile.css?v=20260224-v3-final" />
+    <link rel="stylesheet" href="./css/global.css?v=20260224-v4-final-fix" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260224-v4-final-fix" />
+    <link rel="stylesheet" href="./css/player-mobile.css?v=20260224-v4-final-fix" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5929082469611228" crossorigin="anonymous"></script>
     <script src="//imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
@@ -22,7 +22,7 @@
     <!-- FORCE CLEAN RELOAD SCRIPT -->
     <script>
     (function() {
-        const CURRENT_VERSION = '20260224_CLEAN_V3_FINAL_FORCE';
+        const CURRENT_VERSION = '20260224_CLEAN_V4_FINAL_FORCE';
         try {
             const storedVersion = localStorage.getItem('klyx_version');
             if (storedVersion !== CURRENT_VERSION) {
@@ -289,8 +289,8 @@
               } catch(e) {}
           }, 500);
 
-        // FORCE CACHE BUSTING - Version: 20260224-v3-ima-ads
-        const v = "20260224-v3-ima-ads-" + Date.now();
+        // FORCE CACHE BUSTING - Version: 20260224-v4-final-fix
+        const v = "20260224-v4-final-fix-" + Date.now();
         
         // Import Router first
         const { mountAppShell } = await import(`./js/router.js?v=${v}`);
