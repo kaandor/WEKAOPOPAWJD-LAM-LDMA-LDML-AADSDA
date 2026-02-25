@@ -95,8 +95,6 @@ async function setupIMAAds(videoElem) {
     // Create a robust promise that resolves no matter what
     return new Promise((resolve) => {
         let isResolved = false;
-        let adRetryCount = 0;
-        const MAX_RETRIES = 1;
         
         // Safety Resolver
         const safeResolve = () => {
@@ -113,64 +111,69 @@ async function setupIMAAds(videoElem) {
             return;
         }
 
-        // 2. Set a safety timeout (8 seconds max for ads to start - increased for reliability)
-        // If ads don't start in 8s, we force content playback
+        // 2. Set a safety timeout (15 seconds max for ads - increased for strict gating)
         const adTimeout = setTimeout(() => {
             if (!isResolved) {
-                console.warn("[IMA] Ad setup timed out (8s). Forcing content.");
-                showStatus("Anúncio demorou muito. Iniciando filme...");
-                if (adsManager) {
-                    try { adsManager.destroy(); } catch(e) {}
-                }
-                
-                // Force remove container if it exists
-                const container = document.getElementById('ad-container');
-                if (container) container.remove();
-                
-                safeResolve();
+                console.warn("[IMA] Ad setup timed out. Forcing content (Fallback).");
+                // Only force content if we really must (user strictness might prefer blocking)
+                // But for safety against soft-locks:
+                // safeResolve(); 
             }
-        }, 8000); // 8 seconds timeout (Increased from 3s)
+        }, 15000);
 
         adPromiseResolve = () => {
             clearTimeout(adTimeout);
             safeResolve();
         };
         
-        // Function to request ads (encapsulated for retry)
+        // --- ONE-TIME CONTAINER SETUP ---
+        // Create container ONLY ONCE to allow reuse and avoid "User Gesture" blocking on retries
+        const adContainer = document.createElement('div');
+        adContainer.id = 'ad-container';
+        adContainer.style.position = 'absolute';
+        adContainer.style.top = '0';
+        adContainer.style.left = '0';
+        adContainer.style.width = '100%';
+        adContainer.style.height = '100%';
+        adContainer.style.zIndex = '21000';
+        adContainer.style.background = 'black'; 
+        videoElement.parentNode.insertBefore(adContainer, videoElement.nextSibling);
+
+        // Branding
+        const branding = document.createElement('div');
+        branding.textContent = "Ads Klyx";
+        branding.style.position = 'absolute';
+        branding.style.top = '10px';
+        branding.style.left = '10px';
+        branding.style.color = 'rgba(255, 255, 255, 0.7)';
+        branding.style.background = 'rgba(0, 0, 0, 0.5)';
+        branding.style.padding = '4px 8px';
+        branding.style.borderRadius = '4px';
+        branding.style.fontSize = '12px';
+        branding.style.zIndex = '21001';
+        branding.style.pointerEvents = 'none';
+        branding.style.fontFamily = 'sans-serif';
+        adContainer.appendChild(branding);
+
+        // Initialize Display Container ONCE
+        try {
+            adDisplayContainer = new google.ima.AdDisplayContainer(adContainer, videoElement);
+            // Must be called via user action if possible. 
+            // If this fails (autoplay block), we need a "Click to Play" button.
+            adDisplayContainer.initialize(); 
+        } catch (e) {
+            console.error("[IMA] Container Init Error:", e);
+        }
+
+        // Function to request ads (reusing container)
         const requestAds = () => {
-            // Remove existing container if retrying
-            const existingContainer = document.getElementById('ad-container');
-            if (existingContainer) existingContainer.remove();
-
-            const adContainer = document.createElement('div');
-            adContainer.id = 'ad-container';
-            adContainer.style.position = 'absolute';
-            adContainer.style.top = '0';
-            adContainer.style.left = '0';
-            adContainer.style.width = '100%';
-            adContainer.style.height = '100%';
-            adContainer.style.zIndex = '21000'; // Higher than loading-overlay (20000)
-            adContainer.style.background = 'black'; // Prevent seeing behind
-            videoElement.parentNode.insertBefore(adContainer, videoElement.nextSibling);
-
-            // Ads Klyx Branding
-            const branding = document.createElement('div');
-            branding.textContent = "Ads Klyx";
-            branding.style.position = 'absolute';
-            branding.style.top = '10px';
-            branding.style.left = '10px';
-            branding.style.color = 'rgba(255, 255, 255, 0.7)';
-            branding.style.background = 'rgba(0, 0, 0, 0.5)';
-            branding.style.padding = '4px 8px';
-            branding.style.borderRadius = '4px';
-            branding.style.fontSize = '12px';
-            branding.style.zIndex = '21001';
-            branding.style.pointerEvents = 'none'; // Click through to ad
-            branding.style.fontFamily = 'sans-serif';
-            adContainer.appendChild(branding);
-
             try {
-                adDisplayContainer = new google.ima.AdDisplayContainer(adContainer, videoElement);
+                // Destroy old manager/loader if exists (but keep container)
+                if (adsManager) {
+                    try { adsManager.destroy(); } catch(e) {}
+                }
+
+                // Create new loader for this attempt
                 adsLoader = new google.ima.AdsLoader(adDisplayContainer);
                 
                 adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onAdsManagerLoaded, false);
@@ -183,25 +186,47 @@ async function setupIMAAds(videoElem) {
                         showStatus(`Falha no anúncio. Tentativa ${adRetryCount}/${MAX_RETRIES} em ${delay/1000}s...`);
                         
                         setTimeout(() => {
-                            if (adsManager) {
-                                try { adsManager.destroy(); } catch(err) {}
-                            }
                             requestAds();
                         }, delay);
                     } else {
-                        // STRICT AD GATING: DO NOT PLAY MOVIE IF ADS FAIL
-                        showStatus("Não foi possível carregar o anúncio. Recarregando...");
+                        // STRICT AD GATING: Infinite Retry with Manual Trigger option
+                        showStatus("Não foi possível carregar o anúncio.", "error");
                         
-                        // Reset and try again after a longer delay (infinite loop as requested)
-                        adRetryCount = 0;
+                        // Create/Show Retry Button
+                        let retryBtn = document.getElementById('ad-retry-btn');
+                        if (!retryBtn) {
+                            retryBtn = document.createElement('button');
+                            retryBtn.id = 'ad-retry-btn';
+                            retryBtn.textContent = "Tentar Novamente (Obrigatório)";
+                            retryBtn.style.position = 'absolute';
+                            retryBtn.style.top = '50%';
+                            retryBtn.style.left = '50%';
+                            retryBtn.style.transform = 'translate(-50%, -50%)';
+                            retryBtn.style.zIndex = '22000';
+                            retryBtn.style.padding = '15px 30px';
+                            retryBtn.style.fontSize = '18px';
+                            retryBtn.style.background = '#e50914';
+                            retryBtn.style.color = 'white';
+                            retryBtn.style.border = 'none';
+                            retryBtn.style.borderRadius = '5px';
+                            retryBtn.style.cursor = 'pointer';
+                            retryBtn.onclick = () => {
+                                retryBtn.remove();
+                                showStatus("Recarregando anúncio...");
+                                adRetryCount = 0; // Reset retries
+                                // Re-initialize container on click to satisfy user gesture
+                                try { adDisplayContainer.initialize(); } catch(err){}
+                                requestAds();
+                            };
+                            document.body.appendChild(retryBtn);
+                        }
+                        
+                        // Also auto-retry slowly in background
                         setTimeout(() => {
-                            if (adsManager) {
-                                try { adsManager.destroy(); } catch(err) {}
-                            }
-                            requestAds();
+                           if(document.getElementById('ad-retry-btn')) {
+                               requestAds();
+                           }
                         }, 5000);
-                        
-                        // onAdError(e); // DISABLE FALLBACK TO CONTENT
                     }
                 }, false);
 
@@ -219,7 +244,8 @@ async function setupIMAAds(videoElem) {
                 adsLoader.requestAds(adsRequest);
             } catch (e) {
                 console.error("[IMA] Setup Exception:", e);
-                safeResolve();
+                // If setup fails, show retry button
+                showStatus("Erro no Player de Anúncio.", "error");
             }
         };
 
