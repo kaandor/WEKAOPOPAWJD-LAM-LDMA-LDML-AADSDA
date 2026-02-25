@@ -35,19 +35,32 @@ let videoElement;
 let adPromiseResolve;
 
 // List of VAST Tags for Random Rotation
+// PRIORIDADE: Tags Reais do Google AdSense/Ad Manager usando seu ID
+// FALLBACK: Tags de Teste (apenas se o real falhar)
 const VAST_TAGS = [
-    // Single Inline Linear
-    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=',
-    // Single Skippable Inline
-    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_preroll_skippable&sz=640x480&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=',
-    // VMAP Pre-roll
-    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/vmap_ad_samples&sz=640x480&cust_params=sample_ar%3Dpreonly&ciu_szs=300x250%2C728x90&gdfp_req=1&ad_rule=1&output=vmap&unviewed_position_start=1&env=vp&impl=s&correlator='
+    // 1. PRIMARY: Production AdSense for Video Tag (Tentativa de monetização real)
+    `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=video_text_image&max_ad_duration=30000&adtest=off`,
+    
+    // 2. SECONDARY: Production Tag (Generic format)
+    `https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=`,
+    
+    // 3. FALLBACK: Google Sample Tag (Garante que ALGO apareça se o real falhar)
+    'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_preroll_skippable&sz=640x480&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator='
 ];
 
 function getRandomVastTag() {
-    const tag = VAST_TAGS[Math.floor(Math.random() * VAST_TAGS.length)];
-    // Add timestamp to prevent caching
-    return tag + '&timestamp=' + Date.now();
+    // Check if adRetryCount is defined, otherwise assume 0
+    const retry = (typeof adRetryCount !== 'undefined') ? adRetryCount : 0;
+
+    // Sempre tenta a tag REAL primeiro (índice 0) na primeira tentativa
+    if (retry === 0) {
+        return VAST_TAGS[0] + '&timestamp=' + Date.now();
+    } else {
+        // Fallback para as outras tags
+        const fallbackTags = VAST_TAGS.slice(1);
+        const tag = fallbackTags[Math.floor(Math.random() * fallbackTags.length)];
+        return tag + '&timestamp=' + Date.now();
+    }
 }
 
 // Helper: Obfuscate Metadata (Stealth Mode)
