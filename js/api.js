@@ -558,17 +558,30 @@ export const api = {
 
     async _writeFirebaseData(userId, data) {
         try {
+            // Check if FIREBASE_DB_URL is valid/configured
+            if (!FIREBASE_DB_URL || FIREBASE_DB_URL.includes("klix-iptv-default-rtdb")) {
+                 // Suppress error for unconfigured firebase to avoid alerting user
+                 // Just log warning
+                 console.warn("Firebase not configured or default URL used. Skipping write.");
+                 return null;
+            }
+
             const url = `${FIREBASE_DB_URL}/users/${userId}/full_sync.json`;
             const res = await fetch(url, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             });
+            if (res.status === 404) {
+                 console.warn("Firebase 404 - Project not found or DB disabled.");
+                 return null;
+            }
             if (!res.ok) throw new Error(`Firebase Write Error ${res.status}`);
             return await res.json();
         } catch (e) {
-            console.error("Firebase Write Error", e);
-            throw e;
+            console.warn("Firebase Write Error (suppressed)", e);
+            // Do not throw to prevent app breakage
+            return null;
         }
     },
 

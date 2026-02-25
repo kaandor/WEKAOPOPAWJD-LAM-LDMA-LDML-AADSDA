@@ -645,16 +645,173 @@ export async function initSeries() {
     }
 }
 
-// Global Redirects for Modals (Fix for broken player)
-window.showMovieModal = function(id) {
-    console.log("Opening Movie:", id);
-    window.location.href = `./player_v2.html?type=movie&id=${encodeURIComponent(id)}`;
+// --- MODAL SYSTEM RESTORED ---
+
+function injectModalHTML() {
+    if (document.getElementById('detailsModal')) return;
+    const modalHTML = `
+    <div id="detailsModal" class="netflix-modal-backdrop" onclick="closeModal(event)" style="z-index: 99999;">
+        <div class="netflix-modal-content" onclick="event.stopPropagation()">
+            <button class="netflix-close-btn" onclick="closeModal()">×</button>
+            <div id="modalBody" class="netflix-modal-body">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+window.closeModal = function(e) {
+    if (e && e.target !== document.getElementById('detailsModal') && e.target.className !== 'netflix-close-btn') {
+        // Allow close button to work
+        if (!e.target.closest('.netflix-close-btn')) return;
+    } 
+    const modal = document.getElementById('detailsModal');
+    if (modal) {
+        modal.classList.remove('active');
+        // Clear content after animation to stop video/audio if any
+        setTimeout(() => {
+             const body = document.getElementById('modalBody');
+             if(body) body.innerHTML = '';
+        }, 300);
+    }
 };
 
-window.showSeriesModal = function(id) {
-    console.log("Opening Series:", id);
-    // Redirect to player in series mode. Player will handle episode selection or default to S1E1.
-    window.location.href = `./player_v2.html?type=series&id=${encodeURIComponent(id)}`;
+window.showMovieModal = async function(id) {
+    console.log("Opening Movie Modal:", id);
+    injectModalHTML();
+    const modal = document.getElementById('detailsModal');
+    const body = document.getElementById('modalBody');
+    
+    // Reset state
+    modal.classList.remove('active');
+    void modal.offsetWidth; // Force reflow
+    modal.classList.add('active');
+    
+    body.innerHTML = '<div class="loading-spinner" style="height:200px">Carregando...</div>';
+    
+    try {
+        // Try to find movie in cached lists first to avoid network delay
+        let movie = null;
+        
+        // 1. Try api.movies.list cache if available
+        // Since we don't have direct access to internal cache, we fetch (it uses cache)
+        const res = await api.content.getMovies();
+        if (res.ok && res.data.movies) {
+            movie = res.data.movies.find(m => m.id == id);
+        }
+        
+        if (!movie) {
+            // Fallback: Try Home data
+             const homeRes = await api.content.getHome();
+             if (homeRes.ok && homeRes.data.rails) {
+                 // Search in all rails
+                 Object.values(homeRes.data.rails).flat().forEach(m => {
+                     if (m.id == id) movie = m;
+                 });
+             }
+        }
+
+        if (!movie) throw new Error("Filme não encontrado");
+
+        // Render Modal Content
+        const posterUrl = getProxiedImage(movie.poster);
+        
+        body.innerHTML = `
+            <div class="netflix-hero">
+                <img src="${posterUrl}" class="netflix-poster" onerror="this.src='https://via.placeholder.com/200x300?text=Error'"/>
+            </div>
+            <div class="netflix-info-container">
+                <h2 style="font-size: 24px; margin-bottom: 10px;">${movie.title}</h2>
+                <div class="netflix-meta-row">
+                    <span class="match-score">98% Relevante</span>
+                    <span class="age-badge">${movie.rating || '12+'}</span>
+                    <span class="meta-item">${movie.year || ''}</span>
+                    <span class="meta-item">${movie.duration ? Math.round(movie.duration/60) + ' min' : ''}</span>
+                </div>
+                
+                <div class="netflix-actions-stack">
+                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${encodeURIComponent(id)}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg>
+                        Assistir
+                    </button>
+                    <!-- Future: Minha Lista button -->
+                </div>
+                
+                <p class="netflix-description">${movie.description || 'Sem descrição disponível.'}</p>
+                
+                <div class="netflix-cast-info">
+                   <div class="meta-line"><span style="color:#777">Gênero:</span> ${movie.genre || 'Geral'}</div>
+                </div>
+            </div>
+        `;
+
+    } catch (e) {
+        console.error("Error showing movie modal:", e);
+        body.innerHTML = `<div style="padding:20px; text-align:center;">
+            <p>Erro ao carregar detalhes.</p>
+            <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${encodeURIComponent(id)}'">
+                Tentar Reproduzir Direto
+            </button>
+        </div>`;
+    }
+};
+
+window.showSeriesModal = async function(id) {
+    console.log("Opening Series Modal:", id);
+    injectModalHTML();
+    const modal = document.getElementById('detailsModal');
+    const body = document.getElementById('modalBody');
+    
+    modal.classList.add('active');
+    body.innerHTML = '<div class="loading-spinner" style="height:200px">Carregando...</div>';
+
+    try {
+        let series = null;
+        const res = await api.content.getSeries();
+        if (res.ok && res.data.series) {
+            series = res.data.series.find(s => s.id == id);
+        }
+
+        if (!series) throw new Error("Série não encontrada");
+
+        // Render Series Content
+        const posterUrl = getProxiedImage(series.poster);
+        
+        body.innerHTML = `
+            <div class="netflix-hero">
+                <img src="${posterUrl}" class="netflix-poster" onerror="this.src='https://via.placeholder.com/200x300?text=Error'"/>
+            </div>
+            <div class="netflix-info-container">
+                <h2 style="font-size: 24px; margin-bottom: 10px;">${series.title}</h2>
+                <div class="netflix-meta-row">
+                    <span class="match-score">Série</span>
+                    <span class="age-badge">${series.rating || '14+'}</span>
+                    <span class="meta-item">${series.year || ''}</span>
+                </div>
+                
+                <div class="netflix-actions-stack">
+                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=series&id=${encodeURIComponent(id)}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg>
+                        Assistir
+                    </button>
+                </div>
+                
+                <p class="netflix-description">${series.description || 'Sem descrição disponível.'}</p>
+                 <div class="netflix-cast-info">
+                   <div class="meta-line"><span style="color:#777">Gênero:</span> ${series.genre || 'Geral'}</div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("Error showing series modal:", e);
+        body.innerHTML = `<div style="padding:20px; text-align:center;">
+            <p>Erro ao carregar detalhes.</p>
+            <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=series&id=${encodeURIComponent(id)}'">
+                Tentar Reproduzir Direto
+            </button>
+        </div>`;
+    }
 };
 
 // Also export initSearch just in case
