@@ -1,5 +1,5 @@
 import { requireAuth, logout } from "./auth.js";
-import { api } from "./api.js?v=20260224-v3-final";
+import { api } from "./api.js?v=20260225-v1";
 import { initInput } from "./input.js";
 
 function icon() {

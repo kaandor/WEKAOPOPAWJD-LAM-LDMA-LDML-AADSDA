@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260224-final-v2";
+import { api } from "./api.js?v=20260225-v1";
 
 // --- THEME APPLICATION + CLOUD SYNC ---
 // Start cloud polling silently (sem bolinha verde)
@@ -68,9 +68,9 @@ function getProxiedImage(url) {
     // If local asset, return as is
     if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
     
-    // Prioridade para clientetv.xyz: Vercel Proxy (mais estável que corsproxy.io)
+    // Prioridade para clientetv.xyz: Weserv.nl (Melhor contra ORB)
     if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
-        return `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(url)}`;
+        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
     }
     
     // Proxy external URLs

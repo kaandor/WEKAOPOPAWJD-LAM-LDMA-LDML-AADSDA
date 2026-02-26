@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Series</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260220-zindex4" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260211-fix6" />
-    <script src="./js/adsterra.js"></script>
+    <link rel="stylesheet" href="./css/global.css?v=20260225-v1" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260225-v1" />
+    <script src="./js/adsterra.js?v=20260225-v1"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -41,8 +41,8 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260224-final-v2";
-      import { initSeries } from "./js/ui.js?v=20260224-final-v2";
+      import { mountAppShell } from "./js/router.js?v=20260225-v1";
+      import { initSeries } from "./js/ui.js?v=20260225-v1";
       (async () => {
         try {
           await mountAppShell({ currentPath: "/series" });

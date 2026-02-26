@@ -1,5 +1,5 @@
-import { api } from "./api.js?v=20260224-final-v3";
-import { applyGlobalTheme } from "./ui.js?v=20260224-final-v3"; // Import UI for Theme
+import { api } from "./api.js?v=20260225-v1";
+import { applyGlobalTheme } from "./ui.js?v=20260225-v1"; // Import UI for Theme
 
 // Apply theme immediately
 applyGlobalTheme();
@@ -13,8 +13,8 @@ let loadingWatchdog = null; // Watchdog to detect stuck loading
 
 // Helper to proxy streams if needed (Mixed Content fix)
 const PROXY_LIST = [
-    "https://klyx-api.vercel.app/api/proxy?url=",
     "https://corsproxy.io/?",
+    "https://klyx-api.vercel.app/api/proxy?url=",
     "https://api.codetabs.com/v1/proxy?quest=",
     "https://api.allorigins.win/raw?url="
 ];
@@ -74,7 +74,7 @@ function showStatus(msg) {
 function getProxiedStreamUrl(url, index = 0) {
     if (!url) return '';
     const proxyBase = PROXY_LIST[index] || PROXY_LIST[0];
-    const proxyName = ["Vercel", "CorsProxy", "CodeTabs", "AllOrigins"][index] || "Proxy";
+    const proxyName = ["CorsProxy", "Vercel", "CodeTabs", "AllOrigins"][index] || "Proxy";
     
     // Only show "Conectando" status if we are NOT in ad phase
     // But since this is called during attachSource (post-ad), it's fine.
