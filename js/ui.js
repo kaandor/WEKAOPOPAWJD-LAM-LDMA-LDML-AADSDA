@@ -64,9 +64,15 @@ function setupDragScroll(slider) {
 function getProxiedImage(url) {
     if (!url) return 'https://via.placeholder.com/300x450?text=No+Image';
     // If already proxied, return as is
-    if (url.includes('images.weserv.nl')) return url;
+    if (url.includes('images.weserv.nl') || url.includes('klyx-api.vercel.app')) return url;
     // If local asset, return as is
     if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
+    
+    // OPTIMIZATION: Known problematic domains for Weserv/CorsProxy -> Use Vercel directly
+    // Fixes 'net::ERR_BLOCKED_BY_ORB' for clientetv.xyz
+    if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
+        return `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(url)}`;
+    }
     
     // Proxy external URLs
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
