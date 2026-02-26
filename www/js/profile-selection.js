@@ -289,8 +289,8 @@ function selectProfile(profile) {
     localStorage.setItem("klyx_profile_name", profile.name);
     localStorage.setItem("klyx_profile_avatar", profile.avatar);
     
-    // Explicitly redirect to the user-requested URL
-    const targetUrl = "https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/dashboard.html";
+    // Explicitly redirect using relative path (works in any Pages repo)
+    const targetUrl = "./dashboard.html";
     
     console.log("Redirecting to dashboard:", targetUrl);
     window.location.href = targetUrl;
