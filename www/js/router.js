@@ -1,5 +1,5 @@
-import { requireAuth } from "./auth.js";
-import { api } from "./api.js?v=20260213-final-fix";
+import { requireAuth, logout } from "./auth.js";
+import { api } from "./api.js?v=20260225-v1";
 import { initInput } from "./input.js";
 
 function icon() {
@@ -85,13 +85,15 @@ export async function mountAppShell({ currentPath }) {
             <span class="nav-icon">${icons.series}</span>
             <span class="nav-text">Séries</span>
           </a>
-          <a href="./profile-selection.html" data-path="/profiles" class="nav-item-profile focusable" translate="no">
-  <span class="nav-icon">${icons.profile}</span>
-  <span class="nav-text">Perfis</span>
-</a>
         </nav>
         <div class="header-actions">
-          <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
+          <div class="profile-dropdown-container">
+            <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
+            <div class="profile-dropdown" id="profileDropdown" style="display:none;">
+              <button type="button" class="btn btn-secondary profile-dropdown-item" data-action="settings">Configurações</button>
+              <button type="button" class="btn btn-danger profile-dropdown-item" data-action="logout">Sair da conta</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -104,6 +106,57 @@ export async function mountAppShell({ currentPath }) {
   });
 
   const switchBtn = document.getElementById("switchProfileBtn");
+  const dropdown = document.getElementById("profileDropdown");
+
+  if (switchBtn && dropdown) {
+    let isOpen = false;
+
+    function openDropdown() {
+      dropdown.style.display = "flex";
+      isOpen = true;
+    }
+
+    function closeDropdown() {
+      dropdown.style.display = "none";
+      isOpen = false;
+    }
+
+    function toggleDropdown() {
+      if (isOpen) {
+        closeDropdown();
+      } else {
+        openDropdown();
+      }
+    }
+
+    switchBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleDropdown();
+    });
+
+    dropdown.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      const action = target.getAttribute("data-action");
+      if (action === "settings") {
+        window.location.href = "./settings.html";
+      } else if (action === "logout") {
+        logout();
+      }
+      closeDropdown();
+    });
+
+    document.addEventListener("click", () => {
+      if (!isOpen) return;
+      closeDropdown();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && isOpen) {
+        closeDropdown();
+      }
+    });
+  }
 }
 
 function escapeHtml(value) {

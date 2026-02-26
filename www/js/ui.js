@@ -1,10 +1,13 @@
-import { api } from "./api.js?v=20260211-fix7";
+import { api } from "./api.js?v=20260225-v1";
 
 // --- THEME APPLICATION + CLOUD SYNC ---
 // Start cloud polling silently (sem bolinha verde)
-if (api.session.read()?.user) {
-    const token = api.session.read()?.tokens?.accessToken;
-    if (token && token !== "offline" && !String(token).startsWith("klyx_")) {
+const session = api.session.read();
+if (session?.user) {
+    const token = session.tokens?.accessToken;
+    const isGoogle = session.provider === "google";
+    // Allow Google users to poll even without standard token
+    if (isGoogle || (token && token !== "offline" && !String(token).startsWith("klyx_"))) {
         api.cloud.startPolling();
     }
 }
@@ -61,40 +64,106 @@ function setupDragScroll(slider) {
 function getProxiedImage(url) {
     if (!url) return 'https://via.placeholder.com/300x450?text=No+Image';
     // If already proxied, return as is
-    if (url.includes('images.weserv.nl')) return url;
+    if (url.includes('images.weserv.nl') || url.includes('klyx-api.vercel.app')) return url;
     // If local asset, return as is
     if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
+    
+    // Prioridade para clientetv.xyz: Weserv.nl (Melhor contra ORB)
+    if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
+        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
+    }
     
     // Proxy external URLs
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
 }
 
-// Global Image Error Handler to try backups
-window.handleImageError = function(img) {
-    const originalSrc = img.getAttribute('data-original-src');
-    if (!originalSrc) {
-        img.src = 'https://via.placeholder.com/300x450?text=Error';
-        return;
-    }
+// --- METADATA FETCHING (TMDB) ---
+// Used to fetch descriptions when missing in source
+const TMDB_API_KEY = "3d197569c720ea63916d97cf9ca466f1"; // Public demo key
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-    // If weserv failed, try corsproxy
-    if (img.src.includes('images.weserv.nl')) {
-        console.warn('Weserv failed, trying CorsProxy for image:', originalSrc);
-        img.src = `https://corsproxy.io/?${encodeURIComponent(originalSrc)}`;
-        return;
+async function fetchMetadata(title, type = 'movie') {
+    if (!title) return null;
+    
+    // Clean title for search
+    // Remove (YYYY), [Dual], [Legendado], etc.
+    let cleanTitle = title
+        .replace(/\(\d{4}\)/g, '')
+        .replace(/\[.*?\]/g, '')
+        .replace(/ - .*/, '') // Remove suffixes
+        .trim();
+        
+    // Extract year if present in original title
+    const yearMatch = title.match(/\((\d{4})\)/);
+    const year = yearMatch ? yearMatch[1] : '';
+    
+    try {
+        let searchUrl = `${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=pt-BR`;
+        if (year) searchUrl += `&year=${year}`;
+        
+        const res = await fetch(searchUrl);
+        const data = await res.json();
+        
+        if (data.results && data.results.length > 0) {
+            // Return first match
+            const match = data.results[0];
+            return {
+                description: match.overview,
+                rating: match.vote_average ? match.vote_average.toFixed(1) : null,
+                year: match.release_date ? match.release_date.split('-')[0] : (match.first_air_date ? match.first_air_date.split('-')[0] : ''),
+                backdrop: match.backdrop_path ? `https://image.tmdb.org/t/p/w1280${match.backdrop_path}` : null,
+                genre_ids: match.genre_ids
+            };
+        }
+    } catch (e) {
+        console.warn("TMDB Fetch Error:", e);
     }
+    return null;
+}
 
-    // If corsproxy failed (or was direct), try codetabs
-    if (img.src.includes('corsproxy.io')) {
-        console.warn('CorsProxy failed, trying CodeTabs for image:', originalSrc);
-        img.src = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(originalSrc)}`;
-        return;
-    }
 
-    // Final fallback
-    img.onerror = null; // Prevent infinite loop
-    img.src = 'https://via.placeholder.com/300x450?text=No+Image';
-};
+    // Global Image Error Handler to try backups
+    window.handleImageError = function(img) {
+        // Prevent infinite loop
+        if (img.getAttribute('data-failed') === 'true') return;
+
+        const originalSrc = img.getAttribute('data-original-src');
+        if (!originalSrc) {
+            img.src = 'https://via.placeholder.com/300x450?text=Error';
+            img.setAttribute('data-failed', 'true');
+            return;
+        }
+
+        const currentSrc = img.src;
+        let nextSrc = '';
+
+        // Strategy Chain: Weserv -> CorsProxy -> Vercel -> AllOrigins -> Placeholder
+
+        // 1. If currently using Weserv (default), try CorsProxy (more robust)
+        if (currentSrc.includes('images.weserv.nl')) {
+            console.warn('[Image] Weserv failed, switching to CorsProxy:', originalSrc);
+            nextSrc = `https://corsproxy.io/?${encodeURIComponent(originalSrc)}`;
+        }
+        // 2. If CorsProxy failed, try Vercel Proxy
+        else if (currentSrc.includes('corsproxy.io')) {
+            console.warn('[Image] CorsProxy failed, switching to Vercel:', originalSrc);
+            nextSrc = `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(originalSrc)}`;
+        }
+        // 3. If Vercel failed, try AllOrigins
+        else if (currentSrc.includes('klyx-api.vercel.app')) {
+            console.warn('[Image] Vercel failed, switching to AllOrigins:', originalSrc);
+            nextSrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalSrc)}`;
+        }
+        // 4. Give up
+        else {
+            console.error('[Image] All proxies failed for:', originalSrc);
+            img.src = 'https://via.placeholder.com/300x450?text=No+Image';
+            img.setAttribute('data-failed', 'true');
+            return;
+        }
+
+        img.src = nextSrc;
+    };
 
 // Helper for infinite scroll
 function setupInfiniteScroll(items, container, createCardFn) {
@@ -162,6 +231,17 @@ export async function initLive() {
 
 export function handleLoginSuccess(user) {
     console.log("Login successful:", user);
+    try {
+        const session = api.session.read();
+        const token = session && session.tokens && session.tokens.accessToken;
+        const isGoogle = session && session.provider === "google";
+        
+        if (isGoogle || (token && token !== "offline" && !String(token).startsWith("klyx_"))) {
+            api.cloud.startPolling();
+        }
+    } catch (e) {
+        console.warn("Cloud polling start error", e);
+    }
     window.location.href = "./profile-selection.html";
 }
 
@@ -215,7 +295,7 @@ export async function initDashboard() {
                             const isLive = finalType === 'live';
                             let clickAction;
                             if (isLive) {
-                                clickAction = `window.location.href='./player.html?type=live&id=${item.id}'`;
+                                clickAction = `window.location.href='./player_v2.html?type=live&id=${item.id}'`;
                             } else if (isSeries) {
                                 clickAction = `window.showSeriesModal('${item.id}')`;
                             } else {
@@ -225,7 +305,9 @@ export async function initDashboard() {
                             return `
                             <div class="card focusable" data-id="${item.id}" tabindex="0" 
                                  onclick="${clickAction}">
-                                <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" draggable="false" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=Error';">
+                                <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" draggable="false" 
+                                     data-original-src="${item.poster}"
+                                     onerror="window.handleImageError(this)">
                                 <div class="card-body">
                                     <h3 class="card-title">${item.title}</h3>
                                     <div class="card-meta">
@@ -470,47 +552,67 @@ export async function initMovies() {
 
         // Initial Render
         render();
-        try {
-            const ad1 = document.createElement("ins");
-            ad1.className = "adsbygoogle";
-            ad1.style.display = "block";
-            ad1.style.width = "100%";
-            ad1.style.minHeight = "90px";
-            ad1.setAttribute("data-ad-client","ca-pub-5929082469611228");
-            ad1.setAttribute("data-ad-slot","1234567890");
-            ad1.setAttribute("data-ad-format","auto");
-            ad1.setAttribute("data-full-width-responsive","true");
-            if (catalog) catalog.appendChild(ad1);
-            (window.adsbygoogle=window.adsbygoogle||[]).push({});
-            const ad2 = document.createElement("ins");
-            ad2.className = "adsbygoogle";
-            ad2.style.display = "block";
-            ad2.style.width = "100%";
-            ad2.style.minHeight = "90px";
-            ad2.setAttribute("data-ad-client","ca-pub-5929082469611228");
-            ad2.setAttribute("data-ad-slot","1234567891");
-            ad2.setAttribute("data-ad-format","auto");
-            ad2.setAttribute("data-full-width-responsive","true");
-            container.parentElement.appendChild(ad2);
-            (window.adsbygoogle=window.adsbygoogle||[]).push({});
-            const ad3 = document.createElement("ins");
-            ad3.className = "adsbygoogle";
-            ad3.style.display = "block";
-            ad3.style.width = "100%";
-            ad3.style.minHeight = "90px";
-            ad3.setAttribute("data-ad-client","ca-pub-5929082469611228");
-            ad3.setAttribute("data-ad-slot","1234567892");
-            ad3.setAttribute("data-ad-format","auto");
-            ad3.setAttribute("data-full-width-responsive","true");
-            container.parentElement.appendChild(ad3);
-            (window.adsbygoogle=window.adsbygoogle||[]).push({});
-        } catch(e) {}
+
 
     } catch (e) {
         console.error("Movies error:", e);
-        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
+        container.innerHTML = `<p style="color:red">Erro ao carregar filmes: ${e.message}</p>`;
     }
 }
+
+// --- SHARED CARD CREATORS ---
+export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClick }) {
+    const card = document.createElement("div");
+    card.className = "card focusable";
+    card.tabIndex = 0;
+    card.onclick = onClick;
+    
+    // Handle Enter key
+    card.onkeydown = (e) => {
+        if (e.key === 'Enter') onClick();
+    };
+
+    const img = document.createElement("img");
+    img.className = "poster";
+    img.src = getProxiedImage(posterUrl);
+    img.alt = title;
+    img.loading = "lazy";
+    img.draggable = false;
+    // Error handler attached to window to avoid inline JS restrictions if strict CSP
+    img.setAttribute('data-original-src', posterUrl);
+    img.onerror = function() { window.handleImageError(this); };
+
+    const body = document.createElement("div");
+    body.className = "card-body";
+
+    const h3 = document.createElement("h3");
+    h3.className = "card-title";
+    h3.textContent = title;
+
+    const meta = document.createElement("div");
+    meta.className = "card-meta";
+    
+    if (metaLeft) {
+        const sp1 = document.createElement("span");
+        sp1.textContent = metaLeft;
+        meta.appendChild(sp1);
+    }
+    if (metaRight) {
+        const sp2 = document.createElement("span");
+        sp2.className = "badge";
+        sp2.textContent = metaRight;
+        meta.appendChild(sp2);
+    }
+
+    body.appendChild(h3);
+    body.appendChild(meta);
+    card.appendChild(img);
+    card.appendChild(body);
+    
+    return card;
+}
+
+// --- MISSING EXPORTS RESTORED ---
 
 export async function initSeries() {
     console.log("Series Initialized");
@@ -519,29 +621,24 @@ export async function initSeries() {
     const container = document.getElementById("seriesGrid");
     const categorySelectId = "seriesCategory";
     const searchInput = document.getElementById("seriesSearch");
-    
-    if (!container) return;
 
-    // Switch to Grid layout (reset display if it was changed to block)
-    container.style.display = "grid"; 
+    if (!container) return;
     container.innerHTML = '<div class="loading-spinner">Carregando séries...</div>';
 
     try {
         const [seriesRes, catsRes] = await Promise.all([
             api.content.getSeries(),
-            api.series.categories()
+            api.series && api.series.categories ? api.series.categories() : Promise.resolve({ ok: true, data: [] })
         ]);
 
         if (!seriesRes.ok) throw new Error(seriesRes.data?.error || "Erro ao carregar séries");
-
         const allSeries = seriesRes.data.series || [];
 
         if (allSeries.length === 0) {
-            container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+            container.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
             return;
         }
 
-        // Render Function
         let currentCategory = "";
         let currentSearch = "";
 
@@ -554,32 +651,30 @@ export async function initSeries() {
             
             container.innerHTML = "";
             if (filtered.length === 0) {
-                container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+                container.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
                 return;
             }
             
-            setupInfiniteScroll(filtered, container, (item) => {
+            setupInfiniteScroll(filtered, container, (series) => {
                 return createPosterCard({
-                    title: item.title,
-                    posterUrl: item.poster,
-                    metaLeft: "Série",
-                    metaRight: item.rating ? `★ ${item.rating}` : "",
+                    title: series.title,
+                    posterUrl: series.poster,
+                    metaLeft: "",
+                    metaRight: series.rating ? `★ ${series.rating}` : "Série",
                     onClick: () => {
-                        window.showSeriesModal(item.id);
+                        window.showSeriesModal(series.id);
                     }
                 });
             });
         };
 
-        // Setup Custom Dropdown
-        if (catsRes.ok) {
+        if (catsRes.ok && catsRes.data.length > 0) {
             setupCustomDropdown(categorySelectId, catsRes.data, (val) => {
                 currentCategory = val;
                 render();
             });
         }
 
-        // Search Listener
         if (searchInput) {
             searchInput.oninput = (e) => {
                 currentSearch = e.target.value.toLowerCase();
@@ -587,526 +682,275 @@ export async function initSeries() {
             };
         }
 
-        // Initial Render
         render();
-        try {
-            const children = Array.from(container.children);
-            const indexes = [];
-            if (children.length > 0) {
-                indexes.push(Math.floor(Math.random()*children.length));
-                let i2 = Math.floor(Math.random()*children.length);
-                if (i2 === indexes[0]) i2 = (i2+1) % children.length;
-                indexes.push(i2);
-            }
-            const mk = (slot) => {
-                const ins = document.createElement("ins");
-                ins.className = "adsbygoogle";
-                ins.style.display = "block";
-                ins.style.width = "100%";
-                ins.style.minHeight = "90px";
-                ins.setAttribute("data-ad-client","ca-pub-5929082469611228");
-                ins.setAttribute("data-ad-slot",slot);
-                ins.setAttribute("data-ad-format","auto");
-                ins.setAttribute("data-full-width-responsive","true");
-                return ins;
-            };
-            if (children.length === 0) {
-                const adA = mk("2234567890");
-                const adB = mk("2234567891");
-                container.appendChild(adA);
-                (window.adsbygoogle=window.adsbygoogle||[]).push({});
-                container.appendChild(adB);
-                (window.adsbygoogle=window.adsbygoogle||[]).push({});
-            } else {
-                const adA = mk("2234567890");
-                container.insertBefore(adA, children[indexes[0]]);
-                (window.adsbygoogle=window.adsbygoogle||[]).push({});
-                const adB = mk("2234567891");
-                container.insertBefore(adB, children[indexes[1]]);
-                (window.adsbygoogle=window.adsbygoogle||[]).push({});
-            }
-        } catch(e) {}
-
+        
     } catch (e) {
         console.error("Series error:", e);
-        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
+        container.innerHTML = `<p style="color:red">Erro ao carregar séries: ${e.message}</p>`;
     }
 }
 
-export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClick }) {
-    const card = document.createElement("div");
-    card.className = "card focusable";
-    card.tabIndex = 0;
+// --- MODAL SYSTEM RESTORED ---
+
+function injectModalHTML() {
+    if (document.getElementById('detailsModal')) return;
+    const modalHTML = `
+    <div id="detailsModal" class="netflix-modal-backdrop" onclick="closeModal(event)" style="z-index: 99999;">
+        <div class="netflix-modal-content" onclick="event.stopPropagation()">
+            <button class="netflix-close-btn" onclick="closeModal()">×</button>
+            <div id="modalBody" class="netflix-modal-body">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+window.closeModal = function(e) {
+    if (e && e.target !== document.getElementById('detailsModal') && e.target.className !== 'netflix-close-btn') {
+        // Allow close button to work
+        if (!e.target.closest('.netflix-close-btn')) return;
+    } 
+    const modal = document.getElementById('detailsModal');
+    if (modal) {
+        modal.classList.remove('active');
+        // Clear content after animation to stop video/audio if any
+        setTimeout(() => {
+             const body = document.getElementById('modalBody');
+             if(body) body.innerHTML = '';
+        }, 300);
+    }
+};
+
+window.showMovieModal = async function(id) {
+    console.log("Opening Movie Modal:", id);
+    injectModalHTML();
+    const modal = document.getElementById('detailsModal');
+    const body = document.getElementById('modalBody');
     
+    // Reset state
+    modal.classList.remove('active');
+    void modal.offsetWidth; // Force reflow
+    modal.classList.add('active');
+    
+    body.innerHTML = '<div class="loading-spinner" style="height:200px">Carregando...</div>';
+    
+    try {
+        // Try to find movie in cached lists first to avoid network delay
+        let movie = null;
+        
+        // 1. Try api.movies.list cache if available
+        // Since we don't have direct access to internal cache, we fetch (it uses cache)
+        const res = await api.content.getMovies();
+        if (res.ok && res.data.movies) {
+            movie = res.data.movies.find(m => m.id == id);
+        }
+        
+        if (!movie) {
+            // Fallback: Try Home data
+             const homeRes = await api.content.getHome();
+             if (homeRes.ok && homeRes.data.rails) {
+                 // Search in all rails
+                 Object.values(homeRes.data.rails).flat().forEach(m => {
+                     if (m.id == id) movie = m;
+                 });
+             }
+        }
+
+        if (!movie) throw new Error("Filme não encontrado");
+
+        // Render Modal Content
+        const proxiedPoster = getProxiedImage(movie.poster);
+        
+        body.innerHTML = `
+            <div class="netflix-hero">
+                <img src="${proxiedPoster}" class="netflix-poster" data-original-src="${movie.poster}" onerror="window.handleImageError(this)"/>
+            </div>
+            <div class="netflix-info-container">
+                <h2 style="font-size: 24px; margin-bottom: 10px;">${movie.title}</h2>
+                <div class="netflix-meta-row">
+                    <span class="match-score">98% Relevante</span>
+                    <span class="age-badge">${movie.rating || '12+'}</span>
+                    <span class="meta-item">${movie.year || ''}</span>
+                    <span class="meta-item">${movie.duration ? Math.round(movie.duration/60) + ' min' : ''}</span>
+                </div>
+                
+                <div class="netflix-actions-stack">
+                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${encodeURIComponent(id)}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg>
+                        Assistir
+                    </button>
+                    <!-- Future: Minha Lista button -->
+                </div>
+                
+                <p class="netflix-description">${movie.description || 'Carregando sinopse...'}</p>
+                
+                <div class="netflix-cast-info">
+                   <div class="meta-line"><span style="color:#777">Gênero:</span> ${movie.genre || 'Geral'}</div>
+                </div>
+            </div>
+        `;
+        
+        // --- LAZY FETCH DESCRIPTION IF MISSING ---
+        if (!movie.description || movie.description === 'Carregando sinopse...') {
+            // Async fetch without blocking UI
+            fetchMetadata(movie.title, 'movie').then(meta => {
+                const descEl = body.querySelector('.netflix-description');
+                if (meta && meta.description) {
+                    if (descEl) descEl.textContent = meta.description;
+                    
+                    // Also update rating/year if missing
+                    if (!movie.rating && meta.rating) {
+                        const rateEl = body.querySelector('.age-badge');
+                        if (rateEl) rateEl.textContent = meta.rating;
+                    }
+                    if (!movie.year && meta.year) {
+                         const yearEl = body.querySelectorAll('.meta-item')[0]; // Assuming first is year
+                         if (yearEl) yearEl.textContent = meta.year;
+                    }
+                } else {
+                    if (descEl) descEl.textContent = 'Sinopse indisponível.';
+                }
+            });
+        }
+
+    } catch (e) {
+        console.error("Error showing movie modal:", e);
+        body.innerHTML = `<div style="padding:20px; text-align:center;">
+            <p>Erro ao carregar detalhes.</p>
+            <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${encodeURIComponent(id)}'">
+                Tentar Reproduzir Direto
+            </button>
+        </div>`;
+    }
+};
+
+window.showSeriesModal = async function(id) {
+    console.log("Opening Series Modal:", id);
+    injectModalHTML();
+    const modal = document.getElementById('detailsModal');
+    const body = document.getElementById('modalBody');
+    
+    modal.classList.add('active');
+    body.innerHTML = '<div class="loading-spinner" style="height:200px">Carregando...</div>';
+
+    try {
+        let series = null;
+        const res = await api.content.getSeries();
+        if (res.ok && res.data.series) {
+            series = res.data.series.find(s => s.id == id);
+        }
+
+        if (!series) throw new Error("Série não encontrada");
+
+        // Render Series Content
+        const proxiedPoster = getProxiedImage(series.poster);
+        
+        body.innerHTML = `
+            <div class="netflix-hero">
+                <img src="${proxiedPoster}" class="netflix-poster" data-original-src="${series.poster}" onerror="window.handleImageError(this)"/>
+            </div>
+            <div class="netflix-info-container">
+                <h2 style="font-size: 24px; margin-bottom: 10px;">${series.title}</h2>
+                <div class="netflix-meta-row">
+                    <span class="match-score">Série</span>
+                    <span class="age-badge">${series.rating || '14+'}</span>
+                    <span class="meta-item">${series.year || ''}</span>
+                </div>
+                
+                <div class="netflix-actions-stack">
+                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=series&id=${encodeURIComponent(id)}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg>
+                        Assistir
+                    </button>
+                </div>
+                
+                <p class="netflix-description">${series.description || 'Carregando sinopse...'}</p>
+                 <div class="netflix-cast-info">
+                   <div class="meta-line"><span style="color:#777">Gênero:</span> ${series.genre || 'Geral'}</div>
+                </div>
+            </div>
+        `;
+        
+        // --- LAZY FETCH DESCRIPTION IF MISSING (SERIES) ---
+        if (!series.description || series.description === 'Carregando sinopse...') {
+            fetchMetadata(series.title, 'tv').then(meta => {
+                 const descEl = body.querySelector('.netflix-description');
+                 if (meta && meta.description) {
+                     if (descEl) descEl.textContent = meta.description;
+                     
+                     if (!series.rating && meta.rating) {
+                        const rateEl = body.querySelector('.age-badge');
+                        if (rateEl) rateEl.textContent = meta.rating;
+                     }
+                 } else {
+                     if (descEl) descEl.textContent = 'Sinopse indisponível.';
+                 }
+            });
+        }
+        
+    } catch (e) {
+        console.error("Error showing series modal:", e);
+        body.innerHTML = `<div style="padding:20px; text-align:center;">
+            <p>Erro ao carregar detalhes.</p>
+            <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=series&id=${encodeURIComponent(id)}'">
+                Tentar Reproduzir Direto
+            </button>
+        </div>`;
+    }
+};
+
+// Also export initSearch just in case
+import { initSearch as initSearchOriginal } from "./search.js";
+export const initSearch = initSearchOriginal;
+
+
+export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick }) {
+    const card = document.createElement("div");
+    card.className = "card focusable"; // Reusing card class but might need specific thumb styling
+    card.tabIndex = 0;
+    card.onclick = onClick;
+    
+    // Handle Enter key
+    card.onkeydown = (e) => {
+        if (e.key === 'Enter') onClick();
+    };
+
     const img = document.createElement("img");
-    img.className = "poster";
-    img.src = getProxiedImage(posterUrl);
+    img.className = "poster"; // Using poster class for now, maybe create .thumb
+    img.src = getProxiedImage(thumbUrl);
     img.alt = title;
     img.loading = "lazy";
-    img.onerror = () => { img.onerror = null; img.src = 'https://via.placeholder.com/300x450?text=Error'; };
-    
-    const info = document.createElement("div");
-    info.className = "card-body";
-    
+    img.draggable = false;
+    img.setAttribute('data-original-src', thumbUrl);
+    img.onerror = function() { window.handleImageError(this); };
+
+    const body = document.createElement("div");
+    body.className = "card-body";
+
     const h3 = document.createElement("h3");
     h3.className = "card-title";
     h3.textContent = title;
-    
+
     const meta = document.createElement("div");
     meta.className = "card-meta";
     
-    // Badge style to match renderRail
-    const badge = document.createElement("span");
-    badge.className = "badge";
-    // Construct badge text: "Year | Rating" or just "Year"
-    const badgeText = [metaLeft, metaRight].filter(Boolean).join(" | ");
-    badge.textContent = badgeText || "Geral";
-    
-    meta.append(badge);
-    
-    info.append(h3, meta);
-    card.append(img, info);
-    
-    if (onClick) {
-        card.addEventListener("click", (e) => {
-            console.log("Card clicked:", title);
-            onClick(e);
-        });
-        card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") onClick();
-        });
+    if (metaLeft) {
+        const sp1 = document.createElement("span");
+        sp1.textContent = metaLeft;
+        meta.appendChild(sp1);
     }
+    if (metaRight) {
+        const sp2 = document.createElement("span");
+        sp2.className = "badge";
+        sp2.textContent = metaRight;
+        meta.appendChild(sp2);
+    }
+
+    body.appendChild(h3);
+    body.appendChild(meta);
+    card.appendChild(img);
+    card.appendChild(body);
     
     return card;
 }
-
-export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick }) {
-    // Similar to poster card but maybe different styling class if needed
-    // For now reusing similar structure
-    return createPosterCard({ title, posterUrl: thumbUrl, metaLeft, metaRight, onClick });
-}
-
-export function applyTheme(theme) {
-    try {
-        if (theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
-    } catch (e) { console.warn("Theme apply error", e); }
-}
-
-// Helper for generic select dropdown (Settings, etc)
-function setupSelectDropdown(selectId) {
-    const originalSelect = document.getElementById(selectId);
-    if (!originalSelect) return;
-
-    const container = originalSelect.parentElement;
-    
-    // Create new structure
-    const dropdown = document.createElement('div');
-    dropdown.className = 'category-dropdown';
-    dropdown.style.width = '100%'; 
-    
-    // Get options
-    const options = Array.from(originalSelect.options).map(opt => ({
-        label: opt.text,
-        value: opt.value,
-        selected: opt.selected
-    }));
-    
-    const selectedOption = options.find(o => o.selected) || options[0];
-    
-    const btn = document.createElement('button');
-    btn.className = 'category-btn focusable';
-    btn.innerHTML = `
-        <span class="selected-label">${selectedOption ? selectedOption.label : 'Selecione'}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-    `;
-    
-    const menu = document.createElement('div');
-    menu.className = 'category-menu';
-    
-    options.forEach(opt => {
-        const item = document.createElement('div');
-        item.className = 'category-item focusable';
-        if (opt.selected) item.classList.add('selected');
-        item.textContent = opt.label;
-        item.dataset.value = opt.value;
-        item.tabIndex = 0;
-        
-        item.onclick = () => {
-            btn.querySelector('.selected-label').textContent = opt.label;
-            menu.classList.remove('active');
-            menu.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
-            item.classList.add('selected');
-            originalSelect.value = opt.value;
-            originalSelect.dispatchEvent(new Event('change'));
-        };
-        
-        item.onkeydown = (e) => {
-            if (e.key === 'Enter') item.click();
-        };
-        
-        menu.appendChild(item);
-    });
-    
-    dropdown.appendChild(btn);
-    dropdown.appendChild(menu);
-    
-    btn.onclick = (e) => {
-        e.stopPropagation();
-        const isActive = menu.classList.contains('active');
-        document.querySelectorAll('.category-menu.active').forEach(m => m.classList.remove('active'));
-        if (!isActive) menu.classList.add('active');
-    };
-    
-    document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target)) menu.classList.remove('active');
-    });
-    
-    originalSelect.style.display = 'none';
-    const old = container.querySelector('.category-dropdown');
-    if (old) old.remove();
-    container.insertBefore(dropdown, originalSelect);
-}
-
-export async function initSettings() {
-    console.log("Settings Initialized");
-    
-    const legacySection = document.querySelector(".section.two-col");
-    if (legacySection) {
-        const panels = legacySection.querySelectorAll(".panel");
-        panels.forEach(p => {
-            if (p.id !== "settingsPanel") p.remove();
-        });
-        legacySection.classList.remove("two-col");
-    }
-    const legacyMac = document.getElementById("deviceMac");
-    const legacyKey = document.getElementById("deviceKey");
-    const legacySub = document.getElementById("subscriptionStatus");
-    [legacyMac, legacyKey, legacySub].forEach(el => {
-        if (el) {
-            const panel = el.closest(".panel");
-            if (panel && panel.id !== "settingsPanel") panel.remove();
-        }
-    });
-    
-    const prefs = api.settings.get();
-    if (prefs.theme) {
-        const themeEl = document.getElementById("theme");
-        if (themeEl) themeEl.value = prefs.theme;
-        applyTheme(prefs.theme);
-    }
-    if (prefs.language) {
-        const langEl = document.getElementById("language");
-        if (langEl) langEl.value = prefs.language;
-    }
-
-    setupSelectDropdown("theme");
-    setupSelectDropdown("language");
-
-    const saveBtn = document.getElementById("saveSettings");
-    if (saveBtn) {
-        saveBtn.onclick = () => {
-            try {
-                const theme = document.getElementById("theme").value;
-                const language = document.getElementById("language").value;
-                
-                console.log("Saving settings...", { theme, language });
-
-                api.settings.save({ theme, language });
-                applyTheme(theme);
-                
-                const saveStatus = document.getElementById("settingsStatus");
-                if (saveStatus) {
-                    saveStatus.textContent = "Salvo & Sincronizando...";
-                    saveStatus.style.color = "#4ade80";
-                    setTimeout(() => saveStatus.textContent = "", 3000);
-                }
-            } catch (e) {
-                console.error("Save Settings Error:", e);
-                alert("Erro ao salvar configurações: " + e.message);
-            }
-        };
-    }
-}
-
-// Global Series Modal Handler
-window.showSeriesModal = async function(seriesId) {
-    console.log("showSeriesModal called for ID:", seriesId);
-    // 1. Create Backdrop
-    const backdrop = document.createElement('div');
-    backdrop.className = 'netflix-modal-backdrop active'; 
-    backdrop.style.zIndex = "10001"; // Force high z-index
-    
-    // 2. Create Modal Structure
-    backdrop.innerHTML = `
-        <div class="netflix-modal-content">
-            <button class="netflix-close-btn">&times;</button>
-            <div class="netflix-modal-body loading">
-                <div class="loading-spinner"></div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(backdrop);
-    
-    const closeBtn = backdrop.querySelector('.netflix-close-btn');
-    const close = () => {
-        backdrop.classList.remove('active');
-        setTimeout(() => backdrop.remove(), 300);
-    };
-    
-    closeBtn.onclick = close;
-    backdrop.onclick = (e) => {
-        if (e.target === backdrop) close();
-    };
-    
-    // 3. Fetch Data
-    try {
-        const [detailsRes, episodesRes] = await Promise.all([
-            api.series.get(seriesId),
-            api.series.episodes(seriesId)
-        ]);
-        
-        if (!detailsRes.ok) throw new Error(detailsRes.data?.error || "Erro ao carregar série");
-        
-        const series = detailsRes.data.item;
-        const episodes = episodesRes.ok ? episodesRes.data.episodes : [];
-        
-        // Group episodes by season
-        const seasons = {};
-        episodes.forEach(ep => {
-            const s = ep.season_number || 1;
-            if (!seasons[s]) seasons[s] = [];
-            seasons[s].push(ep);
-        });
-        
-        // Sort episodes in each season
-        Object.keys(seasons).forEach(s => {
-            seasons[s].sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-        });
-        
-        const seasonNumbers = Object.keys(seasons).sort((a, b) => a - b);
-        
-        // Update Modal Content
-        const bodyEl = backdrop.querySelector('.netflix-modal-body');
-        bodyEl.classList.remove('loading');
-        
-        // Render Body
-        bodyEl.innerHTML = `
-            <div class="netflix-hero">
-                <img class="netflix-poster" src="${getProxiedImage(series.poster)}" data-original-src="${series.poster}" alt="${series.title}" onerror="window.handleImageError(this)">
-                <div class="netflix-hero-gradient"></div>
-            </div>
-            
-            <div class="netflix-info-container">
-                <h2 style="font-size: 24px; margin-bottom: 10px; font-weight: bold;">${series.title}</h2>
-                <div class="netflix-meta-row" style="justify-content: flex-start;">
-                    <span class="match-score">${series.rating ? series.rating + ' ★' : ''}</span>
-                    <span class="meta-item">${series.year || ''}</span>
-                    <span class="badge" style="background:rgba(255,255,255,0.2); padding:0 6px;">Série</span>
-                </div>
-
-                <p class="netflix-description">${series.description || 'Sem descrição.'}</p>
-                
-                <div class="season-selector" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;">
-                    ${seasonNumbers.map((s, i) => `
-                        <button class="season-tab ${i === 0 ? 'active' : ''}" data-season="${s}" 
-                                style="background: ${i === 0 ? '#9333ea' : 'rgba(255,255,255,0.1)'}; border: none; color: white; padding: 8px 16px; border-radius: 20px; white-space: nowrap; cursor: pointer;">
-                            Temporada ${s}
-                        </button>
-                    `).join('')}
-                </div>
-                
-                <div class="episodes-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <!-- Episodes will be injected here -->
-                </div>
-            </div>
-        `;
-        
-        const listEl = bodyEl.querySelector('.episodes-list');
-        const tabs = bodyEl.querySelectorAll('.season-tab');
-        
-        const renderEpisodes = (season) => {
-            const seasonEps = seasons[season] || [];
-            if (seasonEps.length === 0) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">Nenhum episódio encontrado.</div>';
-                return;
-            }
-            
-            listEl.innerHTML = seasonEps.map(ep => `
-                <div class="episode-item" onclick="window.location.href='./player.html?type=series&id=${encodeURIComponent(series.id)}&s=${ep.season_number}&e=${ep.episode_number}'"
-                     style="display: flex; gap: 15px; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
-                    <div style="font-size: 24px; font-weight: bold; color: #555; width: 30px; text-align: center;">${ep.episode_number}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: bold; font-size: 14px;">${ep.title || `Episódio ${ep.episode_number}`}</div>
-                        <div style="font-size: 12px; color: #aaa;">${ep.duration ? Math.round(ep.duration / 60) + ' min' : ''}</div>
-                    </div>
-                    <div style="width: 30px; height: 30px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <div style="width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid white; margin-left: 2px;"></div>
-                    </div>
-                </div>
-            `).join('');
-        };
-        
-        // Initial Render
-        if (seasonNumbers.length > 0) {
-            renderEpisodes(seasonNumbers[0]);
-        } else {
-            listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">Nenhum episódio disponível.</div>';
-        }
-        
-        // Tab Switching
-        tabs.forEach(tab => {
-            tab.onclick = () => {
-                tabs.forEach(t => {
-                    t.style.background = 'rgba(255,255,255,0.1)';
-                    t.classList.remove('active');
-                });
-                tab.style.background = '#9333ea';
-                tab.classList.add('active');
-                renderEpisodes(tab.dataset.season);
-            };
-        });
-        
-    } catch (e) {
-        console.error(e);
-        backdrop.querySelector('.netflix-modal-body').innerHTML = `
-            <div style="padding: 20px; color: #ff4444; text-align: center;">
-                Erro ao carregar detalhes: ${e.message}
-            </div>
-        `;
-    }
-};
-
-// Global Movie Modal Handler (Netflix Mobile Style)
-window.showMovieModal = async function(movieId) {
-    console.log("showMovieModal called for ID:", movieId);
-    // 1. Create Backdrop
-    const backdrop = document.createElement('div');
-    backdrop.className = 'netflix-modal-backdrop active'; 
-    backdrop.style.zIndex = "10001"; // Force high z-index
-    
-    // 2. Create Modal Structure (Loading State)
-    backdrop.innerHTML = `
-        <div class="netflix-modal-content">
-            <button class="netflix-close-btn">&times;</button>
-            <div class="netflix-modal-body loading">
-                <div class="loading-spinner"></div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(backdrop);
-    
-    const closeBtn = backdrop.querySelector('.netflix-close-btn');
-    const close = () => {
-        backdrop.classList.remove('active');
-        setTimeout(() => backdrop.remove(), 300);
-    };
-    
-    closeBtn.onclick = close;
-    backdrop.onclick = (e) => {
-        if (e.target === backdrop) close();
-    };
-    
-    // 3. Fetch Data
-    try {
-        const detailsRes = await api.movies.get(movieId);
-        
-        if (!detailsRes.ok) throw new Error(detailsRes.data?.error || "Erro ao carregar filme");
-        
-        const movie = detailsRes.data.item;
-        
-        // Prepare Trailer URL (YouTube Search)
-        const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + " trailer")}`;
-        
-        // Randomize Match Score for Demo
-        const matchScore = Math.floor(Math.random() * (99 - 85) + 85);
-        const year = movie.year || '2023';
-        const age = movie.age || '14';
-        const duration = movie.duration ? `${Math.floor(movie.duration/60)}h ${movie.duration%60}min` : '1h 45min';
-
-        // Render Body
-        const bodyEl = backdrop.querySelector('.netflix-modal-body');
-        bodyEl.classList.remove('loading');
-        
-        bodyEl.innerHTML = `
-            <div class="netflix-hero">
-                <img class="netflix-poster" src="${getProxiedImage(movie.poster)}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
-                <div class="netflix-hero-gradient"></div>
-            </div>
-            
-            <div class="netflix-info-container">
-                <div class="netflix-meta-row">
-                    <span class="match-score">${matchScore}% relevante</span>
-                    <span class="meta-item">${year}</span>
-                    <span class="age-badge">${age}</span>
-                    <span class="meta-item">${duration}</span>
-                </div>
-
-                <div class="netflix-actions-stack">
-                     <button class="btn-play-lg" onclick="window.location.href='./player.html?type=movie&id=${encodeURIComponent(movie.id)}'">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 3l14 9-14 9V3z"/>
-                        </svg>
-                        Assistir
-                    </button>
-                    
-                    <a href="${trailerUrl}" target="_blank" class="btn-secondary-lg">
-                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                        </svg>
-                        Trailer
-                    </a>
-                </div>
-
-                <p class="netflix-description">${movie.description || 'Sem descrição disponível.'}</p>
-                
-                <div class="netflix-cast-info">
-                     <div class="meta-line"><span class="label">Elenco:</span> ${movie.cast || 'Indisponível'}</div>
-                     <div class="meta-line"><span class="label">Criação:</span> ${movie.director || 'Indisponível'}</div>
-                </div>
-
-                <div class="netflix-icon-actions">
-                    <div class="icon-action">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14"/>
-                        </svg>
-                        <span>Minha lista</span>
-                    </div>
-                    <div class="icon-action">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-                        </svg>
-                        <span>Classifique</span>
-                    </div>
-                    <div class="icon-action">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="18" cy="5" r="3"/>
-                            <circle cx="6" cy="12" r="3"/>
-                            <circle cx="18" cy="19" r="3"/>
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                        </svg>
-                        <span>Compartilhe</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-    } catch (e) {
-        console.error(e);
-        backdrop.querySelector('.netflix-modal-body').innerHTML = `
-            <div style="padding: 40px; color: #ff4444; text-align: center;">
-                <p>Erro ao carregar detalhes</p>
-                <p style="font-size:12px; opacity:0.7">${e.message}</p>
-            </div>
-        `;
-    }
-};

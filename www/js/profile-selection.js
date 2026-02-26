@@ -84,6 +84,7 @@ let profiles = [];
 let isManageMode = false;
 let currentEditingProfileId = null;
 let selectedAvatarUrl = "";
+let lastSyncDownOk = false;
 
 // Constants
 const DICEBEAR_BASE = "https://api.dicebear.com/7.x";
@@ -103,12 +104,27 @@ function getAvailableIcons(isKid) {
     return icons;
 }
 
+function handleCloudUpdate() {
+    api.profiles.list().then((res) => {
+        if (!res || !res.ok) return;
+        let nextProfiles = res.data;
+        if (!Array.isArray(nextProfiles) && nextProfiles && nextProfiles.profiles) {
+            nextProfiles = nextProfiles.profiles;
+        }
+        if (!Array.isArray(nextProfiles)) return;
+        profiles = nextProfiles.filter(p => p && p.id);
+        render();
+    }).catch((e) => {
+        console.error("Error updating profiles after cloud sync", e);
+    });
+}
+
 // Init
 export async function initProfileSelection() {
     session = api.session.read() || null;
+    window.addEventListener("klyx-data-updated", handleCloudUpdate);
     await loadProfiles();
     setupEventListeners();
-    // Pre-generate default grid (Adult)
     generateIconGrid(false);
 }
 
@@ -120,9 +136,10 @@ async function loadProfiles() {
         loadingDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#9333ea;color:white;padding:5px 10px;border-radius:4px;z-index:9999;font-size:12px;";
         loadingDiv.textContent = "☁️ Sincronizando...";
         document.body.appendChild(loadingDiv);
-        
+        lastSyncDownOk = false;
         try {
             await api.cloud.syncDown();
+            lastSyncDownOk = true;
         } catch (syncError) {
             console.warn("Sync failed, proceeding with local data:", syncError);
         } finally {
@@ -161,8 +178,8 @@ function render() {
     // Filter out invalid profiles to prevent ghost slots
     profiles = profiles.filter(p => p && p.id);
 
-    // RESTORE/RECOVERY: If no profiles exist (wiped or sync error), create a default one immediately
-    if (profiles.length === 0) {
+    // RESTORE/RECOVERY: If no profiles exist, create a default one only when last sync was successful
+    if (profiles.length === 0 && lastSyncDownOk) {
         console.warn("No profiles found! Creating default 'Perfil 1'...");
         const defaultProfile = {
             id: "p" + Date.now(),
@@ -272,8 +289,15 @@ function selectProfile(profile) {
     localStorage.setItem("klyx_profile_name", profile.name);
     localStorage.setItem("klyx_profile_avatar", profile.avatar);
     
-    // Redirect
-    window.location.href = "./dashboard.html";
+    // Redirect with robust path construction
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+    // Ensure we don't double slash if basePath is root
+    const cleanBasePath = basePath === '/' ? '' : basePath;
+    const targetUrl = window.location.origin + cleanBasePath + "/dashboard.html";
+    
+    console.log("Redirecting to dashboard:", targetUrl);
+    window.location.href = targetUrl;
 }
 
 // Modal Functions

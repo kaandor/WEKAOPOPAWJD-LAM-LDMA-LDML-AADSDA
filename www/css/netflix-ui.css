@@ -14,11 +14,13 @@
     align-items: flex-end; /* Bottom sheet on mobile */
     justify-content: center;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.3s ease;
 }
 
 .netflix-modal-backdrop.active {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .netflix-modal-content {

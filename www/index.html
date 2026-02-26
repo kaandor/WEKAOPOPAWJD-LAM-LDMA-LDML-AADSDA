@@ -9,52 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Entrar</title>
-    <style>
-      body {
-        background-color: #0b0e14;
-        color: #fff;
-        margin: 0;
-        font-family: system-ui, -apple-system, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-      }
-      .brand-logo {
-        max-width: 320px;
-        width: 100%;
-        height: auto;
-        display: block;
-        margin: 0 auto 20px;
-      }
-      .auth-card {
-        width: 100%;
-        max-width: 400px;
-        padding: 20px;
-      }
-      .input {
-        background: #1f2937;
-        border: 1px solid rgba(255,255,255,0.1);
-        color: white;
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        box-sizing: border-box;
-      }
-      .btn-primary {
-        background: #A855F7;
-        color: white;
-        border: none;
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: bold;
-        margin-top: 10px;
-      }
-    </style>
-    <link rel="stylesheet" href="./css/global.css?v=20260204-fix3" />
-    <link rel="stylesheet" href="./css/login.css?v=20260204-fix3" />
+    <link rel="stylesheet" href="./css/global.css?v=20260225-v1" />
+    <link rel="stylesheet" href="./css/login.css?v=20260225-v1" />
+    <script src="./js/adsterra.js?v=20260225-v1"></script>
   </head>
   <body>
     <div class="auth-shell">
@@ -95,7 +52,7 @@
         </div>
 
         <div id="error" class="error hidden"></div>
-        <div id="connectionStatusDot" style="display:none;"></div>
+        <div id="connectionStatusDot"></div>
       </div>
     </div>
 
@@ -104,14 +61,17 @@
       try {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(regs => {
-            regs.forEach(r => r.unregister());
+            regs.forEach(r => {
+                console.log('Unregistering SW:', r);
+                r.unregister();
+            });
           });
         }
       } catch(_) {}
       
-      import { api } from "./js/api.js?v=20260222-loginfix";
-      import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260222-loginfix";
-      import { handleLoginSuccess } from "./js/ui.js?v=20260222-loginfix";
+      import { api } from "./js/api.js?v=20260225-v1";
+      import { redirectIfAuthed, applyTheme } from "./js/auth.js?v=20260225-v1";
+      import { handleLoginSuccess } from "./js/ui.js?v=20260225-v1";
 
       // Dev helper: ?logout=true clears session to allow seeing the login screen
       if (new URLSearchParams(window.location.search).has('logout')) {
@@ -121,6 +81,22 @@
 
       applyTheme();
 
+      const statusDot = document.getElementById('connectionStatusDot');
+      function setSyncState(state) {
+          if (!statusDot) return;
+          statusDot.classList.remove('syncing', 'synced', 'error');
+          if (state === 'syncing') {
+              statusDot.classList.add('syncing');
+          } else if (state === 'synced') {
+              statusDot.classList.add('synced');
+          } else if (state === 'error') {
+              statusDot.classList.add('error');
+          }
+      }
+
+      window.addEventListener('klyx-sync-start', () => setSyncState('syncing'));
+      window.addEventListener('klyx-sync-end', () => setSyncState('synced'));
+      window.addEventListener('klyx-data-updated', () => setSyncState('synced'));
       const githubBtn = document.getElementById('githubLoginBtn');
       const googleBtn = document.getElementById('googleLoginBtn');
       if (githubBtn) {
