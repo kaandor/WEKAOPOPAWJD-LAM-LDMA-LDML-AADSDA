@@ -1,6 +1,6 @@
 
 export function redirectIfAuthed() {
-    const sessionStr = localStorage.getItem('klyx.session');
+    const sessionStr = sessionStorage.getItem('klyx.session');
     if (!sessionStr) return;
     try {
         const session = JSON.parse(sessionStr);
@@ -10,16 +10,16 @@ export function redirectIfAuthed() {
         } else {
             // Invalid session found, clear it
             console.warn("Sessão inválida detectada (usuário incompleto). Limpando...");
-            localStorage.removeItem('klyx.session');
+            sessionStorage.removeItem('klyx.session');
         }
     } catch (e) {
         // Invalid JSON leftover; clear to avoid redirect loops
-        localStorage.removeItem('klyx.session');
+        sessionStorage.removeItem('klyx.session');
     }
 }
 
 export function requireAuth() {
-    const sessionStr = localStorage.getItem('klyx.session');
+    const sessionStr = sessionStorage.getItem('klyx.session');
     if (!sessionStr) {
         window.location.href = './index.html';
         return null;
@@ -43,7 +43,7 @@ export function applyTheme() {
 }
 
 export function logout() {
-    localStorage.removeItem('klyx.session');
-    localStorage.removeItem('klyx_profile_id');
+    sessionStorage.removeItem('klyx.session');
+    sessionStorage.removeItem('klyx_profile_id');
     window.location.href = './index.html';
 }

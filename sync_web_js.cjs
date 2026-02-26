@@ -14,7 +14,7 @@ if (!fs.existsSync(DST_DIR)) {
   fs.mkdirSync(DST_DIR, { recursive: true });
 }
 
-["api.js", "ui.js", "player.js", "router.js"].forEach((file) => {
+["api.js", "ui.js", "player_core.js", "router.js"].forEach((file) => {
   const src = path.join(SRC_DIR, file);
   const dst = path.join(DST_DIR, file);
 

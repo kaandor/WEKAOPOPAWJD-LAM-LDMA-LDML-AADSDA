@@ -1,8 +1,8 @@
-import http from 'http';
-import https from 'https';
-import fs from 'fs';
-import path from 'path';
-import { URL } from 'url';
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const { URL } = require('url');
 
 const PORT = 8080;
 const MIME_TYPES = {
