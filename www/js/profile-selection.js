@@ -286,16 +286,56 @@ function promptPinVerification(title, callback) {
 function selectProfile(profile) {
     console.log("Selecting profile:", profile.name);
     api.profiles.setCurrent(profile.id);
-    localStorage.setItem("klyx_profile_name", profile.name);
-    localStorage.setItem("klyx_profile_avatar", profile.avatar);
+    sessionStorage.setItem("klyx_profile_name", profile.name);
+    sessionStorage.setItem("klyx_profile_avatar", profile.avatar);
     
     // Explicitly redirect using relative path (works in any Pages repo)
     const targetUrl = "./dashboard.html";
     
     console.log("Redirecting to dashboard:", targetUrl);
-    window.location.href = targetUrl;
+    safeNavigate(targetUrl);
 }
 
+// URL validation + DNS-failure tolerant navigation
+function safeNavigate(url) {
+    // Allow only relative paths or https URLs to github.io
+    const isRelative = /^\.?\/[^\s]*$/.test(url);
+    const isHttpsGh = /^https:\/\/[^\/]+\.github\.io\/[^\s]+$/.test(url);
+    const isInvalidGitDomain = /\/\/[^\/]*\.git\//.test(url);
+
+    if (isInvalidGitDomain) {
+        console.warn("Blocked invalid domain .git:", url);
+    }
+
+    const candidate = isRelative ? url : (isHttpsGh ? url : "./dashboard.html");
+
+    // Exponential retry preflight to avoid broken navigations
+    const attempts = [1000, 3000, 9000];
+    let tried = 0;
+
+    const tryFetch = () => {
+        fetch(candidate, { method: "HEAD", cache: "no-store" })
+            .then((res) => {
+                if (res.ok) {
+                    window.location.href = candidate;
+                } else {
+                    throw new Error("Preflight failed: " + res.status);
+                }
+            })
+            .catch(() => {
+                if (tried < attempts.length) {
+                    const wait = attempts[tried++];
+                    console.warn("Preflight failed. Retrying in", wait, "ms");
+                    setTimeout(tryFetch, wait);
+                } else {
+                    // Final fallback
+                    window.location.href = "./dashboard.html";
+                }
+            });
+    };
+
+    tryFetch();
+}
 // Modal Functions
 function openCreateModal() {
     currentEditingProfileId = null;
