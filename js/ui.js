@@ -68,10 +68,9 @@ function getProxiedImage(url) {
     // If local asset, return as is
     if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
     
-    // OPTIMIZATION: Known problematic domains for Weserv/CorsProxy -> Use Vercel directly
-    // Fixes 'net::ERR_BLOCKED_BY_ORB' for clientetv.xyz
+    // Prioridade para clientetv.xyz: Vercel Proxy (mais estável que corsproxy.io)
     if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
-        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        return `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(url)}`;
     }
     
     // Proxy external URLs
