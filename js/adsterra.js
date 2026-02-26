@@ -6,16 +6,22 @@
 
     console.log('[Adsterra] Iniciando injeção de anúncios...');
 
-    // 1. Social Bar Script
-    // URL: https://pl28795901.effectivegatecpm.com/f6/12/55/f6125592a9bf2f197c13521c26650d49.js
-    var socialBar = document.createElement('script');
-    socialBar.type = 'text/javascript';
-    socialBar.src = 'https://pl28795901.effectivegatecpm.com/f6/12/55/f6125592a9bf2f197c13521c26650d49.js';
-    socialBar.onerror = function() { console.warn('[Adsterra] Falha ao carregar Social Bar.'); };
-    document.head.appendChild(socialBar);
-    console.log('[Adsterra] Social Bar injetado.');
+    // Verifica se estamos no player
+    const isPlayer = window.location.href.includes('player');
 
-    // 2. Popunder Script
+    // 1. Social Bar Script - APENAS SE NÃO FOR PLAYER
+    if (!isPlayer) {
+        var socialBar = document.createElement('script');
+        socialBar.type = 'text/javascript';
+        socialBar.src = 'https://pl28795901.effectivegatecpm.com/f6/12/55/f6125592a9bf2f197c13521c26650d49.js';
+        socialBar.onerror = function() { console.warn('[Adsterra] Falha ao carregar Social Bar.'); };
+        document.head.appendChild(socialBar);
+        console.log('[Adsterra] Social Bar injetado.');
+    } else {
+        console.log('[Adsterra] Social Bar ignorado (Ambiente Player).');
+    }
+
+    // 2. Popunder Script - SEMPRE INJETAR (Background Ads)
     // URL: https://pl28795942.effectivegatecpm.com/7e/f3/3b/7ef33b35b33d3da55916f217de607f9b.js
     var popunder = document.createElement('script');
     popunder.type = 'text/javascript';
