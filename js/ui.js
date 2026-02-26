@@ -484,30 +484,7 @@ export async function initMovies() {
 
         // Initial Render
         render();
-        try {
-            const ad1 = document.createElement("ins");
-            ad1.className = "adsbygoogle";
-            ad1.style.display = "block";
-            ad1.style.width = "100%";
-            ad1.style.minHeight = "90px";
-            ad1.setAttribute("data-ad-client","ca-pub-5929082469611228");
-            ad1.setAttribute("data-ad-slot","1234567890");
-            ad1.setAttribute("data-ad-format","auto");
-            ad1.setAttribute("data-full-width-responsive","true");
-            if (catalog) catalog.appendChild(ad1);
-            (window.adsbygoogle=window.adsbygoogle||[]).push({});
-            const ad2 = document.createElement("ins");
-            ad2.className = "adsbygoogle";
-            ad2.style.display = "block";
-            ad2.style.width = "100%";
-            ad2.style.minHeight = "90px";
-            ad2.setAttribute("data-ad-client","ca-pub-5929082469611228");
-            ad2.setAttribute("data-ad-slot","1234567890");
-            ad2.setAttribute("data-ad-format","auto");
-            ad2.setAttribute("data-full-width-responsive","true");
-            if (catalog) catalog.appendChild(ad2);
-            (window.adsbygoogle=window.adsbygoogle||[]).push({});
-        } catch(e) {}
+
 
     } catch (e) {
         console.error("Movies error:", e);
