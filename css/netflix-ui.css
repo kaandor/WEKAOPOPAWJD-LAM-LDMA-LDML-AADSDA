@@ -1,0 +1,247 @@
+
+/* Existing styles... */
+
+/* =========================================
+   Netflix Mobile Style Modal (Movie)
+   ========================================= */
+.netflix-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end; /* Bottom sheet on mobile */
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.netflix-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.netflix-modal-content {
+    background: #141414;
+    width: 100%;
+    max-width: 500px; /* Constrain width on desktop */
+    height: 85vh; /* Max height */
+    border-radius: 16px 16px 0 0;
+    position: relative;
+    overflow: hidden;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.netflix-modal-backdrop.active .netflix-modal-content {
+    transform: translateY(0);
+}
+
+@media (min-width: 768px) {
+    .netflix-modal-backdrop {
+        align-items: center; /* Center on desktop */
+    }
+    .netflix-modal-content {
+        height: auto;
+        max-height: 85vh;
+        border-radius: 16px;
+    }
+}
+
+.netflix-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 4px;
+}
+
+.netflix-modal-body {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+}
+
+.netflix-modal-body.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hero Section */
+.netflix-hero {
+    position: relative;
+    padding: 30px 20px 20px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(to bottom, #1f1f1f, #141414);
+}
+
+.netflix-poster {
+    width: 160px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    z-index: 1;
+}
+
+/* Info Container */
+.netflix-info-container {
+    padding: 10px 20px 40px;
+    color: #fff;
+}
+
+/* Metadata Row */
+.netflix-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+.match-score {
+    color: #46d369; /* Netflix Green */
+    font-weight: 700;
+}
+
+.age-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 0 6px;
+    border-radius: 2px;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.meta-item {
+    color: #bcbcbc;
+}
+
+/* Actions Stack */
+.netflix-actions-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.btn-play-lg {
+    background: #9333ea; /* Site Accent Purple */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.btn-play-lg:active {
+    background: #7e22ce;
+}
+
+.btn-secondary-lg {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+    text-decoration: none;
+}
+
+.btn-secondary-lg:active {
+    background: rgba(255,255,255,0.25);
+}
+
+/* Description */
+.netflix-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+/* Cast Info */
+.netflix-cast-info {
+    margin-bottom: 25px;
+}
+
+.meta-line {
+    font-size: 12px;
+    color: #d2d2d2;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.meta-line .label {
+    color: #777;
+    margin-right: 4px;
+}
+
+/* Icon Actions Row */
+.netflix-icon-actions {
+    display: flex;
+    justify-content: flex-start; /* Aligned left like screenshot, or space-around? Screenshot shows left/center */
+    gap: 40px;
+    padding-top: 10px;
+}
+
+.icon-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    cursor: pointer;
+    min-width: 60px;
+}
+
+.icon-action svg {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-action span {
+    font-size: 10px;
+    color: #a3a3a3;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.icon-action:active {
+    opacity: 0.7;
+}
