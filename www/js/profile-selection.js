@@ -289,12 +289,8 @@ function selectProfile(profile) {
     localStorage.setItem("klyx_profile_name", profile.name);
     localStorage.setItem("klyx_profile_avatar", profile.avatar);
     
-    // Redirect with robust path construction
-    const currentPath = window.location.pathname;
-    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
-    // Ensure we don't double slash if basePath is root
-    const cleanBasePath = basePath === '/' ? '' : basePath;
-    const targetUrl = window.location.origin + cleanBasePath + "/dashboard.html";
+    // Explicitly redirect to the user-requested URL
+    const targetUrl = "https://kaandor.github.io/WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/dashboard.html";
     
     console.log("Redirecting to dashboard:", targetUrl);
     window.location.href = targetUrl;
