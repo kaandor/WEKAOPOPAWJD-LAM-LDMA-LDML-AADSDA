@@ -78,6 +78,51 @@ function getProxiedImage(url) {
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
 }
 
+// --- METADATA FETCHING (TMDB) ---
+// Used to fetch descriptions when missing in source
+const TMDB_API_KEY = "3d197569c720ea63916d97cf9ca466f1"; // Public demo key
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+
+async function fetchMetadata(title, type = 'movie') {
+    if (!title) return null;
+    
+    // Clean title for search
+    // Remove (YYYY), [Dual], [Legendado], etc.
+    let cleanTitle = title
+        .replace(/\(\d{4}\)/g, '')
+        .replace(/\[.*?\]/g, '')
+        .replace(/ - .*/, '') // Remove suffixes
+        .trim();
+        
+    // Extract year if present in original title
+    const yearMatch = title.match(/\((\d{4})\)/);
+    const year = yearMatch ? yearMatch[1] : '';
+    
+    try {
+        let searchUrl = `${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=pt-BR`;
+        if (year) searchUrl += `&year=${year}`;
+        
+        const res = await fetch(searchUrl);
+        const data = await res.json();
+        
+        if (data.results && data.results.length > 0) {
+            // Return first match
+            const match = data.results[0];
+            return {
+                description: match.overview,
+                rating: match.vote_average ? match.vote_average.toFixed(1) : null,
+                year: match.release_date ? match.release_date.split('-')[0] : (match.first_air_date ? match.first_air_date.split('-')[0] : ''),
+                backdrop: match.backdrop_path ? `https://image.tmdb.org/t/p/w1280${match.backdrop_path}` : null,
+                genre_ids: match.genre_ids
+            };
+        }
+    } catch (e) {
+        console.warn("TMDB Fetch Error:", e);
+    }
+    return null;
+}
+
+
     // Global Image Error Handler to try backups
     window.handleImageError = function(img) {
         // Prevent infinite loop
@@ -739,13 +784,36 @@ window.showMovieModal = async function(id) {
                     <!-- Future: Minha Lista button -->
                 </div>
                 
-                <p class="netflix-description">${movie.description || 'Sem descrição disponível.'}</p>
+                <p class="netflix-description">${movie.description || 'Carregando sinopse...'}</p>
                 
                 <div class="netflix-cast-info">
                    <div class="meta-line"><span style="color:#777">Gênero:</span> ${movie.genre || 'Geral'}</div>
                 </div>
             </div>
         `;
+        
+        // --- LAZY FETCH DESCRIPTION IF MISSING ---
+        if (!movie.description || movie.description === 'Carregando sinopse...') {
+            // Async fetch without blocking UI
+            fetchMetadata(movie.title, 'movie').then(meta => {
+                const descEl = body.querySelector('.netflix-description');
+                if (meta && meta.description) {
+                    if (descEl) descEl.textContent = meta.description;
+                    
+                    // Also update rating/year if missing
+                    if (!movie.rating && meta.rating) {
+                        const rateEl = body.querySelector('.age-badge');
+                        if (rateEl) rateEl.textContent = meta.rating;
+                    }
+                    if (!movie.year && meta.year) {
+                         const yearEl = body.querySelectorAll('.meta-item')[0]; // Assuming first is year
+                         if (yearEl) yearEl.textContent = meta.year;
+                    }
+                } else {
+                    if (descEl) descEl.textContent = 'Sinopse indisponível.';
+                }
+            });
+        }
 
     } catch (e) {
         console.error("Error showing movie modal:", e);
@@ -798,12 +866,30 @@ window.showSeriesModal = async function(id) {
                     </button>
                 </div>
                 
-                <p class="netflix-description">${series.description || 'Sem descrição disponível.'}</p>
+                <p class="netflix-description">${series.description || 'Carregando sinopse...'}</p>
                  <div class="netflix-cast-info">
                    <div class="meta-line"><span style="color:#777">Gênero:</span> ${series.genre || 'Geral'}</div>
                 </div>
             </div>
         `;
+        
+        // --- LAZY FETCH DESCRIPTION IF MISSING (SERIES) ---
+        if (!series.description || series.description === 'Carregando sinopse...') {
+            fetchMetadata(series.title, 'tv').then(meta => {
+                 const descEl = body.querySelector('.netflix-description');
+                 if (meta && meta.description) {
+                     if (descEl) descEl.textContent = meta.description;
+                     
+                     if (!series.rating && meta.rating) {
+                        const rateEl = body.querySelector('.age-badge');
+                        if (rateEl) rateEl.textContent = meta.rating;
+                     }
+                 } else {
+                     if (descEl) descEl.textContent = 'Sinopse indisponível.';
+                 }
+            });
+        }
+        
     } catch (e) {
         console.error("Error showing series modal:", e);
         body.innerHTML = `<div style="padding:20px; text-align:center;">
