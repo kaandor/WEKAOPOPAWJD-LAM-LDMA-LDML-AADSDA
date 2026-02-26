@@ -71,7 +71,7 @@ function getProxiedImage(url) {
     // OPTIMIZATION: Known problematic domains for Weserv/CorsProxy -> Use Vercel directly
     // Fixes 'net::ERR_BLOCKED_BY_ORB' for clientetv.xyz
     if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
-        return `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(url)}`;
+        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
     }
     
     // Proxy external URLs
@@ -93,22 +93,22 @@ function getProxiedImage(url) {
         const currentSrc = img.src;
         let nextSrc = '';
 
-        // Strategy Chain: Weserv -> Vercel -> AllOrigins -> CorsProxy -> Placeholder
+        // Strategy Chain: Weserv -> CorsProxy -> Vercel -> AllOrigins -> Placeholder
 
-        // 1. If currently using Weserv (default), try Vercel Proxy
+        // 1. If currently using Weserv (default), try CorsProxy (more robust)
         if (currentSrc.includes('images.weserv.nl')) {
-            console.warn('[Image] Weserv failed, switching to Vercel Proxy:', originalSrc);
+            console.warn('[Image] Weserv failed, switching to CorsProxy:', originalSrc);
+            nextSrc = `https://corsproxy.io/?${encodeURIComponent(originalSrc)}`;
+        }
+        // 2. If CorsProxy failed, try Vercel Proxy
+        else if (currentSrc.includes('corsproxy.io')) {
+            console.warn('[Image] CorsProxy failed, switching to Vercel:', originalSrc);
             nextSrc = `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(originalSrc)}`;
         }
-        // 2. If Vercel failed, try AllOrigins
+        // 3. If Vercel failed, try AllOrigins
         else if (currentSrc.includes('klyx-api.vercel.app')) {
             console.warn('[Image] Vercel failed, switching to AllOrigins:', originalSrc);
             nextSrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalSrc)}`;
-        }
-        // 3. If AllOrigins failed, try CorsProxy
-        else if (currentSrc.includes('allorigins.win')) {
-            console.warn('[Image] AllOrigins failed, switching to CorsProxy:', originalSrc);
-            nextSrc = `https://corsproxy.io/?${encodeURIComponent(originalSrc)}`;
         }
         // 4. Give up
         else {
