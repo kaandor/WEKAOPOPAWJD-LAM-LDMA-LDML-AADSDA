@@ -716,11 +716,11 @@ window.showMovieModal = async function(id) {
         if (!movie) throw new Error("Filme não encontrado");
 
         // Render Modal Content
-        const posterUrl = getProxiedImage(movie.poster);
+        const proxiedPoster = getProxiedImage(movie.poster);
         
         body.innerHTML = `
             <div class="netflix-hero">
-                <img src="${posterUrl}" class="netflix-poster" onerror="this.src='https://via.placeholder.com/200x300?text=Error'"/>
+                <img src="${proxiedPoster}" class="netflix-poster" data-original-src="${movie.poster}" onerror="window.handleImageError(this)"/>
             </div>
             <div class="netflix-info-container">
                 <h2 style="font-size: 24px; margin-bottom: 10px;">${movie.title}</h2>
@@ -777,11 +777,11 @@ window.showSeriesModal = async function(id) {
         if (!series) throw new Error("Série não encontrada");
 
         // Render Series Content
-        const posterUrl = getProxiedImage(series.poster);
+        const proxiedPoster = getProxiedImage(series.poster);
         
         body.innerHTML = `
             <div class="netflix-hero">
-                <img src="${posterUrl}" class="netflix-poster" onerror="this.src='https://via.placeholder.com/200x300?text=Error'"/>
+                <img src="${proxiedPoster}" class="netflix-poster" data-original-src="${series.poster}" onerror="window.handleImageError(this)"/>
             </div>
             <div class="netflix-info-container">
                 <h2 style="font-size: 24px; margin-bottom: 10px;">${series.title}</h2>
