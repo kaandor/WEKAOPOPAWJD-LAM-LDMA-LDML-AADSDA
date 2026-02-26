@@ -291,10 +291,10 @@
         const v = "20260224-v4-final-fix-" + Date.now();
         
         // Import Router first
-        const { mountAppShell } = await import(`./js/router.js?v=${v}`);
+        const { mountAppShell } = await import(`../js/router.js?v=${v}`);
         
         // Import Player Core (Renamed from player.js to force 404 on old cache)
-        const { initPlayer } = await import(`./js/player_core.js?v=${v}`);
+        const { initPlayer } = await import(`../js/player_core.js?v=${v}`);
 
           await mountAppShell({ currentPath: "" });
           await initPlayer();

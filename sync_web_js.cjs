@@ -10,8 +10,8 @@ const CSS_SRC_DIR = path.join(__dirname, "css");
 const CSS_DST_DIR = path.resolve(__dirname, "..", "..", "..", "WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA", "www", "css");
 
 if (!fs.existsSync(DST_DIR)) {
-  console.error("Destino não encontrado:", DST_DIR);
-  process.exit(1);
+  console.log("Criando diretório de destino:", DST_DIR);
+  fs.mkdirSync(DST_DIR, { recursive: true });
 }
 
 ["api.js", "ui.js", "player.js", "router.js"].forEach((file) => {
