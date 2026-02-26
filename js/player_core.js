@@ -41,13 +41,13 @@ const MAX_RETRIES = 3; // Permitir 3 tentativas para cobrir as 3 tags VAST
 // PRIORIDADE: Tags Reais do Google AdSense/Ad Manager usando seu ID
 // FALLBACK: Tags de Teste (apenas se o real falhar)
 const VAST_TAGS = [
-    // 1. PRIMARY: Standard Preroll (Forced)
+    // 1. PRIMARY: Standard (Generic - Best Fill)
     `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=standard&videoad_start_delay=0&hl=pt&max_ad_duration=30000&adtest=off`,
     
-    // 2. SECONDARY: Video Text Image (Fallback)
+    // 2. SECONDARY: Text/Image/Video (Mixed - High Fill)
     `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=video_text_image&videoad_start_delay=0&hl=pt&max_ad_duration=30000&adtest=off`,
     
-    // 3. TERTIARY: Skippable (Last Resort)
+    // 3. TERTIARY: Skippable (Video Only - Specific)
     `https://googleads.g.doubleclick.net/pagead/ads?client=ca-video-pub-5929082469611228&description_url=${encodeURIComponent(window.location.href)}&ad_type=skippable_video&videoad_start_delay=0&hl=pt&max_ad_duration=30000&adtest=off`
 ];
 
