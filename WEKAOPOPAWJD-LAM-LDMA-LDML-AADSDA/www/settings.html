@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Settings</title>
+    <link rel="stylesheet" href="./css/global.css?v=20260211-fix6" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260211-fix6" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header id="app-header"></header>
+      <main class="page">
+        <div class="container">
+          <h1>Settings</h1>
+          <div class="subtext" style="margin-top: 8px">Theme, language, security, and preferences.</div>
+
+          <div class="section">
+            <div class="panel" id="settingsPanel">
+              <div style="font-weight: 750">Preferences</div>
+              <div class="field" style="margin-top: 12px">
+                <label class="subtext">Tema</label>
+                <select id="theme" class="select" style="margin-top: 6px">
+                  <option value="dark">Escuro</option>
+                  <option value="light">Claro</option>
+                </select>
+              </div>
+              <div class="field" style="margin-top: 12px">
+                <label class="subtext">Linguagem</label>
+                <select id="language" class="select" style="margin-top: 6px">
+                  <option value="en">Inglês</option>
+                  <option value="pt">Português</option>
+                </select>
+              </div>
+              <div class="field" style="margin-top: 12px">
+                <label class="subtext">Reproduzir próximo automaticamente</label>
+                <div style="margin-top: 6px">
+                  <input id="autoplayNext" type="checkbox" />
+                </div>
+              </div>
+              <div class="toolbar" style="margin-top: 14px">
+                <button id="saveSettings" class="btn btn-primary" type="button">Salvar</button>
+                <span id="settingsStatus" class="subtext"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      import { mountAppShell } from "./js/router.js?v=20260222-fix-settings-clean";
+      import { initSettings } from "./js/ui.js?v=20260222-fix-settings-clean";
+      
+      try {
+        await mountAppShell({ currentPath: "/settings" });
+        initSettings();
+      } catch (e) {
+        console.error("Settings Init Error:", e);
+      }
+    </script>
+  </body>
+</html>
+

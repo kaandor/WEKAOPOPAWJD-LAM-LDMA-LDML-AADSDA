@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Disponibilidade - GitHub Pages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+        }
+        .success {
+            background: #2d5a2d;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            background: #5a2d2d;
+            border-left: 4px solid #f44336;
+        }
+        .loading {
+            background: #2d2d5a;
+            border-left: 4px solid #2196F3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #log {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .log-info { background: #333; }
+        .log-success { background: #2d5a2d; }
+        .log-error { background: #5a2d2d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Disponibilidade - GitHub Pages</h1>
+        <p>Este teste verifica se os arquivos necessários estão disponíveis no GitHub Pages.</p>
+        
+        <button onclick="runAllTests()">Executar Todos os Testes</button>
+        <button onclick="clearLog()">Limpar Log</button>
+        <button onclick="testPlayerCore()">Testar Player Core</button>
+        
+        <div id="log"></div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Resultados dos Testes</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const results = document.getElementById('results');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            log.innerHTML = '';
+            results.innerHTML = '';
+        }
+
+        function addResult(test, success, details = '') {
+            const result = document.createElement('div');
+            result.className = `test-item ${success ? 'success' : 'error'}`;
+            result.innerHTML = `
+                <strong>${test}</strong>
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            results.appendChild(result);
+        }
+
+        async function testFile(url, name) {
+            addLog(`Testando: ${name} (${url})`, 'info');
+            try {
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                });
+                if (response.ok) {
+                    addLog(`✓ ${name} disponível (${response.status})`, 'success');
+                    return { success: true, status: response.status, url };
+                } else {
+                    addLog(`✗ ${name} não disponível (${response.status})`, 'error');
+                    return { success: false, status: response.status, url };
+                }
+            } catch (error) {
+                addLog(`✗ ${name} erro: ${error.message}`, 'error');
+                return { success: false, error: error.message, url };
+            }
+        }
+
+        async function testPlayerCore() {
+            clearLog();
+            addLog('Iniciando teste específico do player_core.js...', 'info');
+            
+            const baseUrl = window.location.origin;
+            const paths = [
+                `${baseUrl}/js/player_core.js`,
+                `${baseUrl}/www/js/player_core.js`,
+                `./js/player_core.js`,
+                `./www/js/player_core.js`
+            ];
+
+            for (const path of paths) {
+                const result = await testFile(path, `player_core.js (${path})`);
+                if (result.success) {
+                    addResult('Player Core Encontrado', true, `Disponível em: ${path}`);
+                    
+                    // Testar importação real
+                    try {
+                        addLog('Testando importação do módulo...', 'info');
+                        const module = await import(path);
+                        addLog('✓ Módulo importado com sucesso!', 'success');
+                        addResult('Importação do Módulo', true, 'Módulo carregado corretamente');
+                        
+                        if (module.initPlayer) {
+                            addResult('Função initPlayer', true, 'Função encontrada no módulo');
+                        } else {
+                            addResult('Função initPlayer', false, 'Função não encontrada no módulo');
+                        }
+                        break;
+                    } catch (importError) {
+                        addLog(`✗ Erro na importação: ${importError.message}`, 'error');
+                        addResult('Importação do Módulo', false, `Erro: ${importError.message}`);
+                    }
+                }
+            }
+        }
+
+        async function runAllTests() {
+            clearLog();
+            addLog('Iniciando testes de disponibilidade...', 'info');
+            
+            const baseUrl = window.location.origin;
+            const tests = [
+                // Testes de arquivos JavaScript
+                { url: `${baseUrl}/js/player_core.js`, name: 'player_core.js (raiz)' },
+                { url: `${baseUrl}/www/js/player_core.js`, name: 'player_core.js (www)' },
+                { url: `${baseUrl}/js/router.js`, name: 'router.js (raiz)' },
+                { url: `${baseUrl}/www/js/router.js`, name: 'router.js (www)' },
+                { url: `${baseUrl}/js/api.js`, name: 'api.js (raiz)' },
+                { url: `${baseUrl}/www/js/api.js`, name: 'api.js (www)' },
+                { url: `${baseUrl}/js/ui.js`, name: 'ui.js (raiz)' },
+                { url: `${baseUrl}/www/js/ui.js`, name: 'ui.js (www)' },
+                
+                // Testes de arquivos HTML
+                { url: `${baseUrl}/player_v2.html`, name: 'player_v2.html (raiz)' },
+                { url: `${baseUrl}/www/player_v2.html`, name: 'player_v2.html (www)' },
+                { url: `${baseUrl}/index.html`, name: 'index.html (raiz)' },
+                { url: `${baseUrl}/www/index.html`, name: 'index.html (www)' },
+                
+                // Testes de dados
+                { url: `${baseUrl}/www/assets/data/movies.json`, name: 'movies.json' },
+                
+                // Teste do próprio arquivo de teste
+                { url: `${baseUrl}/github_test.html`, name: 'github_test.html' }
+            ];
+
+            let successCount = 0;
+            let totalCount = tests.length;
+
+            for (const test of tests) {
+                const result = await testFile(test.url, test.name);
+                addResult(test.name, result.success, result.error || `Status: ${result.status}`);
+                if (result.success) successCount++;
+            }
+
+            // Resumo final
+            addLog(`Testes concluídos: ${successCount}/${totalCount} arquivos disponíveis`, 
+                   successCount === totalCount ? 'success' : 'error');
+            
+            if (successCount < totalCount) {
+                addLog('Alguns arquivos não estão disponíveis. Verifique o deploy no GitHub Pages.', 'error');
+            } else {
+                addLog('Todos os arquivos estão disponíveis! 🎉', 'success');
+            }
+        }
+
+        // Executar testes automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            addLog('Página de teste carregada. Clique em "Executar Todos os Testes" para começar.', 'info');
+        });
+    </script>
+</body>
+</html>

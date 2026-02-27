@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecionando...</title>
+  </head>
+  <body>
+    <p>Redirecionando para a tela de login...</p>
+    <script>
+      try {
+        const search = window.location.search || "";
+        const target = "./index.html" + search;
+        window.location.replace(target);
+      } catch (e) {
+        const search = window.location.search || "";
+        const target = "./index.html" + search;
+        window.location.href = target;
+      }
+    </script>
+  </body>
+</html>
