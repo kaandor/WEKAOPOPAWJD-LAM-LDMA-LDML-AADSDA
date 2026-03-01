@@ -1,4 +1,4 @@
-name: Deploy static site to GitHub Pages
+﻿name: Deploy static site to GitHub Pages
 
 on:
   push:
@@ -23,11 +23,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Upload static files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./www
+          path: ./WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA
 
       - name: Deploy to GitHub Pages
         id: deployment
