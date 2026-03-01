@@ -46,7 +46,7 @@ async function getLocalData(file) {
 }
 
 function readSession() {
-  const raw = sessionStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -61,12 +61,12 @@ function writeSession(session) {
     console.error("Tentativa de salvar sessão inválida bloqueada.", session);
     return;
   }
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
 
 function clearSession() {
-  sessionStorage.removeItem(STORAGE_KEY);
-  sessionStorage.removeItem("klyx_profile_id");
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem("klyx_profile_id");
 }
 
 // Helper to normalize data structure (fix poster_url -> poster)

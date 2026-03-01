@@ -498,6 +498,7 @@ async function attachSource({ video, streamUrl, streamUrlSub, streamType, ui, is
 
 // Helper: Show Error with optional Action Button
 function showError(msg, actionElem) {
+    if (window.finishLoading) window.finishLoading(); // FIX: Ensure loading screen is hidden
     const errorOverlay = document.getElementById('errorOverlay');
     const errorMsg = document.getElementById('errorMsg');
     const btnRetry = document.getElementById('btnRetry');
@@ -514,164 +515,400 @@ function showError(msg, actionElem) {
         const existingAction = document.getElementById('errorAction');
         if (existingAction) existingAction.remove();
 
+        // Add action element if provided
         if (actionElem) {
             actionElem.id = 'errorAction';
             errorOverlay.appendChild(actionElem);
         }
-        
+
+        // Retry button
         if (btnRetry) {
-            btnRetry.onclick = () => location.reload();
+            btnRetry.style.display = 'inline-block';
+            btnRetry.onclick = () => {
+                errorOverlay.style.display = 'none';
+                if (spinner) spinner.style.display = 'block';
+                // Reset proxy attempts and reload
+                currentProxyAttempt = 0;
+                initPlayer();
+            };
         }
     }
 }
 
 function createExternalAction(url) {
+    if (!url) return null;
     const btn = document.createElement('button');
-    btn.textContent = "Abrir no VLC / Player Externo";
-    btn.style.marginTop = "10px";
-    btn.style.padding = "10px 20px";
-    btn.style.background = "#333";
-    btn.style.color = "white";
-    btn.style.border = "1px solid #555";
-    btn.style.borderRadius = "4px";
-    btn.style.cursor = "pointer";
-    btn.onclick = () => window.open(url, '_blank');
+    btn.className = 'btn-primary';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> Abrir no Player Externo';
+    btn.style.marginTop = '10px';
+    btn.onclick = () => {
+        window.open(url, '_blank');
+        showStatus('Abrindo no player externo...');
+    };
     return btn;
 }
 
-export async function initPlayer() {
-    console.log("Initializing Player Core...");
+function setupUI(detail, video, ui) {
+    const { title, meta, episodes, currentEpIndex, seriesId } = detail;
     
-    // UI References
-    const video = document.getElementById('video');
-    const ui = {
-        title: document.getElementById('playerTitle'),
-        meta: document.getElementById('playerMeta'),
-        backBtn: document.getElementById('backBtn'),
-        loading: document.getElementById('loading-overlay')
+    // Title
+    const titleEl = document.getElementById('playerTitle');
+    if (titleEl) titleEl.textContent = title;
+    
+    // Meta info
+    const metaEl = document.getElementById('playerMeta');
+    if (metaEl) metaEl.textContent = meta;
+    
+    // Series Controls
+    const seriesControls = document.getElementById('seriesControls');
+    if (episodes.length > 0 && seriesControls) {
+        seriesControls.style.display = 'flex';
+        
+        // Previous/Next buttons
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const epInfo = document.getElementById('episodeInfo');
+        
+        if (btnPrev) {
+            btnPrev.disabled = currentEpIndex <= 0;
+            btnPrev.onclick = () => {
+                if (currentEpIndex > 0) {
+                    const prevEp = episodes[currentEpIndex - 1];
+                    window.location.href = `./player_v2.html?type=episode&id=${prevEp.id}&seriesId=${seriesId}`;
+                }
+            };
+        }
+        
+        if (btnNext) {
+            btnNext.disabled = currentEpIndex >= episodes.length - 1;
+            btnNext.onclick = () => {
+                if (currentEpIndex < episodes.length - 1) {
+                    const nextEp = episodes[currentEpIndex + 1];
+                    window.location.href = `./player_v2.html?type=episode&id=${nextEp.id}&seriesId=${seriesId}`;
+                }
+            };
+        }
+        
+        if (epInfo) {
+            epInfo.textContent = `Episódio ${currentEpIndex + 1} de ${episodes.length}`;
+        }
+    } else if (seriesControls) {
+        seriesControls.style.display = 'none';
+    }
+}
+
+function setupControls(video, ui) {
+    const progressBar = document.getElementById('progressBar');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnRewind = document.getElementById('btnRewind');
+    const btnForward = document.getElementById('btnForward');
+    const btnMute = document.getElementById('btnMute');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const btnSettings = document.getElementById('btnSettings');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const btnPiP = document.getElementById('btnPiP');
+    const videoContainer = document.getElementById('video-container');
+    const controls = document.getElementById('controls');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    
+    // Play/Pause
+    if (btnPlay) {
+        const updatePlayButton = () => {
+            btnPlay.innerHTML = video.paused 
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
+        };
+        
+        btnPlay.addEventListener('click', () => {
+            if (video.paused) {
+                video.play().catch(console.warn);
+            } else {
+                video.pause();
+            }
+        });
+        
+        video.addEventListener('play', updatePlayButton);
+        video.addEventListener('pause', updatePlayButton);
+        updatePlayButton();
+    }
+    
+    // Rewind/Fast Forward
+    if (btnRewind) btnRewind.onclick = () => { video.currentTime = Math.max(0, video.currentTime - 10); };
+    if (btnForward) btnForward.onclick = () => { video.currentTime = Math.min(video.duration || 0, video.currentTime + 10); };
+    
+    // Progress Bar
+    if (progressBar) {
+        const updateProgress = () => {
+            if (!isNaN(video.duration) && video.duration > 0) {
+                progressBar.value = (video.currentTime / video.duration) * 100;
+                progressBar.disabled = false;
+                progressBar.style.opacity = '1';
+                progressBar.style.cursor = 'pointer';
+            }
+        };
+        
+        video.addEventListener('timeupdate', updateProgress);
+        progressBar.addEventListener('input', (e) => {
+            if (!isNaN(video.duration) && video.duration > 0) {
+                video.currentTime = (e.target.value / 100) * video.duration;
+            }
+        });
+        
+        updateProgress();
+    }
+    
+    // Time Display
+    if (currentTimeEl || durationEl) {
+        const formatTime = (seconds) => {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+        
+        const updateTime = () => {
+            if (currentTimeEl) currentTimeEl.textContent = formatTime(video.currentTime);
+            if (durationEl) durationEl.textContent = formatTime(video.duration || 0);
+        };
+        
+        video.addEventListener('timeupdate', updateTime);
+        video.addEventListener('loadedmetadata', updateTime);
+        updateTime();
+    }
+    
+    // Volume
+    if (btnMute) {
+        const updateMuteButton = () => {
+            btnMute.innerHTML = video.muted || video.volume === 0
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+        };
+        
+        btnMute.addEventListener('click', () => {
+            video.muted = !video.muted;
+            updateMuteButton();
+        });
+        
+        updateMuteButton();
+    }
+    
+    if (volumeSlider) {
+        volumeSlider.value = video.volume;
+        volumeSlider.addEventListener('input', (e) => {
+            video.volume = e.target.value;
+            video.muted = false;
+            if (btnMute) updateMuteButton();
+        });
+    }
+    
+    // Settings
+    if (btnSettings) {
+        btnSettings.onclick = () => {
+            const settings = document.getElementById('settingsPanel');
+            if (settings) {
+                settings.style.display = settings.style.display === 'block' ? 'none' : 'block';
+            }
+        };
+    }
+    
+    // Fullscreen
+    if (btnFullscreen) {
+        btnFullscreen.onclick = () => {
+            if (!document.fullscreenElement) {
+                videoContainer.requestFullscreen().catch(console.warn);
+            } else {
+                document.exitFullscreen().catch(console.warn);
+            }
+        };
+    }
+    
+    // Picture-in-Picture
+    if (btnPiP && 'pictureInPictureEnabled' in document) {
+        btnPiP.style.display = 'block';
+        btnPiP.onclick = async () => {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else {
+                    await video.requestPictureInPicture();
+                }
+            } catch (err) {
+                console.warn('PiP failed:', err);
+            }
+        };
+    } else if (btnPiP) {
+        btnPiP.style.display = 'none';
+    }
+    
+    // Controls visibility
+    let controlsTimeout;
+    const showControls = () => {
+        if (controls) controls.classList.add('show');
+        if (loadingSpinner) loadingSpinner.style.display = 'block';
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(() => {
+            if (controls && !video.paused) controls.classList.remove('show');
+        }, 3000);
     };
     
-    if (!video) {
-        console.error("Video element not found!");
+    if (videoContainer) {
+        videoContainer.addEventListener('mousemove', showControls);
+        videoContainer.addEventListener('touchstart', showControls);
+        video.addEventListener('play', showControls);
+        video.addEventListener('pause', showControls);
+    }
+    
+    showControls();
+}
+
+function setupKeyboardShortcuts(video) {
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        
+        switch (e.key) {
+            case ' ':
+                e.preventDefault();
+                if (video.paused) video.play().catch(console.warn);
+                else video.pause();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                video.currentTime = Math.max(0, video.currentTime - 10);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                video.volume = Math.min(1, video.volume + 0.1);
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                video.volume = Math.max(0, video.volume - 0.1);
+                break;
+            case 'f':
+                e.preventDefault();
+                if (!document.fullscreenElement) {
+                    document.getElementById('video-container').requestFullscreen().catch(console.warn);
+                } else {
+                    document.exitFullscreen().catch(console.warn);
+                }
+                break;
+            case 'm':
+                e.preventDefault();
+                video.muted = !video.muted;
+                break;
+        }
+    });
+}
+
+function setupSubtitles(video, streamUrlSub, ui) {
+    // Clear existing subtitles
+    const existingTracks = video.querySelectorAll('track');
+    existingTracks.forEach(track => track.remove());
+    
+    if (!streamUrlSub) {
+        console.log("[Subtitles] No subtitle URL provided.");
         return;
     }
+    
+    console.log(`[Subtitles] Loading subtitles from: ${streamUrlSub}`);
+    
+    const track = document.createElement('track');
+    track.kind = 'captions';
+    track.label = 'Português';
+    track.srclang = 'pt';
+    track.src = streamUrlSub;
+    track.default = true;
+    
+    track.addEventListener('load', () => {
+        console.log("[Subtitles] Loaded successfully.");
+        track.mode = 'showing';
+        video.textTracks[0].mode = 'showing';
+    });
+    
+    track.addEventListener('error', (e) => {
+        console.error("[Subtitles] Failed to load:", e);
+        track.remove();
+    });
+    
+    video.appendChild(track);
+    
+    // Ensure subtitles are enabled
+    video.addEventListener('loadedmetadata', () => {
+        if (video.textTracks.length > 0) {
+            video.textTracks[0].mode = 'showing';
+        }
+    });
+}
 
-    // 1. SETUP ADS FIRST (Blocking or Async?)
-    // We start ad setup immediately but don't block UI initialization completely
-    // The setupIMAAds function has a safety timeout to force content if ads fail.
-    await setupIMAAds(video);
-
-    // 2. Load Content Details
+export async function initPlayer() {
+    console.log("[initPlayer] Starting...");
+    
+    // Hide error overlay on init
+    const errorOverlay = document.getElementById('errorOverlay');
+    if (errorOverlay) errorOverlay.style.display = 'none';
+    
+    // Get type and id from URL
     const type = qs('type');
     const id = qs('id');
     
     if (!type || !id) {
-        showError("Conteúdo não especificado.");
-        if (ui.loading) ui.loading.style.display = 'none';
+        showError("Parâmetros inválidos.");
         return;
     }
-
-    const detail = await loadDetail(type, id);
     
+    // Get UI elements
+    const video = document.getElementById('video');
+    const ui = {
+        loading: document.getElementById('loading-overlay'),
+        controls: document.getElementById('controls'),
+        videoContainer: document.getElementById('video-container')
+    };
+    
+    if (!video) {
+        showError("Elemento de vídeo não encontrado.");
+        return;
+    }
+    
+    // Load content details
+    const detail = await loadDetail(type, id);
     if (!detail.ok) {
         showError(detail.error);
-        if (ui.loading) ui.loading.style.display = 'none';
         return;
     }
-
-    // Update UI
-    if (ui.title) ui.title.textContent = detail.title;
-    if (ui.meta) ui.meta.textContent = detail.meta;
     
-    if (ui.backBtn) {
-        ui.backBtn.onclick = () => {
-            // Smart Back: If series, maybe go back to series modal?
-            // For now, simple history back
-            if (history.length > 1) history.back();
-            else window.location.href = './dashboard.html';
-        };
-    }
-
-    // --- PLAYBACK STARTUP ---
-    // Check for "Audio 2" (Dubbed vs Subtitled)
-    // Logic: If Audio2 exists, ask user OR check preference
-    // For now, let's default to Audio 1 (usually Dubbed or Primary)
-    // But if we want to support switching, we need the modal.
-
-    // SETUP TRACK MODAL
-    const btnSettings = document.getElementById('btnSettings');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettings = document.getElementById('closeSettings');
-    const audioOptions = document.getElementById('audioOptions');
+    // Setup UI
+    setupUI(detail, video, ui);
+    setupControls(video, ui);
+    setupKeyboardShortcuts(video);
+    setupSubtitles(video, detail.streamUrlSub, ui);
     
-    // Populate Audio Options
-    if (audioOptions) {
-        audioOptions.innerHTML = '';
-        
-        // Option 1: Primary (Dubbed/Default)
-        const opt1 = document.createElement('div');
-        opt1.style.padding = '8px';
-        opt1.style.background = 'rgba(255,255,255,0.1)';
-        opt1.style.borderRadius = '4px';
-        opt1.style.cursor = 'pointer';
-        opt1.textContent = "Áudio Principal (Dublado/Original)";
-        opt1.onclick = () => {
-            location.reload(); // Simple reload for now to reset
-        };
-        audioOptions.appendChild(opt1);
-
-        // Option 2: Secondary (Legendado)
-        if (detail.streamUrlAudio2) {
-            const opt2 = document.createElement('div');
-            opt2.style.padding = '8px';
-            opt2.style.background = 'transparent';
-            opt2.style.borderRadius = '4px';
-            opt2.style.cursor = 'pointer';
-            opt2.textContent = "Áudio Alternativo (Legendado)";
-            opt2.onclick = () => {
-                 // Switch source logic
-                 attachSource({ 
-                     video, 
-                     streamUrl: detail.streamUrlAudio2, 
-                     streamUrlSub: detail.streamUrlSub, 
-                     streamType: 'hls', 
-                     ui,
-                     isLegendado: true 
-                 });
-                 settingsModal.style.display = 'none';
-            };
-            audioOptions.appendChild(opt2);
-        }
-    }
-
-    if (btnSettings) {
-        btnSettings.onclick = () => {
-            if (settingsModal) settingsModal.style.display = (settingsModal.style.display === 'none' ? 'block' : 'none');
-        };
-    }
+    // Setup ads (simplified for Adsterra)
+    await setupIMAAds(video);
     
-    if (closeSettings) {
-        closeSettings.onclick = () => {
-            if (settingsModal) settingsModal.style.display = 'none';
-        };
-    }
-
-    // SETUP SERIES CONTROLS (Next / List)
-    if (type === 'series' || type === 'episode') {
-        setupSeriesControls(detail, video);
-    }
-
     // iOS Audio Selection Prompt
-    // If iOS AND we have multiple audio options, ask BEFORE playing
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isIOS && detail.streamUrlAudio2) {
         // Show a custom modal or use native confirm? Custom is better.
         // For simplicity, we'll just start with Primary, but show the Settings button prominently.
         // Or we could programmatically open the settings modal?
         // Let's just let it play and user can switch.
+        // Add user gesture fallback for autoplay
+        const videoContainer = document.getElementById('video-container');
+        if (videoContainer) {
+            videoContainer.addEventListener('click', async () => {
+                if (video.paused) {
+                    await video.play();
+                }
+            }, { once: true });
+        }
     }
 
-    // Start Playback (Primary Source)
+    // Attach video source
     await attachSource({ 
         video, 
         streamUrl: detail.streamUrl, 
@@ -681,84 +918,18 @@ export async function initPlayer() {
         isLegendado: false
     });
 
+    const isIOSMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isIOSMobile) {
+        const onFirstTouch = () => {
+            try { video.play(); } catch(_) {}
+        };
+        document.body.addEventListener('touchstart', onFirstTouch, { once: true, passive: true });
+        document.body.addEventListener('click', onFirstTouch, { once: true });
+    }
+
     // Remove loading overlay (Video will handle buffering spinner)
     if (ui.loading) {
         // ui.loading.style.display = 'none'; // Handled by finishLoading global
         if (window.finishLoading) window.finishLoading();
     }
-}
-
-function setupSeriesControls(detail, video) {
-    const btnNext = document.getElementById('btnNextEp');
-    const btnList = document.getElementById('btnEpList');
-    const epListModal = document.getElementById('epListModal');
-    const epListContent = document.getElementById('epListContent');
-    const closeEpList = document.getElementById('closeEpListModal');
-    
-    if (btnNext) {
-        // Check if there is a next episode
-        const nextIndex = detail.currentEpIndex + 1;
-        if (nextIndex < detail.episodes.length) {
-            btnNext.style.display = 'flex';
-            btnNext.onclick = () => {
-                const nextEp = detail.episodes[nextIndex];
-                window.location.href = `./player_v2.html?type=series&id=${detail.seriesId}&s=${nextEp.season_number}&e=${nextEp.episode_number}`;
-            };
-        }
-    }
-    
-    if (btnList) {
-        btnList.style.display = 'flex';
-        btnList.onclick = () => {
-            epListModal.style.display = 'flex';
-            renderEpisodeList(detail.episodes, detail.currentEpIndex, epListContent, detail.seriesId);
-        };
-    }
-    
-    if (closeEpList) {
-        closeEpList.onclick = () => epListModal.style.display = 'none';
-    }
-}
-
-function renderEpisodeList(episodes, currentIndex, container, seriesId) {
-    container.innerHTML = '';
-    
-    // Group by Season
-    const seasons = {};
-    episodes.forEach(ep => {
-        const s = ep.season_number || 1;
-        if (!seasons[s]) seasons[s] = [];
-        seasons[s].push(ep);
-    });
-    
-    Object.keys(seasons).sort((a,b) => a-b).forEach(seasonNum => {
-        const title = document.createElement('h4');
-        title.textContent = `Temporada ${seasonNum}`;
-        title.style.color = '#aaa';
-        title.style.margin = '15px 0 10px 0';
-        container.appendChild(title);
-        
-        seasons[seasonNum].forEach(ep => {
-            const el = document.createElement('div');
-            el.style.padding = '10px';
-            el.style.marginBottom = '5px';
-            el.style.borderRadius = '4px';
-            el.style.background = (ep.episode_number === episodes[currentIndex].episode_number && ep.season_number === episodes[currentIndex].season_number) ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255,255,255,0.05)';
-            el.style.cursor = 'pointer';
-            el.style.display = 'flex';
-            el.style.justifyContent = 'space-between';
-            el.style.alignItems = 'center';
-            
-            el.innerHTML = `
-                <span style="color: white; font-size: 14px;">${ep.episode_number}. ${ep.title}</span>
-                <span style="color: #666; font-size: 12px;">${ep.duration ? ep.duration : ''}</span>
-            `;
-            
-            el.onclick = () => {
-                window.location.href = `./player_v2.html?type=series&id=${seriesId}&s=${ep.season_number}&e=${ep.episode_number}`;
-            };
-            
-            container.appendChild(el);
-        });
-    });
 }
