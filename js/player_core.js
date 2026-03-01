@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260225-v1";
+import { api } from "./api.js?v=20260301-033430";
 import { applyGlobalTheme } from "./ui.js?v=20260225-v1"; // Import UI for Theme
 
 // Apply theme immediately
@@ -147,12 +147,17 @@ async function loadDetail(type, id) {
         
         // Determine episode to play
         let epIndex = 0;
-        const seasonParam = parseInt(qs('s'));
-        const episodeParam = parseInt(qs('e'));
+        const seasonParam = parseInt(qs('season') || qs('s'));
+        const episodeParam = parseInt(qs('episode') || qs('e'));
         
         if (!isNaN(seasonParam) && !isNaN(episodeParam)) {
             const foundIndex = episodes.findIndex(ep => ep.season_number === seasonParam && ep.episode_number === episodeParam);
-            if (foundIndex !== -1) epIndex = foundIndex;
+            if (foundIndex !== -1) {
+                epIndex = foundIndex;
+                console.log([loadDetail] Found specific episode: SE at index );
+            } else {
+                console.warn([loadDetail] Episode SE not found. Defaulting to index 0.);
+            }
         }
         
         const ep = episodes[epIndex];
