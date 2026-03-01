@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" fill="none">
+  <!-- Icon: Rounded Triangle pointing right -->
+  <!-- Using a path to create a soft rounded triangle look -->
+  <path d="M20 15 L 20 65 L 60 40 Z" fill="none" stroke="#A855F7" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+  
+  <!-- Text: Klyx -->
+  <!-- Using a font stack that likely exists on system or generic sans-serif -->
+  <text x="75" y="52" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="42" fill="white">Klyx</text>
+  
+  <!-- Text: IPTV -->
+  <text x="78" y="72" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="13" fill="#E5E7EB" letter-spacing="4">IPTV</text>
+  
+  <!-- Pixel Accents -->
+  <!-- Top right near the 'x' -->
+  <rect x="155" y="15" width="6" height="6" rx="1" fill="#A855F7" />
+  <rect x="163" y="8" width="6" height="6" rx="1" fill="#A855F7" />
+  <rect x="148" y="22" width="4" height="4" rx="1" fill="#A855F7" opacity="0.8" />
+</svg>

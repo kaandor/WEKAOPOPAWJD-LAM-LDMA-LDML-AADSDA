@@ -1,0 +1,5 @@
+[33mcommit f7f53a6e5934db95e83f0cc568de443c972da56c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: kaandor <53550987+kaandor@users.noreply.github.com>
+Date:   Sat Feb 28 23:46:11 2026 -0300
+
+    Fix: Correct deploy path and disable submodules

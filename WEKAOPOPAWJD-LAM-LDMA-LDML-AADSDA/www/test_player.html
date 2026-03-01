@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Player - KLYX</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .success { border-color: #0f0; background: #001100; }
+        .error { border-color: #f00; background: #110000; }
+        .warning { border-color: #ff0; background: #111100; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        button:hover { background: #0088ff; }
+        #log {
+            background: #111;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste do Player KLYX</h1>
+    
+    <div class="test-section">
+        <h3>Status dos Arquivos</h3>
+        <div id="file-status">Verificando...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Testes de Carregamento</h3>
+        <button onclick="testLoadRouter()">Testar Router.js</button>
+        <button onclick="testLoadPlayerCore()">Testar Player Core</button>
+        <button onclick="testFullPlayer()">Testar Player Completo</button>
+        <button onclick="clearCache()">Limpar Cache</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Log de Depuração</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const fileStatus = document.getElementById('file-status');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.style.color = type === 'error' ? '#ff6666' : type === 'success' ? '#66ff66' : '#ffffff';
+            entry.textContent = `[${timestamp}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        async function checkFiles() {
+            addLog('Iniciando verificação de arquivos...');
+            
+            const files = [
+                './js/router.js',
+                './js/player_core.js',
+                './js/api.js',
+                './js/ui.js',
+                './js/auth.js'
+            ];
+            
+            let statusHtml = '';
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file + '?v=' + Date.now());
+                    if (response.ok) {
+                        statusHtml += `<div style="color: #0f0;">✓ ${file} - OK</div>`;
+                        addLog(`${file} encontrado`, 'success');
+                    } else {
+                        statusHtml += `<div style="color: #f00;">✗ ${file} - Erro ${response.status}</div>`;
+                        addLog(`${file} erro: ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    statusHtml += `<div style="color: #f00;">✗ ${file} - Erro: ${error.message}</div>`;
+                    addLog(`${file} erro: ${error.message}`, 'error');
+                }
+            }
+            
+            fileStatus.innerHTML = statusHtml;
+        }
+        
+        async function testLoadRouter() {
+            addLog('Testando carregamento do router.js...');
+            try {
+                const v = Date.now();
+                const { mountAppShell } = await import(`./js/router.js?v=${v}`);
+                addLog('Router.js carregado com sucesso!', 'success');
+                addLog('Função mountAppShell disponível: ' + (typeof mountAppShell === 'function'), 'success');
+            } catch (error) {
+                addLog('Erro ao carregar router.js: ' + error.message, 'error');
+                console.error('Router error:', error);
+            }
+        }
+        
+        async function testLoadPlayerCore() {
+            addLog('Testando carregamento do player_core.js...');
+            try {
+                const v = Date.now();
+                const { initPlayer } = await import(`./js/player_core.js?v=${v}`);
+                addLog('Player_core.js carregado com sucesso!', 'success');
+                addLog('Função initPlayer disponível: ' + (typeof initPlayer === 'function'), 'success');
+            } catch (error) {
+                addLog('Erro ao carregar player_core.js: ' + error.message, 'error');
+                console.error('Player Core error:', error);
+            }
+        }
+        
+        async function testFullPlayer() {
+            addLog('Testando player completo...');
+            try {
+                // Testar importação sequencial como no player_v2.html
+                const v = Date.now();
+                addLog('Carregando router.js...');
+                const { mountAppShell } = await import(`./js/router.js?v=${v}`);
+                addLog('Router carregado, carregando player_core.js...');
+                const { initPlayer } = await import(`./js/player_core.js?v=${v}`);
+                addLog('Player Core carregado, inicializando...');
+                
+                // Simular inicialização
+                await mountAppShell({ currentPath: "" });
+                addLog('App Shell montado com sucesso!', 'success');
+                
+                // Não executar initPlayer aqui pois precisa de parâmetros específicos
+                addLog('Player pronto para inicialização!', 'success');
+                
+            } catch (error) {
+                addLog('Erro no teste completo: ' + error.message, 'error');
+                console.error('Full player error:', error);
+            }
+        }
+        
+        async function clearCache() {
+            addLog('Limpando cache...');
+            
+            // Limpar cache do navegador
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        addLog('Cache deletado: ' + cacheName, 'success');
+                    }
+                } catch (error) {
+                    addLog('Erro ao limpar cache: ' + error.message, 'warning');
+                }
+            }
+            
+            // Desregistrar service workers
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                        addLog('Service Worker desregistrado: ' + registration.scope, 'success');
+                    }
+                } catch (error) {
+                    addLog('Erro ao desregistrar SW: ' + error.message, 'warning');
+                }
+            }
+            
+            // Limpar localStorage e sessionStorage
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                addLog('Storage limpo', 'success');
+            } catch (error) {
+                addLog('Erro ao limpar storage: ' + error.message, 'warning');
+            }
+            
+            addLog('Cache limpo! Recarregando página...', 'success');
+            setTimeout(() => location.reload(), 1000);
+        }
+        
+        // Inicializar teste
+        addLog('Ferramenta de teste inicializada', 'success');
+        checkFiles();
+        
+        // Log de informações do navegador
+        addLog('User Agent: ' + navigator.userAgent);
+        addLog('Online: ' + navigator.onLine);
+    </script>
+</body>
+</html>

@@ -290,17 +290,85 @@
         // FORCE CACHE BUSTING - Version: 20260224-v4-final-fix
         const v = "20260224-v4-final-fix-" + Date.now();
         
-        // Import Router first
-        const { mountAppShell } = await import(`./js/router.js?v=${v}`);
-        
-        // Import Player Core (Renamed from player.js to force 404 on old cache)
-        const { initPlayer } = await import(`./js/player_core.js?v=${v}`);
+        try {
+          console.log("[Player] Iniciando carregamento de módulos...");
+          
+          // Limpar cache do service worker se existir
+          if ('serviceWorker' in navigator) {
+            try {
+              const registrations = await navigator.serviceWorker.getRegistrations();
+              for (const registration of registrations) {
+                await registration.unregister();
+                console.log("[Player] Service Worker desregistrado:", registration.scope);
+              }
+            } catch (swError) {
+              console.warn("[Player] Erro ao desregistrar Service Worker:", swError);
+            }
+          }
+          
+          const importFallback = async (modules) => {
+            let lastError;
+            for (const path of modules) {
+              try {
+                console.log(`[Player] Tentando carregar módulo: ${path}`);
+                return await import(path);
+              } catch (e) {
+                console.warn(`[Player] Falha ao carregar ${path}:`, e);
+                lastError = e;
+              }
+            }
+            throw lastError;
+          };
 
+          const getPaths = (filename) => {
+             const v = "20260226-v5-fix-" + Date.now();
+             return [
+               `./js/${filename}?v=${v}`,
+               `./www/js/${filename}?v=${v}`,
+               `../js/${filename}?v=${v}`, // Caso esteja em subpasta
+               `/${filename}?v=${v}` // Caso esteja na raiz absoluta (fallback extremo)
+             ];
+          };
+
+          console.log("[Player] Carregando router.js...");
+          const { mountAppShell } = await importFallback(getPaths('router.js'));
+          console.log("[Player] Router carregado com sucesso");
+
+          console.log("[Player] Carregando player_core.js...");
+          const { initPlayer } = await importFallback(getPaths('player_core.js'));
+          console.log("[Player] Player Core carregado com sucesso");
+
+          console.log("[Player] Inicializando aplicação...");
           await mountAppShell({ currentPath: "" });
+          console.log("[Player] App Shell montado com sucesso");
+          
           await initPlayer();
-      } catch (e) {
-          console.error("Critical Player Error:", e);
-      }
+          console.log("[Player] Player inicializado com sucesso");
+          
+        } catch (importError) {
+          console.error("[Player] Erro crítico ao carregar módulos:", importError);
+          console.error("[Player] Detalhes do erro:", {
+            message: importError.message,
+            stack: importError.stack,
+            name: importError.name
+          });
+          
+          // Tentar mostrar mensagem de erro ao usuário
+          const errorDiv = document.createElement('div');
+          errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: red; color: white; padding: 20px; z-index: 9999; border-radius: 10px; text-align: center;';
+          errorDiv.innerHTML = `
+            <h3>Erro ao Carregar Player</h3>
+            <p>${importError.message}</p>
+            <button onclick="location.reload()" style="margin-top: 10px; padding: 10px 20px; cursor: pointer;">Recarregar</button>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          // Tentar recarregar após 3 segundos
+          setTimeout(() => {
+            console.log("[Player] Tentando recarregar página...");
+            location.reload();
+          }, 3000);
+        }
     </script>
   </body>
 </html>

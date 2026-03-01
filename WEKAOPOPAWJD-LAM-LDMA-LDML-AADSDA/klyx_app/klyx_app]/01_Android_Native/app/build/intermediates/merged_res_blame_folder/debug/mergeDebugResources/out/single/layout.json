@@ -1,0 +1,42 @@
+[
+    {
+        "merged": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-mergeDebugResources-34:\\layout\\activity_profile.xml",
+        "source": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-main-37:\\layout\\activity_profile.xml"
+    },
+    {
+        "merged": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-mergeDebugResources-34:\\layout\\activity_dashboard.xml",
+        "source": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-main-37:\\layout\\activity_dashboard.xml"
+    },
+    {
+        "merged": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-mergeDebugResources-34:\\layout\\activity_player.xml",
+        "source": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-main-37:\\layout\\activity_player.xml"
+    },
+    {
+        "merged": "com.klyx.app-mergeDebugResources-34:/layout/activity_profile.xml",
+        "source": "com.klyx.app-main-37:/layout/activity_profile.xml"
+    },
+    {
+        "merged": "com.klyx.app-mergeDebugResources-34:/layout/activity_profile_selection.xml",
+        "source": "com.klyx.app-main-37:/layout/activity_profile_selection.xml"
+    },
+    {
+        "merged": "com.klyx.app-mergeDebugResources-34:/layout/fragment_grid.xml",
+        "source": "com.klyx.app-main-37:/layout/fragment_grid.xml"
+    },
+    {
+        "merged": "com.klyx.app-mergeDebugResources-34:/layout/fragment_home.xml",
+        "source": "com.klyx.app-main-37:/layout/fragment_home.xml"
+    },
+    {
+        "merged": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-mergeDebugResources-34:\\layout\\item_movie_card.xml",
+        "source": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-main-37:\\layout\\item_movie_card.xml"
+    },
+    {
+        "merged": "com.klyx.app-mergeDebugResources-34:/layout/activity_dashboard.xml",
+        "source": "com.klyx.app-main-37:/layout/activity_dashboard.xml"
+    },
+    {
+        "merged": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-mergeDebugResources-34:\\layout\\activity_login.xml",
+        "source": "C:\\Users\\kaandro\\.gradle\\daemon\\9.1.0\\com.klyx.app-main-37:\\layout\\activity_login.xml"
+    }
+]

@@ -79,7 +79,11 @@ video.video {
   opacity: 1;
   transition: opacity 0.3s ease;
   z-index: 20;
-  pointer-events: auto;
+  pointer-events: none; /* Allow clicks to pass through to video */
+}
+
+.controls > * {
+  pointer-events: auto; /* Re-enable clicks for control groups */
 }
 
 /* Top Overlay (Back & Settings) */
@@ -105,6 +109,59 @@ video.video {
 
 /* Adjust floating controls for mobile */
 @media (max-width: 768px) {
+    .controls-center {
+        gap: 20px !important; /* Reduce gap */
+    }
+
+    .btn-play-big {
+        width: 56px !important; /* Smaller play button */
+        height: 56px !important;
+        font-size: 20px !important;
+    }
+    
+    .btn-play-big svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .btn-seek-big {
+        width: 40px !important; /* Smaller seek buttons */
+        height: 40px !important;
+    }
+    
+    .btn-seek-big svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    
+    .btn-seek-big span {
+        font-size: 9px !important;
+    }
+
+    /* Fix overlapping: move bottom controls lower and reduce padding */
+    .controls-bottom {
+        bottom: 10px !important; /* Move closer to bottom */
+        margin-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+        padding: 8px 12px !important; /* Slimmer padding */
+        width: 95% !important; /* Wider on mobile */
+        gap: 10px !important;
+    }
+    
+    .time-display {
+        font-size: 11px !important; /* Smaller font */
+        min-width: 30px !important;
+    }
+    
+    /* Ensure range slider is not too "tall"/thick */
+    .range {
+        height: 3px !important;
+    }
+    
+    .range::-webkit-slider-thumb {
+        width: 12px !important;
+        height: 12px !important;
+    }
+
     #floating-controls {
         top: max(10px, env(safe-area-inset-top) + 10px) !important;
         right: max(10px, env(safe-area-inset-right) + 10px) !important;
@@ -168,6 +225,7 @@ video.video {
   gap: 40px;
   pointer-events: auto;
   width: 100%;
+  z-index: 25;
 }
 
 .btn-play-big {
@@ -244,6 +302,63 @@ video.video {
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   margin-bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 30;
+}
+
+/* Mobile Adjustments for Player */
+@media (max-width: 768px) {
+  .controls-center {
+    gap: 20px; /* Reduce gap */
+  }
+
+  .btn-play-big {
+    width: 56px; /* Smaller play button */
+    height: 56px;
+    font-size: 20px;
+  }
+  
+  .btn-play-big svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .btn-seek-big {
+    width: 40px; /* Smaller seek buttons */
+    height: 40px;
+  }
+  
+  .btn-seek-big svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .btn-seek-big span {
+    font-size: 9px;
+  }
+
+  /* Fix overlapping: move bottom controls lower and reduce padding */
+  .controls-bottom {
+    bottom: 10px; /* Move closer to bottom */
+    margin-bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 8px 12px; /* Slimmer padding */
+    width: 95%; /* Wider on mobile */
+    gap: 10px;
+  }
+  
+  .time-display {
+    font-size: 11px; /* Smaller font */
+    min-width: 30px;
+  }
+  
+  /* Ensure range slider is not too "tall"/thick */
+  .range {
+    height: 3px;
+  }
+  
+  .range::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 .time-display {
@@ -261,7 +376,7 @@ video.video {
   appearance: none;
   flex: 1;
   height: 4px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.3); /* Will be overridden by JS gradient */
   border-radius: 2px;
   cursor: pointer;
   position: relative;
@@ -271,9 +386,14 @@ video.video {
   -webkit-appearance: none;
   width: 14px;
   height: 14px;
-  background: white;
+  background: #9333ea; /* Purple Thumb */
   border-radius: 50%;
   box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  transition: transform 0.1s;
+}
+
+.range::-webkit-slider-thumb:active {
+    transform: scale(1.3);
 }
 
 .hidden {

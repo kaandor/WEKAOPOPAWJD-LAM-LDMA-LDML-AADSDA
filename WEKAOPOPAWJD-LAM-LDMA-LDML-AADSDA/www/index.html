@@ -9,67 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Entrar</title>
-    
-    <!-- Cache Killer Script - Força limpeza de cache e service worker -->
-    <script>
-      // Força limpeza completa do cache e service workers
-      (function() {
-        console.log('[Cache Killer] Iniciando limpeza de cache...');
-        
-        // 1. Remove todos os service workers
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then((registrations) => {
-            console.log(`[Cache Killer] Encontrados ${registrations.length} service workers`);
-            
-            registrations.forEach((registration) => {
-              registration.unregister().then(() => {
-                console.log('[Cache Killer] Service Worker removido:', registration.scope);
-              }).catch((err) => {
-                console.error('[Cache Killer] Erro ao remover Service Worker:', err);
-              });
-            });
-          });
-        }
-        
-        // 2. Limpa todos os caches
-        if ('caches' in window) {
-          caches.keys().then((cacheNames) => {
-            console.log(`[Cache Killer] Encontrados ${cacheNames.length} caches`);
-            
-            cacheNames.forEach((cacheName) => {
-              caches.delete(cacheName).then(() => {
-                console.log('[Cache Killer] Cache removido:', cacheName);
-              }).catch((err) => {
-                console.error('[Cache Killer] Erro ao remover cache:', err);
-              });
-            });
-          });
-        }
-        
-        // 3. Limpa localStorage específico do KLYX (mantém auth)
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('klyx_') && !key.includes('session') && !key.includes('auth')) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((key) => {
-          localStorage.removeItem(key);
-          console.log('[Cache Killer] Removido do localStorage:', key);
-        });
-        
-        // 4. Limpa sessionStorage
-        sessionStorage.clear();
-        console.log('[Cache Killer] sessionStorage limpo');
-        
-        console.log('[Cache Killer] Limpeza de cache concluída!');
-      })();
-    </script>
-    
-    <link rel="stylesheet" href="./css/global.css?v=ad05d9a" />
-    <link rel="stylesheet" href="./css/login.css?v=ad05d9a" />
-    <script src="./js/adsterra.js?v=ad05d9a"></script>
+    <link rel="stylesheet" href="./css/global.css?v=20260226-v1" />
+    <link rel="stylesheet" href="./css/login.css?v=20260226-v1" />
+    <script src="./js/adsterra.js?v=20260226-v1"></script>
   </head>
   <body>
     <div class="auth-shell">
