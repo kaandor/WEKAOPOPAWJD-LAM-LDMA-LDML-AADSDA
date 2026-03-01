@@ -49,10 +49,10 @@
         button:hover {
             background: #45a049;
         }
-        #log {
+        .log {
             background: #1a1a1a;
             border: 1px solid #444;
-            padding: 15px;
+            padding: 10px;
             border-radius: 5px;
             max-height: 300px;
             overflow-y: auto;
@@ -62,33 +62,44 @@
         .log-entry {
             margin: 2px 0;
             padding: 2px 5px;
-            border-radius: 3px;
         }
-        .log-info { background: #333; }
-        .log-success { background: #2d5a2d; }
-        .log-error { background: #5a2d2d; }
+        .log-error {
+            color: #f44336;
+        }
+        .log-success {
+            color: #4CAF50;
+        }
+        .log-info {
+            color: #2196F3;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧪 Teste de Disponibilidade - GitHub Pages</h1>
-        <p>Este teste verifica se os arquivos necessários estão disponíveis no GitHub Pages.</p>
+        <h1>Teste de Disponibilidade - GitHub Pages</h1>
+        <p>Este teste verifica se os arquivos estão disponíveis no GitHub Pages.</p>
         
-        <button onclick="runAllTests()">Executar Todos os Testes</button>
-        <button onclick="clearLog()">Limpar Log</button>
-        <button onclick="testPlayerCore()">Testar Player Core</button>
+        <button onclick="testAllFiles()">Testar Todos os Arquivos</button>
+        <button onclick="clearLogs()">Limpar Logs</button>
+        <button onclick="testDirectImport()">Testar Importação Direta</button>
         
-        <div id="log"></div>
+        <div id="status"></div>
     </div>
 
     <div class="container">
-        <h2>📊 Resultados dos Testes</h2>
+        <h3>Resultados dos Testes</h3>
         <div id="results"></div>
+    </div>
+
+    <div class="container">
+        <h3>Log Detalhado</h3>
+        <div id="log" class="log"></div>
     </div>
 
     <script>
         const log = document.getElementById('log');
         const results = document.getElementById('results');
+        const status = document.getElementById('status');
 
         function addLog(message, type = 'info') {
             const entry = document.createElement('div');
@@ -98,28 +109,22 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        function clearLog() {
+        function clearLogs() {
             log.innerHTML = '';
             results.innerHTML = '';
-        }
-
-        function addResult(test, success, details = '') {
-            const result = document.createElement('div');
-            result.className = `test-item ${success ? 'success' : 'error'}`;
-            result.innerHTML = `
-                <strong>${test}</strong>
-                ${details ? `<br><small>${details}</small>` : ''}
-            `;
-            results.appendChild(result);
+            status.innerHTML = '';
+            addLog('Logs limpos', 'info');
         }
 
         async function testFile(url, name) {
             addLog(`Testando: ${name} (${url})`, 'info');
+            
             try {
                 const response = await fetch(url, {
                     method: 'HEAD',
                     cache: 'no-cache'
                 });
+                
                 if (response.ok) {
                     addLog(`✓ ${name} disponível (${response.status})`, 'success');
                     return { success: true, status: response.status, url };
@@ -133,96 +138,137 @@
             }
         }
 
-        async function testPlayerCore() {
-            clearLog();
-            addLog('Iniciando teste específico do player_core.js...', 'info');
+        async function testAllFiles() {
+            clearLogs();
+            addLog('Iniciando teste de disponibilidade...', 'info');
             
-            const baseUrl = window.location.origin;
-            const paths = [
-                `${baseUrl}/js/player_core.js`,
-                `${baseUrl}/www/js/player_core.js`,
-                `./js/player_core.js`,
-                `./www/js/player_core.js`
-            ];
+            const baseUrl = window.location.origin + window.location.pathname.replace('/github_test.html', '');
+            addLog(`URL base: ${baseUrl}`, 'info');
 
-            for (const path of paths) {
-                const result = await testFile(path, `player_core.js (${path})`);
-                if (result.success) {
-                    addResult('Player Core Encontrado', true, `Disponível em: ${path}`);
-                    
-                    // Testar importação real
-                    try {
-                        addLog('Testando importação do módulo...', 'info');
-                        const module = await import(path);
-                        addLog('✓ Módulo importado com sucesso!', 'success');
-                        addResult('Importação do Módulo', true, 'Módulo carregado corretamente');
-                        
-                        if (module.initPlayer) {
-                            addResult('Função initPlayer', true, 'Função encontrada no módulo');
-                        } else {
-                            addResult('Função initPlayer', false, 'Função não encontrada no módulo');
-                        }
-                        break;
-                    } catch (importError) {
-                        addLog(`✗ Erro na importação: ${importError.message}`, 'error');
-                        addResult('Importação do Módulo', false, `Erro: ${importError.message}`);
-                    }
-                }
-            }
-        }
-
-        async function runAllTests() {
-            clearLog();
-            addLog('Iniciando testes de disponibilidade...', 'info');
-            
-            const baseUrl = window.location.origin;
-            const tests = [
-                // Testes de arquivos JavaScript
+            const files = [
+                // Arquivos JS
                 { url: `${baseUrl}/js/player_core.js`, name: 'player_core.js (raiz)' },
-                { url: `${baseUrl}/www/js/player_core.js`, name: 'player_core.js (www)' },
                 { url: `${baseUrl}/js/router.js`, name: 'router.js (raiz)' },
-                { url: `${baseUrl}/www/js/router.js`, name: 'router.js (www)' },
                 { url: `${baseUrl}/js/api.js`, name: 'api.js (raiz)' },
-                { url: `${baseUrl}/www/js/api.js`, name: 'api.js (www)' },
                 { url: `${baseUrl}/js/ui.js`, name: 'ui.js (raiz)' },
-                { url: `${baseUrl}/www/js/ui.js`, name: 'ui.js (www)' },
+                { url: `${baseUrl}/js/auth.js`, name: 'auth.js (raiz)' },
                 
-                // Testes de arquivos HTML
+                // Arquivos JS em www
+                { url: `${baseUrl}/www/js/player_core.js`, name: 'player_core.js (www)' },
+                { url: `${baseUrl}/www/js/router.js`, name: 'router.js (www)' },
+                { url: `${baseUrl}/www/js/api.js`, name: 'api.js (www)' },
+                { url: `${baseUrl}/www/js/ui.js`, name: 'ui.js (www)' },
+                { url: `${baseUrl}/www/js/auth.js`, name: 'auth.js (www)' },
+                
+                // HTMLs
                 { url: `${baseUrl}/player_v2.html`, name: 'player_v2.html (raiz)' },
                 { url: `${baseUrl}/www/player_v2.html`, name: 'player_v2.html (www)' },
                 { url: `${baseUrl}/index.html`, name: 'index.html (raiz)' },
                 { url: `${baseUrl}/www/index.html`, name: 'index.html (www)' },
                 
-                // Testes de dados
-                { url: `${baseUrl}/www/assets/data/movies.json`, name: 'movies.json' },
-                
-                // Teste do próprio arquivo de teste
-                { url: `${baseUrl}/github_test.html`, name: 'github_test.html' }
+                // Assets
+                { url: `${baseUrl}/assets/data/movies.json`, name: 'movies.json' },
+                { url: `${baseUrl}/www/assets/data/movies.json`, name: 'movies.json (www)' }
             ];
 
-            let successCount = 0;
-            let totalCount = tests.length;
-
-            for (const test of tests) {
-                const result = await testFile(test.url, test.name);
-                addResult(test.name, result.success, result.error || `Status: ${result.status}`);
-                if (result.success) successCount++;
+            status.innerHTML = '<div class="test-item loading">Testando arquivos...</div>';
+            
+            const results = [];
+            for (const file of files) {
+                const result = await testFile(file.url, file.name);
+                results.push(result);
             }
 
-            // Resumo final
-            addLog(`Testes concluídos: ${successCount}/${totalCount} arquivos disponíveis`, 
-                   successCount === totalCount ? 'success' : 'error');
+            displayResults(results);
+        }
+
+        function displayResults(results) {
+            const available = results.filter(r => r.success);
+            const unavailable = results.filter(r => !r.success);
             
-            if (successCount < totalCount) {
-                addLog('Alguns arquivos não estão disponíveis. Verifique o deploy no GitHub Pages.', 'error');
-            } else {
-                addLog('Todos os arquivos estão disponíveis! 🎉', 'success');
+            status.innerHTML = `
+                <div class="test-item success">✓ Arquivos disponíveis: ${available.length}</div>
+                <div class="test-item error">✗ Arquivos indisponíveis: ${unavailable.length}</div>
+            `;
+
+            resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            if (available.length > 0) {
+                const availableDiv = document.createElement('div');
+                availableDiv.innerHTML = '<h4>Arquivos Disponíveis:</h4>';
+                available.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = 'test-item success';
+                    div.textContent = `✓ ${result.name} (${result.status})`;
+                    availableDiv.appendChild(div);
+                });
+                resultsDiv.appendChild(availableDiv);
+            }
+            
+            if (unavailable.length > 0) {
+                const unavailableDiv = document.createElement('div');
+                unavailableDiv.innerHTML = '<h4>Arquivos Indisponíveis:</h4>';
+                unavailable.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = 'test-item error';
+                    div.textContent = `✗ ${result.name} ${result.status ? `(${result.status})` : `(erro: ${result.error})`}`;
+                    unavailableDiv.appendChild(div);
+                });
+                resultsDiv.appendChild(unavailableDiv);
             }
         }
 
-        // Executar testes automaticamente ao carregar a página
+        async function testDirectImport() {
+            clearLogs();
+            addLog('Testando importação direta de módulos...', 'info');
+            
+            try {
+                const v = Date.now();
+                
+                // Testar importação de router.js
+                addLog('Tentando importar router.js de ./js/router.js...', 'info');
+                try {
+                    const { mountAppShell } = await import(`./js/router.js?v=${v}`);
+                    addLog('✓ Router.js importado com sucesso de ./js/', 'success');
+                } catch (e) {
+                    addLog(`✗ Falha ao importar de ./js/: ${e.message}`, 'error');
+                    
+                    addLog('Tentando importar de ./www/js/router.js...', 'info');
+                    try {
+                        const { mountAppShell } = await import(`./www/js/router.js?v=${v}`);
+                        addLog('✓ Router.js importado com sucesso de ./www/js/', 'success');
+                    } catch (e2) {
+                        addLog(`✗ Falha ao importar de ./www/js/: ${e2.message}`, 'error');
+                    }
+                }
+                
+                // Testar importação de player_core.js
+                addLog('Tentando importar player_core.js de ./js/player_core.js...', 'info');
+                try {
+                    const { initPlayer } = await import(`./js/player_core.js?v=${v}`);
+                    addLog('✓ Player_core.js importado com sucesso de ./js/', 'success');
+                } catch (e) {
+                    addLog(`✗ Falha ao importar de ./js/: ${e.message}`, 'error');
+                    
+                    addLog('Tentando importar de ./www/js/player_core.js...', 'info');
+                    try {
+                        const { initPlayer } = await import(`./www/js/player_core.js?v=${v}`);
+                        addLog('✓ Player_core.js importado com sucesso de ./www/js/', 'success');
+                    } catch (e2) {
+                        addLog(`✗ Falha ao importar de ./www/js/: ${e2.message}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                addLog(`Erro geral: ${error.message}`, 'error');
+            }
+        }
+
+        // Testar automaticamente ao carregar
         window.addEventListener('load', () => {
-            addLog('Página de teste carregada. Clique em "Executar Todos os Testes" para começar.', 'info');
+            addLog('Página de teste carregada', 'info');
+            addLog(`URL atual: ${window.location.href}`, 'info');
         });
     </script>
 </body>

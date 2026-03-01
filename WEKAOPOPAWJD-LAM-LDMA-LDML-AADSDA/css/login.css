@@ -1,213 +1,145 @@
-
 body {
-    background-color: #0b0e14;
-    color: #e5e5e5;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    margin: 0;
-    background-image: radial-gradient(circle at center, #1f2937 0%, #0b0e14 100%);
-    background-size: cover;
-    background-position: center;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(168, 85, 247, 0.25) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(109, 40, 217, 0.2) 0%, transparent 40%),
+    linear-gradient(180deg, #1e1b4b 0%, #020617 100%);
+  background-attachment: fixed;
 }
 
 .auth-shell {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 16px;
 }
 
 .auth-card {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    min-height: auto;
-    padding: 60px 48px;
-    width: 100%;
-    max-width: 420px;
-    position: relative;
+  width: min(520px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 15, 25, 0.4); /* Muito mais transparente */
+  backdrop-filter: blur(10px); /* Efeito de vidro fosco */
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 22px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 26px;
 }
 
-.brand-logo {
-    height: 45px;
+@media (max-width: 768px) {
+  .auth-shell {
+    padding: 0;
+    align-items: flex-start;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block; /* Ensure scroll works reliably */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+  }
+
+  .auth-shell::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+  }
+
+  .auth-card {
+    width: 100%;
+    min-height: 100%; /* Changed from 100dvh to fit inside scrollable area */
+    border: none;
+    border-radius: 0;
+    background: transparent; /* Totalmente transparente no mobile */
+    box-shadow: none;
+    padding: 24px 20px;
+    padding-top: max(24px, env(safe-area-inset-top) + 24px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .auth-top {
     margin-bottom: 20px;
+  }
+
+  .input {
+    padding: 16px;
+    font-size: 16px; /* Prevents zooming on iOS */
+  }
+
+  .btn {
+    padding: 16px;
+    font-size: 16px;
+  }
+}
+
+.auth-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.auth-top a {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auth-top a:hover {
+  color: var(--text);
+}
+
+.auth-title {
+  margin-top: 18px;
 }
 
 .auth-title h1 {
-    color: #fff;
-    font-size: 32px;
-    font-weight: 700;
-    margin-bottom: 28px;
-    text-align: left;
+  font-size: 26px;
+  margin: 0;
 }
 
 .auth-title p {
-    display: none; /* Hide subtitle to match Netflix minimal style */
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .field {
-    margin-bottom: 16px;
+  margin-top: 14px;
 }
 
 .field label {
-    display: none; /* Hide labels, use placeholders */
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
 }
 
 .input {
-    background: #333;
-    border-radius: 4px;
-    border: 0;
-    color: #fff;
-    height: 50px;
-    line-height: 50px;
-    padding: 16px 20px;
-    width: 100%;
-    box-sizing: border-box;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
 }
 
-.input::placeholder {
-    color: #8c8c8c;
+.input:focus {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-.btn-primary {
-    background-color: #e50914; /* Netflix Red */
-    border-radius: 4px;
-    border: none;
-    box-shadow: 0 1px 0 rgba(0,0,0,.45);
-    color: #fff;
-    cursor: pointer;
-    display: block;
-    font-size: 16px;
-    font-weight: 700;
-    margin: 24px 0 12px;
-    padding: 16px;
-    width: 100%;
-}
-
-.btn-primary:hover {
-    background-color: #f40612;
-}
-
-/* GitHub Button */
-.btn-github {
-    background-color: #24292e;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
-    margin: 10px 0;
-    padding: 16px;
-    width: 100%;
-    transition: background-color 0.2s;
-}
-
-.btn-github:hover {
-    background-color: #2f363d;
-}
-
-.btn-github svg {
-    margin-right: 10px;
-    fill: white;
-}
-
-/* Google Button */
-.btn-google {
-    background-color: #ffffff;
-    border-radius: 4px;
-    border: none;
-    color: #757575;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
-    margin: 10px 0;
-    padding: 16px;
-    width: 100%;
-    transition: background-color 0.2s;
-    font-family: 'Roboto', sans-serif;
-}
-
-.btn-google:hover {
-    background-color: #f1f1f1;
-    color: #333;
-}
-
-.btn-google svg {
-    margin-right: 10px;
-}
-
-.auth-actions a.btn {
-    color: #737373;
-    font-size: 16px;
-    text-decoration: none;
-    margin-top: 16px;
-    display: block;
-}
-
-.auth-actions a.btn:hover {
-    text-decoration: underline;
-    color: #fff;
+.auth-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .error {
-    background: #e87c03;
-    border-radius: 4px;
-    font-size: 14px;
-    margin: 0 0 16px;
-    padding: 10px 20px;
-    color: white;
+  margin-top: 12px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--danger) 55%, var(--text));
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  padding: 10px 12px;
+  border-radius: 14px;
 }
 
-.hidden {
-    display: none;
-}
-
-#connectionStatusDot {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #4b5563;
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
-    display: none;
-}
-
-#connectionStatusDot.syncing {
-    display: inline-block;
-    background: #fbbf24;
-    animation: klyx-sync-pulse 1s infinite;
-}
-
-#connectionStatusDot.synced {
-    display: inline-block;
-    background: #22c55e;
-    animation: none;
-}
-
-#connectionStatusDot.error {
-    display: inline-block;
-    background: #ef4444;
-    animation: none;
-}
-
-@keyframes klyx-sync-pulse {
-    0% { transform: scale(1); opacity: 0.9; }
-    50% { transform: scale(1.4); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.9; }
-}
