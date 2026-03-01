@@ -567,7 +567,7 @@ function renderEpisodesList(episodes, currentIndex, seriesId, container) {
 
     Object.keys(seasons).sort((a,b) => a - b).forEach(seasonNum => {
         const seasonTitle = document.createElement('h4');
-        seasonTitle.textContent = Temporada ;
+        seasonTitle.textContent = `Temporada ${seasonNum}`;
         seasonTitle.style.color = '#aaa';
         seasonTitle.style.margin = '10px 0 5px 0';
         seasonTitle.style.borderBottom = '1px solid #333';
@@ -594,16 +594,16 @@ function renderEpisodesList(episodes, currentIndex, seriesId, container) {
                 epEl.addEventListener('mouseleave', () => epEl.style.background = 'transparent');
             }
 
-            epEl.innerHTML = 
+            epEl.innerHTML = `
                 <div style='display: flex; flex-direction: column;'>
-                    <span style='color: white; font-weight: bold;'>. </span>
-                    <span style='color: #888; font-size: 12px;'></span>
+                    <span style='color: white; font-weight: bold;'>${ep.episode_number}. ${ep.title}</span>
+                    <span style='color: #888; font-size: 12px;'>${ep.duration ? ep.duration + ' min' : ''}</span>
                 </div>
-                
-            ;
+                ${isCurrent ? '<span style=\'color: #9333ea; font-size: 12px; font-weight: bold;\'>TOCANDO</span>' : ''}
+            `;
             
             epEl.onclick = () => {
-                window.location.href = ./player_v2.html?type=episode&id=&seriesId=;
+                window.location.href = `./player_v2.html?type=episode&id=${ep.id}&seriesId=${seriesId}`;
             };
             
             container.appendChild(epEl);
@@ -636,7 +636,7 @@ function setupUI(detail, video, ui) {
                 btnNextEp.style.display = 'flex';
                 btnNextEp.onclick = () => {
                     const nextEp = episodes[currentEpIndex + 1];
-                    window.location.href = ./player_v2.html?type=episode&id=&seriesId=;
+                    window.location.href = `./player_v2.html?type=episode&id=${nextEp.id}&seriesId=${seriesId}`;
                 };
             } else {
                 btnNextEp.style.display = 'none';
