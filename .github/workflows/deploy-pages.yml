@@ -29,8 +29,9 @@ jobs:
       - name: Upload static files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA
+          path: ./WEKAOPOPAWJD-LAM-LDMA-LDML-AADSDA/www
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
