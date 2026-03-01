@@ -553,6 +553,64 @@ function createExternalAction(url) {
     return btn;
 }
 
+function renderEpisodesList(episodes, currentIndex, seriesId, container) {
+    if (!container) return;
+    container.innerHTML = '';
+    
+    // Group by seasons
+    const seasons = {};
+    episodes.forEach(ep => {
+        const s = ep.season_number || 1;
+        if (!seasons[s]) seasons[s] = [];
+        seasons[s].push(ep);
+    });
+
+    Object.keys(seasons).sort((a,b) => a - b).forEach(seasonNum => {
+        const seasonTitle = document.createElement('h4');
+        seasonTitle.textContent = Temporada ;
+        seasonTitle.style.color = '#aaa';
+        seasonTitle.style.margin = '10px 0 5px 0';
+        seasonTitle.style.borderBottom = '1px solid #333';
+        seasonTitle.style.paddingBottom = '5px';
+        container.appendChild(seasonTitle);
+
+        seasons[seasonNum].forEach(ep => {
+            const epEl = document.createElement('div');
+            epEl.style.padding = '10px';
+            epEl.style.borderBottom = '1px solid #333';
+            epEl.style.cursor = 'pointer';
+            epEl.style.display = 'flex';
+            epEl.style.justifyContent = 'space-between';
+            epEl.style.alignItems = 'center';
+            
+            const isCurrent = (ep.season_number === episodes[currentIndex].season_number && ep.episode_number === episodes[currentIndex].episode_number);
+            
+            if (isCurrent) {
+                epEl.style.background = 'rgba(147, 51, 234, 0.2)';
+                epEl.style.borderLeft = '4px solid #9333ea';
+            } else {
+                epEl.style.background = 'transparent';
+                epEl.addEventListener('mouseenter', () => epEl.style.background = '#333');
+                epEl.addEventListener('mouseleave', () => epEl.style.background = 'transparent');
+            }
+
+            epEl.innerHTML = 
+                <div style='display: flex; flex-direction: column;'>
+                    <span style='color: white; font-weight: bold;'>. </span>
+                    <span style='color: #888; font-size: 12px;'></span>
+                </div>
+                
+            ;
+            
+            epEl.onclick = () => {
+                window.location.href = ./player_v2.html?type=episode&id=&seriesId=;
+            };
+            
+            container.appendChild(epEl);
+        });
+    });
+}
+
 function setupUI(detail, video, ui) {
     const { title, meta, episodes, currentEpIndex, seriesId } = detail;
     
@@ -564,44 +622,52 @@ function setupUI(detail, video, ui) {
     const metaEl = document.getElementById('playerMeta');
     if (metaEl) metaEl.textContent = meta;
     
-    // Series Controls
-    const seriesControls = document.getElementById('seriesControls');
-    if (episodes.length > 0 && seriesControls) {
-        seriesControls.style.display = 'flex';
-        
-        // Previous/Next buttons
-        const btnPrev = document.getElementById('btnPrev');
-        const btnNext = document.getElementById('btnNext');
-        const epInfo = document.getElementById('episodeInfo');
-        
-        if (btnPrev) {
-            btnPrev.disabled = currentEpIndex <= 0;
-            btnPrev.onclick = () => {
-                if (currentEpIndex > 0) {
-                    const prevEp = episodes[currentEpIndex - 1];
-                    window.location.href = `./player_v2.html?type=episode&id=${prevEp.id}&seriesId=${seriesId}`;
-                }
-            };
-        }
-        
-        if (btnNext) {
-            btnNext.disabled = currentEpIndex >= episodes.length - 1;
-            btnNext.onclick = () => {
-                if (currentEpIndex < episodes.length - 1) {
+    // Series Controls (Updated for player_v2.html)
+    const btnNextEp = document.getElementById('btnNextEp');
+    const btnEpList = document.getElementById('btnEpList');
+    const epListModal = document.getElementById('epListModal');
+    const closeEpListModal = document.getElementById('closeEpListModal');
+    const epListContent = document.getElementById('epListContent');
+
+    if (episodes && episodes.length > 0) {
+        // Show Next Episode Button if available
+        if (btnNextEp) {
+            if (currentEpIndex < episodes.length - 1) {
+                btnNextEp.style.display = 'flex';
+                btnNextEp.onclick = () => {
                     const nextEp = episodes[currentEpIndex + 1];
-                    window.location.href = `./player_v2.html?type=episode&id=${nextEp.id}&seriesId=${seriesId}`;
-                }
+                    window.location.href = ./player_v2.html?type=episode&id=&seriesId=;
+                };
+            } else {
+                btnNextEp.style.display = 'none';
+            }
+        }
+
+        // Show Episodes List Button
+        if (btnEpList) {
+            btnEpList.style.display = 'flex';
+            btnEpList.onclick = () => {
+                renderEpisodesList(episodes, currentEpIndex, seriesId, epListContent);
+                if (epListModal) epListModal.style.display = 'flex';
             };
         }
-        
-        if (epInfo) {
-            epInfo.textContent = `Episódio ${currentEpIndex + 1} de ${episodes.length}`;
+
+        // Close Modal Logic
+        if (closeEpListModal && epListModal) {
+            closeEpListModal.onclick = () => {
+                epListModal.style.display = 'none';
+            };
+            // Close on click outside
+            epListModal.onclick = (e) => {
+                if (e.target === epListModal) epListModal.style.display = 'none';
+            };
         }
-    } else if (seriesControls) {
-        seriesControls.style.display = 'none';
+    } else {
+        // Hide buttons if not a series
+        if (btnNextEp) btnNextEp.style.display = 'none';
+        if (btnEpList) btnEpList.style.display = 'none';
     }
 }
-
 function setupControls(video, ui) {
     const progressBar = document.getElementById('progressBar');
     const currentTimeEl = document.getElementById('currentTime');
