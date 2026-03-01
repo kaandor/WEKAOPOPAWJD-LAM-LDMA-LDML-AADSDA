@@ -1,6 +1,5 @@
-import { requireAuth, logout } from "./auth.js";
-import { api } from "./api.js?v=20260225-v1";
-import { initInput } from "./input.js";
+import { requireAuth } from "./auth.js";
+import { api } from "./api.js";
 
 function icon() {
   return `
@@ -12,14 +11,29 @@ function icon() {
 }
 
 export async function mountAppShell({ currentPath }) {
-  console.log('Klyx Router v7 Loaded - Force Update');
-  initInput(); // Initialize TV Navigation globally
-  const session = await requireAuth();
-  if (!session) return;
+  // Optimistic UI: Try to read session immediately from storage
+  let session = api.session.read();
+  
+  // Background validation (fire and forget, handles redirect if invalid)
+  requireAuth().then(verified => {
+      if (!verified && !session?.tokens?.accessToken) {
+          // If both local and remote failed, we are already redirected by requireAuth
+      }
+  }).catch(console.error);
 
-  // Check profile selection
+  // If no local session exists, we must wait for the check
+  if (!session || !session.tokens || !session.tokens.accessToken) {
+      session = await requireAuth();
+      if (!session) return;
+  }
+
+  // Proceed to render immediately with whatever session data we have
+
+  // Check profile selection (skip check if we are already on profiles page, although app shell usually not mounted there?)
+  // Actually profile-selection.html does NOT use mountAppShell.
+  // So if we are here (dashboard, movies, etc), we MUST have a profile.
   const profileId = localStorage.getItem("klyx_profile_id");
-  if (!profileId && !window.location.pathname.includes("profile-selection")) {
+  if (!profileId) {
       window.location.href = "./profile-selection.html";
       return;
   }
@@ -27,12 +41,12 @@ export async function mountAppShell({ currentPath }) {
   const header = document.getElementById("app-header");
   if (!header) return;
 
-  const profileName = localStorage.getItem("klyx_profile_name") || session.user.display_name || session.user.email;
+  const profileName = localStorage.getItem("klyx_profile_name") || session?.user?.display_name || session?.user?.email || "User";
   const profileAvatar = localStorage.getItem("klyx_profile_avatar");
   const userLabel = profileName;
   const initial = userLabel ? userLabel.charAt(0).toUpperCase() : "?";
   
-  // Calculate avatar color
+  // Calculate avatar color (same hash logic as profile-selection.js)
   function hashStr(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -43,17 +57,21 @@ export async function mountAppShell({ currentPath }) {
   const hue = profileName ? hashStr(profileName) % 360 : 0;
   const avatarColor = `hsl(${hue}, 70%, 30%)`;
 
-  // Avatar HTML
+  // Avatar HTML: use img if available, otherwise initial
   const avatarHtml = profileAvatar 
     ? `<img src="${escapeHtml(profileAvatar)}" alt="${escapeHtml(userLabel)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"> <span style="display:none">${initial}</span>`
     : initial;
   
+  // Icons
   const icons = {
     home: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>`,
     movies: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>`,
     series: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
+    live: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
     search: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>`,
-    profile: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>`
+    profile: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>`,
+    settings: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
+    switch: `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>`
   };
 
   header.innerHTML = `
@@ -69,29 +87,59 @@ export async function mountAppShell({ currentPath }) {
             </g>
             <g class="brand-text-group">
               <text x="75" y="52" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="42" fill="currentColor">Klyx</text>
+              <text x="78" y="72" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="13" fill="currentColor" opacity="0.8" letter-spacing="4">IPTV</text>
             </g>
           </svg>
+          <span class="connection-dot" id="connectionStatusDot" title="Checking connection..."></span>
         </a>
         <nav class="nav" aria-label="Primary">
-          <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home focusable" translate="no">
+          <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home" translate="no">
             <span class="nav-icon">${icons.home}</span>
             <span class="nav-text">Início</span>
           </a>
-          <a href="./movies.html" data-path="/movies" class="focusable" translate="no">
+          <a href="./movies.html" data-path="/movies" translate="no">
             <span class="nav-icon">${icons.movies}</span>
             <span class="nav-text">Filmes</span>
           </a>
-          <a href="./series.html" data-path="/series" class="focusable" translate="no">
+          <a href="./series.html" data-path="/series" translate="no">
             <span class="nav-icon">${icons.series}</span>
             <span class="nav-text">Séries</span>
           </a>
+          <a href="./live-tv.html" data-path="/live-tv" translate="no">
+            <span class="nav-icon">${icons.live}</span>
+            <span class="nav-text">TV ao Vivo</span>
+          </a>
+          <!-- Search disabled by user request -->
+          <!-- <a href="/search" data-path="/search">
+            <span class="nav-icon">${icons.search}</span>
+            <span class="nav-text">Buscar</span>
+          </a> -->
         </nav>
         <div class="header-actions">
           <div class="profile-dropdown-container">
-            <button id="switchProfileBtn" class="profile-avatar-btn focusable" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
-            <div class="profile-dropdown" id="profileDropdown" style="display:none;">
-              <button type="button" class="btn btn-secondary profile-dropdown-item" data-action="settings">Configurações</button>
-              <button type="button" class="btn btn-danger profile-dropdown-item" data-action="logout">Sair da conta</button>
+            <button id="switchProfileBtn" class="profile-avatar-btn" type="button" title="${escapeHtml(userLabel)}" style="background-color: ${avatarColor};">${avatarHtml}</button>
+            <div id="profileDropdown" class="profile-dropdown hidden">
+              <a href="./profile.html" class="dropdown-item">
+                <span class="dropdown-icon">${icons.profile}</span>
+                Perfil
+              </a>
+              <a href="./settings.html" class="dropdown-item">
+                <span class="dropdown-icon">${icons.settings}</span>
+                Configurações
+              </a>
+              <a href="./profile-selection.html" class="dropdown-item">
+                <span class="dropdown-icon">${icons.switch}</span>
+                Trocar Perfil
+              </a>
+              <div class="dropdown-divider"></div>
+              <button id="logoutBtn" class="dropdown-item dropdown-danger" type="button">
+                <span class="dropdown-icon">
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </span>
+                Sair
+              </button>
             </div>
           </div>
         </div>
@@ -105,57 +153,73 @@ export async function mountAppShell({ currentPath }) {
     if (path === currentPath) a.setAttribute("aria-current", "page");
   });
 
-  const switchBtn = document.getElementById("switchProfileBtn");
+  // Profile Dropdown Logic
+  const profileBtn = document.getElementById("switchProfileBtn");
   const dropdown = document.getElementById("profileDropdown");
+  
+  // Toggle dropdown
+  profileBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdown?.classList.toggle("hidden");
+  });
 
-  if (switchBtn && dropdown) {
-    let isOpen = false;
-
-    function openDropdown() {
-      dropdown.style.display = "flex";
-      isOpen = true;
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!profileBtn?.contains(e.target) && !dropdown?.contains(e.target)) {
+      dropdown?.classList.add("hidden");
     }
+  });
 
-    function closeDropdown() {
-      dropdown.style.display = "none";
-      isOpen = false;
-    }
+  const btn = document.getElementById("logoutBtn");
+  btn?.addEventListener("click", async () => {
+    localStorage.removeItem("klyx_profile_id");
+    localStorage.removeItem("klyx_profile_name");
+    localStorage.removeItem("klyx_profile_avatar");
+    await api.auth.logout();
+    window.location.href = "./login.html";
+  });
+  
+  const switchBtn = document.getElementById("switchProfileBtn");
+  /* switchBtn click handler removed as it now toggles dropdown */
 
-    function toggleDropdown() {
-      if (isOpen) {
-        closeDropdown();
-      } else {
-        openDropdown();
-      }
-    }
-
-    switchBtn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      toggleDropdown();
-    });
-
-    dropdown.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-action]");
-      if (!target) return;
-      const action = target.getAttribute("data-action");
-      if (action === "settings") {
-        window.location.href = "./settings.html";
-      } else if (action === "logout") {
-        logout();
-      }
-      closeDropdown();
-    });
-
-    document.addEventListener("click", () => {
-      if (!isOpen) return;
-      closeDropdown();
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && isOpen) {
-        closeDropdown();
-      }
-    });
+  // Connection Status Check
+  const connectionDot = document.getElementById("connectionStatusDot");
+  if (connectionDot) {
+      // Initial check
+      api.status.checkConnection().then(isConnected => {
+          if (isConnected) {
+            connectionDot.classList.add("connected");
+            connectionDot.title = "Connected to Database";
+            connectionDot.style.cursor = "default";
+            connectionDot.onclick = null;
+          } else {
+            connectionDot.classList.remove("connected");
+            const err = api.status.getLastError() || "Desconectado";
+            connectionDot.title = "Erro de conexão: Clique para ver detalhes";
+            connectionDot.style.cursor = "help";
+            connectionDot.onclick = () => alert(`Erro de Conexão com Firebase:\n\n${err}\n\nVerifique se as 'Rules' (Regras) do Firebase estão públicas (.read: true, .write: true) ou se o link está correto.`);
+          }
+        });
+      
+      // Periodic check every 30 seconds
+      setInterval(() => {
+          api.status.checkConnection().then(isConnected => {
+              if (isConnected) {
+                  connectionDot.classList.add("connected");
+                  if (api.isOfflineMode && api.isOfflineMode()) {
+                       connectionDot.title = "Modo Local Ativado (Banco de Dados Desligado)";
+                       connectionDot.style.backgroundColor = "#3b82f6"; 
+                  } else {
+                       connectionDot.title = "Connected to Database";
+                       connectionDot.style.backgroundColor = ""; // Reset
+                  }
+              } else {
+                  connectionDot.classList.remove("connected");
+                  connectionDot.title = "Disconnected";
+                  connectionDot.style.backgroundColor = "";
+              }
+          });
+      }, 30000);
   }
 }
 
@@ -167,3 +231,4 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+

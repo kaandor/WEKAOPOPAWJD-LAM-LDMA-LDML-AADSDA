@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Movies</title>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header id="app-header"></header>
+      <main class="page">
+        <div class="container">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+            <div>
+              <h1 style="margin: 0;">Filmes</h1>
+              <div class="subtext" style="margin-top: 5px;">Navegue pelos filmes e comece a assistir instantaneamente.</div>
+            </div>
+            
+            <div class="toolbar" style="margin-top: 0;">
+              <select id="movieCategory" class="select">
+                <option value="">Todas as categorias</option>
+              </select>
+              <input id="movieSearch" class="search-input" placeholder="Pesquisar filmes por nome" />
+            </div>
+          </div>
+          
+          <!-- Rows Container -->
+          <div id="moviesCatalog" style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 40px;"></div>
+
+          <div class="section">
+            <div id="moviesGrid" class="grid-cards"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      import { mountAppShell } from "./js/router.js";
+      import { initMovies } from "./js/ui.js";
+      await mountAppShell({ currentPath: "/movies" });
+      await initMovies();
+    </script>
+  </body>
+</html>
+
