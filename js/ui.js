@@ -671,22 +671,29 @@ function createModal(contentHtml) {
 
     const modal = document.createElement('div');
     modal.id = 'genericModal';
-    modal.className = 'modal-overlay';
+    modal.className = 'netflix-modal-backdrop active'; // Use netflix-ui.css class
     modal.innerHTML = `
-        <div class="modal-content">
-            <button class="modal-close" onclick="document.getElementById('genericModal').remove()">×</button>
-            ${contentHtml}
+        <div class="netflix-modal-content">
+            <div class="netflix-close-btn" onclick="document.getElementById('genericModal').remove()">×</div>
+            <div class="netflix-modal-body">
+                ${contentHtml}
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
     
     // Focus management
-    const closeBtn = modal.querySelector('.modal-close');
-    closeBtn.focus();
+    const closeBtn = modal.querySelector('.netflix-close-btn');
+    if (closeBtn) closeBtn.focus();
     
     // Close on escape
     modal.onkeydown = (e) => {
         if (e.key === 'Escape') modal.remove();
+    };
+    
+    // Close on backdrop click
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
     };
     
     return modal;
@@ -702,7 +709,7 @@ window.showMovieModal = async (id) => {
         const movie = movies.find(m => m.id === id);
         
         if (!movie) {
-            modal.querySelector('.modal-content').innerHTML = '<p>Filme não encontrado.</p><button onclick="this.closest(\'.modal-overlay\').remove()">Fechar</button>';
+            modal.querySelector('.netflix-modal-body').innerHTML = '<p>Filme não encontrado.</p>';
             return;
         }
         
@@ -713,9 +720,6 @@ window.showMovieModal = async (id) => {
         let backdrop = movie.backdrop || '';
 
         if (!description || description.length < 10) {
-             const modalContent = modal.querySelector('.modal-content');
-             // Show we are loading metadata...
-             // Note: We don't block UI, just update later
              const meta = await fetchMetadata(movie.title, 'movie');
              if (meta) {
                  description = meta.description || description;
@@ -727,30 +731,48 @@ window.showMovieModal = async (id) => {
              }
         }
 
-        // 2. Render Full Modal
-        const content = `
-            <div class="movie-detail-modal" style="${backdrop ? `background-image: linear-gradient(to top, #141414 10%, rgba(20,20,20,0.8) 50%, rgba(20,20,20,0.6) 100%), url('${backdrop}'); background-size: cover; background-position: center;` : ''}">
-                <div class="detail-content">
-                    <h1>${movie.title}</h1>
-                    <div class="meta-row">
-                        <span class="match-score">${rating ? `${rating} Pontos` : 'Novo'}</span>
-                        <span class="year">${year}</span>
-                        <span class="age-limit">14</span>
-                    </div>
-                    <p class="description">${description}</p>
-                    
-                    <div class="actions">
-                        <button class="play-btn focusable" onclick="window.location.href='./player_v2.html?type=movie&id=${movie.id}'">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                            Assistir
-                        </button>
-                    </div>
+        // 2. Render Full Modal using netflix-ui.css structure
+        // We replace the inner content of netflix-modal-body
+        const bodyContent = `
+            <div class="netflix-hero">
+                <img class="netflix-poster" src="${getProxiedImage(movie.poster)}" alt="${movie.title}">
+                ${backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, transparent, #141414); z-index:0; pointer-events:none;"></div>` : ''}
+            </div>
+            
+            <div class="netflix-info-container">
+                <h1>${movie.title}</h1>
+                <div class="netflix-meta-row">
+                    <span class="match-score">${rating ? `${rating} Pontos` : 'Novo'}</span>
+                    <span class="year">${year}</span>
+                    <span class="age-badge">14</span>
                 </div>
-                <button class="modal-close-btn" onclick="document.getElementById('genericModal').remove()">×</button>
+                
+                <div class="netflix-actions-stack">
+                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${movie.id}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Assistir
+                    </button>
+                </div>
+                
+                <p class="netflix-description">${description}</p>
             </div>
         `;
         
-        modal.innerHTML = content;
+        // Update modal body
+        modal.querySelector('.netflix-modal-body').innerHTML = bodyContent;
+        
+        // Apply backdrop if available to the hero section specifically or modal background?
+        // netflix-ui.css doesn't seem to have a specific backdrop container for image, 
+        // but we can add inline style to hero if we want.
+        // For now, the poster is enough, or we can use the backdrop image as a background for the hero.
+        if (backdrop) {
+             const hero = modal.querySelector('.netflix-hero');
+             if (hero) {
+                 hero.style.backgroundImage = `url('${getProxiedImage(backdrop)}')`;
+                 hero.style.backgroundSize = 'cover';
+                 hero.style.backgroundPosition = 'center';
+             }
+        }
         
     } catch (e) {
         console.error("Error showing movie modal:", e);
@@ -790,19 +812,24 @@ window.showSeriesModal = async (id) => {
         // Sort seasons
         const sortedSeasons = Object.keys(seasons).sort((a,b) => a - b);
         
-        // Render
+        // Render Seasons
         let seasonsHtml = '';
         sortedSeasons.forEach(s => {
             seasonsHtml += `
-                <div class="season-block">
-                    <h3>Temporada ${s}</h3>
-                    <div class="episodes-list">
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color:#e5e5e5; margin-bottom:10px; padding-left:20px;">Temporada ${s}</h3>
+                    <div style="display:flex; flex-direction:column; gap:2px;">
                         ${seasons[s].map(ep => `
-                            <div class="episode-item focusable" tabindex="0" 
+                            <div class="focusable" tabindex="0" 
+                                 style="padding: 15px 20px; display:flex; align-items:center; gap:15px; cursor:pointer; transition:background 0.2s;"
+                                 onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                                 onmouseout="this.style.background='transparent'"
                                  onclick="window.location.href='./player_v2.html?type=series&id=${id}&season=${s}&episode=${ep.episode_number || ep.episode}'">
-                                <span class="ep-num">${ep.episode_number || ep.episode}</span>
-                                <span class="ep-title">${ep.title}</span>
-                                <svg class="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span style="color:#d2d2d2; font-size:18px; width:30px;">${ep.episode_number || ep.episode}</span>
+                                <div style="flex:1;">
+                                    <div style="color:white; font-weight:500;">${ep.title}</div>
+                                </div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                             </div>
                         `).join('')}
                     </div>
@@ -810,23 +837,40 @@ window.showSeriesModal = async (id) => {
             `;
         });
         
-        const content = `
-            <div class="series-detail-modal" style="${seriesData.backdrop ? `background-image: linear-gradient(to top, #141414 10%, rgba(20,20,20,0.8) 50%, rgba(20,20,20,0.6) 100%), url('${seriesData.backdrop}'); background-size: cover; background-position: center;` : ''}">
-                <div class="detail-header">
-                    <h1>${seriesData.title}</h1>
-                    <p class="description">${seriesData.description || 'Sem descrição.'}</p>
+        const bodyContent = `
+            <div class="netflix-hero">
+                <img class="netflix-poster" src="${getProxiedImage(seriesData.poster)}" alt="${seriesData.title}">
+                ${seriesData.backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, transparent, #141414); z-index:0; pointer-events:none;"></div>` : ''}
+            </div>
+            
+            <div class="netflix-info-container">
+                <h1>${seriesData.title}</h1>
+                <div class="netflix-meta-row">
+                    <span class="match-score">${seriesData.rating ? `${seriesData.rating} Pontos` : 'Novo'}</span>
+                    <span class="year">${seriesData.year || ''}</span>
+                    <span class="age-badge">14</span>
                 </div>
-                <div class="seasons-container">
+                 <p class="netflix-description">${seriesData.description || 'Sem descrição.'}</p>
+                 
+                 <div style="margin-top:20px;">
                     ${seasonsHtml}
-                </div>
-                <button class="modal-close-btn" onclick="document.getElementById('genericModal').remove()">×</button>
+                 </div>
             </div>
         `;
         
-        modal.innerHTML = content;
+        modal.querySelector('.netflix-modal-body').innerHTML = bodyContent;
+
+        if (seriesData.backdrop) {
+             const hero = modal.querySelector('.netflix-hero');
+             if (hero) {
+                 hero.style.backgroundImage = `url('${getProxiedImage(seriesData.backdrop)}')`;
+                 hero.style.backgroundSize = 'cover';
+                 hero.style.backgroundPosition = 'center';
+             }
+        }
 
     } catch (e) {
         console.error("Error showing series modal:", e);
-        modal.innerHTML = `<div class="modal-content"><p>Erro: ${e.message}</p><button onclick="this.closest('.modal-overlay').remove()">Fechar</button></div>`;
+        modal.remove();
     }
 };
