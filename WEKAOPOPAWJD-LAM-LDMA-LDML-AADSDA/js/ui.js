@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260225-v1";
+import { api } from "./api.js?v=20260301-032545";
 
 // --- THEME APPLICATION + CLOUD SYNC ---
 // Start cloud polling silently (sem bolinha verde)
@@ -68,12 +68,16 @@ function getProxiedImage(url) {
     // If local asset, return as is
     if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
     
-    // Prioridade para clientetv.xyz: Weserv.nl (Melhor contra ORB)
+    // Prioridade para clientetv.xyz: CorsProxy (Melhor contra ORB e bloqueios recentes)
     if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
-        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
+        // Tenta carregar direto se for HTTPS, senão usa CorsProxy
+        if (url.startsWith('https://')) return url;
+        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
     }
     
-    // Proxy external URLs
+    // Proxy external URLs (Default Weserv)
+    // Weserv é bom, mas pode sofrer com ORB se redirecionar para HTTP.
+    // Tentar CorsProxy como fallback imediato se Weserv falhar é responsabilidade do handleImageError.
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
 }
 
@@ -122,48 +126,61 @@ async function fetchMetadata(title, type = 'movie') {
 }
 
 
-    // Global Image Error Handler to try backups
-    window.handleImageError = function(img) {
-        // Prevent infinite loop
-        if (img.getAttribute('data-failed') === 'true') return;
+// Global Image Error Handler to try backups
+window.handleImageError = function(img) {
+    // Prevent infinite loop
+    if (img.getAttribute('data-failed') === 'true') return;
 
-        const originalSrc = img.getAttribute('data-original-src');
-        if (!originalSrc) {
-            img.src = 'https://via.placeholder.com/300x450?text=Error';
-            img.setAttribute('data-failed', 'true');
-            return;
-        }
+    const originalSrc = img.getAttribute('data-original-src') || img.src; // Fallback se não tiver attr
+    // Salva o originalSrc na primeira falha se ainda não tiver
+    if (!img.getAttribute('data-original-src')) {
+        img.setAttribute('data-original-src', img.src.replace(/^(https?:\/\/.*?\/\?url=|https?:\/\/corsproxy\.io\/\?|https?:\/\/api\.codetabs\.com\/v1\/proxy\?quest=)/, '')); 
+    }
+    
+    // Recalcula originalSrc limpo para os proxies
+    let cleanSrc = img.getAttribute('data-original-src');
+    if (!cleanSrc || cleanSrc.startsWith('http') === false) cleanSrc = originalSrc; // Fallback
 
-        const currentSrc = img.src;
-        let nextSrc = '';
+    const currentSrc = img.src;
+    let nextSrc = '';
 
-        // Strategy Chain: Weserv -> CorsProxy -> Vercel -> AllOrigins -> Placeholder
+    // Strategy Chain: Direct -> Weserv -> CorsProxy -> CodeTabs -> Vercel -> AllOrigins -> Placeholder
 
-        // 1. If currently using Weserv (default), try CorsProxy (more robust)
-        if (currentSrc.includes('images.weserv.nl')) {
-            console.warn('[Image] Weserv failed, switching to CorsProxy:', originalSrc);
-            nextSrc = `https://corsproxy.io/?${encodeURIComponent(originalSrc)}`;
-        }
-        // 2. If CorsProxy failed, try Vercel Proxy
-        else if (currentSrc.includes('corsproxy.io')) {
-            console.warn('[Image] CorsProxy failed, switching to Vercel:', originalSrc);
-            nextSrc = `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(originalSrc)}`;
-        }
-        // 3. If Vercel failed, try AllOrigins
-        else if (currentSrc.includes('klyx-api.vercel.app')) {
-            console.warn('[Image] Vercel failed, switching to AllOrigins:', originalSrc);
-            nextSrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalSrc)}`;
-        }
-        // 4. Give up
-        else {
-            console.error('[Image] All proxies failed for:', originalSrc);
-            img.src = 'https://via.placeholder.com/300x450?text=No+Image';
-            img.setAttribute('data-failed', 'true');
-            return;
-        }
+    // 1. Falhou Weserv (Padrão) -> Tenta CorsProxy
+    if (currentSrc.includes('images.weserv.nl')) {
+         console.warn('[Image] Weserv failed, switching to CorsProxy:', cleanSrc);
+         nextSrc = `https://corsproxy.io/?${encodeURIComponent(cleanSrc)}`;
+    }
+    // 2. Falhou CorsProxy -> Tenta CodeTabs
+    else if (currentSrc.includes('corsproxy.io')) {
+        console.warn('[Image] CorsProxy failed, switching to CodeTabs:', cleanSrc);
+        nextSrc = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSrc)}`;
+    }
+    // 3. Falhou CodeTabs -> Tenta Vercel
+    else if (currentSrc.includes('api.codetabs.com')) {
+        console.warn('[Image] CodeTabs failed, switching to Vercel:', cleanSrc);
+        nextSrc = `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(cleanSrc)}`;
+    }
+    // 4. Falhou Vercel -> Tenta AllOrigins
+    else if (currentSrc.includes('klyx-api.vercel.app')) {
+        console.warn('[Image] Vercel failed, switching to AllOrigins:', cleanSrc);
+        nextSrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSrc)}`;
+    }
+    // 5. Falhou AllOrigins -> Placeholder
+    else if (currentSrc.includes('api.allorigins.win')) {
+         console.error('[Image] All proxies failed for:', cleanSrc);
+         img.src = 'https://via.placeholder.com/300x450?text=No+Image';
+         img.setAttribute('data-failed', 'true');
+         return;
+    }
+    // 6. Falhou Direto (sem proxy) ou outro -> Começa com Weserv
+    else {
+        console.warn('[Image] Direct load failed, starting proxy chain with Weserv:', cleanSrc);
+        nextSrc = `https://images.weserv.nl/?url=${encodeURIComponent(cleanSrc)}&w=400&output=webp&q=80`;
+    }
 
-        img.src = nextSrc;
-    };
+    img.src = nextSrc;
+};
 
 // Helper for infinite scroll
 function setupInfiniteScroll(items, container, createCardFn) {
@@ -526,431 +543,334 @@ export async function initMovies() {
                     title: movie.title,
                     posterUrl: movie.poster,
                     metaLeft: "",
-                    metaRight: movie.rating ? `★ ${movie.rating}` : "",
-                    onClick: () => {
-                        window.showMovieModal(movie.id);
-                    }
+                    metaRight: "",
+                    clickAction: `window.showMovieModal('${movie.id}')`
                 });
             });
         };
 
-        // Setup Custom Dropdown
-        if (catsRes.ok) {
-            setupCustomDropdown(categorySelectId, catsRes.data, (val) => {
-                currentCategory = val;
+        // Initialize
+        render();
+
+        // Search Listener
+        if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+                currentSearch = e.target.value.toLowerCase();
                 render();
             });
         }
 
-        // Search Listener
-        if (searchInput) {
-            searchInput.oninput = (e) => {
-                currentSearch = e.target.value.toLowerCase();
+        // Category Filter
+        if (catsRes.ok && catsRes.data) {
+            setupCustomDropdown(categorySelectId, catsRes.data, (value) => {
+                currentCategory = value;
                 render();
-            };
+            });
         }
 
-        // Initial Render
-        render();
-
-
     } catch (e) {
-        console.error("Movies error:", e);
-        container.innerHTML = `<p style="color:red">Erro ao carregar filmes: ${e.message}</p>`;
+        console.error("Error loading movies:", e);
+        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
 }
-
-// --- SHARED CARD CREATORS ---
-export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClick }) {
-    const card = document.createElement("div");
-    card.className = "card focusable";
-    card.tabIndex = 0;
-    card.onclick = onClick;
-    
-    // Handle Enter key
-    card.onkeydown = (e) => {
-        if (e.key === 'Enter') onClick();
-    };
-
-    const img = document.createElement("img");
-    img.className = "poster";
-    img.src = getProxiedImage(posterUrl);
-    img.alt = title;
-    img.loading = "lazy";
-    img.draggable = false;
-    // Error handler attached to window to avoid inline JS restrictions if strict CSP
-    img.setAttribute('data-original-src', posterUrl);
-    img.onerror = function() { window.handleImageError(this); };
-
-    const body = document.createElement("div");
-    body.className = "card-body";
-
-    const h3 = document.createElement("h3");
-    h3.className = "card-title";
-    h3.textContent = title;
-
-    const meta = document.createElement("div");
-    meta.className = "card-meta";
-    
-    if (metaLeft) {
-        const sp1 = document.createElement("span");
-        sp1.textContent = metaLeft;
-        meta.appendChild(sp1);
-    }
-    if (metaRight) {
-        const sp2 = document.createElement("span");
-        sp2.className = "badge";
-        sp2.textContent = metaRight;
-        meta.appendChild(sp2);
-    }
-
-    body.appendChild(h3);
-    body.appendChild(meta);
-    card.appendChild(img);
-    card.appendChild(body);
-    
-    return card;
-}
-
-// --- MISSING EXPORTS RESTORED ---
 
 export async function initSeries() {
     console.log("Series Initialized");
     ensureProfilePlacement();
     window.addEventListener("resize", ensureProfilePlacement);
     const container = document.getElementById("seriesGrid");
-    const categorySelectId = "seriesCategory";
     const searchInput = document.getElementById("seriesSearch");
 
     if (!container) return;
+
     container.innerHTML = '<div class="loading-spinner">Carregando séries...</div>';
 
     try {
-        const [seriesRes, catsRes] = await Promise.all([
-            api.content.getSeries(),
-            api.series && api.series.categories ? api.series.categories() : Promise.resolve({ ok: true, data: [] })
-        ]);
+        const res = await api.content.getSeries();
+        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar séries");
 
-        if (!seriesRes.ok) throw new Error(seriesRes.data?.error || "Erro ao carregar séries");
-        const allSeries = seriesRes.data.series || [];
+        const allSeries = res.data.series || [];
 
         if (allSeries.length === 0) {
-            container.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
+            container.innerHTML = "<p>Nenhuma série encontrada.</p>";
             return;
         }
 
-        let currentCategory = "";
         let currentSearch = "";
 
         const render = () => {
             const filtered = allSeries.filter(s => {
-                const matchesCat = !currentCategory || (s.category && s.category.includes(currentCategory));
-                const matchesSearch = !currentSearch || s.title.toLowerCase().includes(currentSearch);
-                return matchesCat && matchesSearch;
+                return !currentSearch || s.title.toLowerCase().includes(currentSearch);
             });
-            
+
             container.innerHTML = "";
             if (filtered.length === 0) {
-                container.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
+                container.innerHTML = "<p>Nenhuma série encontrada.</p>";
                 return;
             }
-            
-            setupInfiniteScroll(filtered, container, (series) => {
+
+            setupInfiniteScroll(filtered, container, (serie) => {
                 return createPosterCard({
-                    title: series.title,
-                    posterUrl: series.poster,
+                    title: serie.title,
+                    posterUrl: serie.poster,
                     metaLeft: "",
-                    metaRight: series.rating ? `★ ${series.rating}` : "Série",
-                    onClick: () => {
-                        window.showSeriesModal(series.id);
-                    }
+                    metaRight: "",
+                    clickAction: `window.showSeriesModal('${serie.id}')`
                 });
             });
         };
 
-        if (catsRes.ok && catsRes.data.length > 0) {
-            setupCustomDropdown(categorySelectId, catsRes.data, (val) => {
-                currentCategory = val;
-                render();
-            });
-        }
+        render();
 
         if (searchInput) {
-            searchInput.oninput = (e) => {
+            searchInput.addEventListener("input", (e) => {
                 currentSearch = e.target.value.toLowerCase();
                 render();
-            };
-        }
-
-        render();
-        
-    } catch (e) {
-        console.error("Series error:", e);
-        container.innerHTML = `<p style="color:red">Erro ao carregar séries: ${e.message}</p>`;
-    }
-}
-
-// --- MODAL SYSTEM RESTORED ---
-
-function injectModalHTML() {
-    if (document.getElementById('detailsModal')) return;
-    const modalHTML = `
-    <div id="detailsModal" class="netflix-modal-backdrop" onclick="closeModal(event)" style="z-index: 99999;">
-        <div class="netflix-modal-content" onclick="event.stopPropagation()">
-            <button class="netflix-close-btn" onclick="closeModal()">×</button>
-            <div id="modalBody" class="netflix-modal-body">
-                <!-- Content injected here -->
-            </div>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-window.closeModal = function(e) {
-    if (e && e.target !== document.getElementById('detailsModal') && e.target.className !== 'netflix-close-btn') {
-        // Allow close button to work
-        if (!e.target.closest('.netflix-close-btn')) return;
-    } 
-    const modal = document.getElementById('detailsModal');
-    if (modal) {
-        modal.classList.remove('active');
-        // Clear content after animation to stop video/audio if any
-        setTimeout(() => {
-             const body = document.getElementById('modalBody');
-             if(body) body.innerHTML = '';
-        }, 300);
-    }
-};
-
-window.showMovieModal = async function(id) {
-    console.log("Opening Movie Modal:", id);
-    injectModalHTML();
-    const modal = document.getElementById('detailsModal');
-    const body = document.getElementById('modalBody');
-    
-    // Reset state
-    modal.classList.remove('active');
-    void modal.offsetWidth; // Force reflow
-    modal.classList.add('active');
-    
-    body.innerHTML = '<div class="loading-spinner" style="height:200px">Carregando...</div>';
-    
-    try {
-        // Try to find movie in cached lists first to avoid network delay
-        let movie = null;
-        
-        // 1. Try api.movies.list cache if available
-        // Since we don't have direct access to internal cache, we fetch (it uses cache)
-        const res = await api.content.getMovies();
-        if (res.ok && res.data.movies) {
-            movie = res.data.movies.find(m => m.id == id);
-        }
-        
-        if (!movie) {
-            // Fallback: Try Home data
-             const homeRes = await api.content.getHome();
-             if (homeRes.ok && homeRes.data.rails) {
-                 // Search in all rails
-                 Object.values(homeRes.data.rails).flat().forEach(m => {
-                     if (m.id == id) movie = m;
-                 });
-             }
-        }
-
-        if (!movie) throw new Error("Filme não encontrado");
-
-        // Render Modal Content
-        const proxiedPoster = getProxiedImage(movie.poster);
-        
-        body.innerHTML = `
-            <div class="netflix-hero">
-                <img src="${proxiedPoster}" class="netflix-poster" data-original-src="${movie.poster}" onerror="window.handleImageError(this)"/>
-            </div>
-            <div class="netflix-info-container">
-                <h2 style="font-size: 24px; margin-bottom: 10px;">${movie.title}</h2>
-                <div class="netflix-meta-row">
-                    <span class="match-score">98% Relevante</span>
-                    <span class="age-badge">${movie.rating || '12+'}</span>
-                    <span class="meta-item">${movie.year || ''}</span>
-                    <span class="meta-item">${movie.duration ? Math.round(movie.duration/60) + ' min' : ''}</span>
-                </div>
-                
-                <div class="netflix-actions-stack">
-                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${encodeURIComponent(id)}'">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg>
-                        Assistir
-                    </button>
-                    <!-- Future: Minha Lista button -->
-                </div>
-                
-                <p class="netflix-description">${movie.description || 'Carregando sinopse...'}</p>
-                
-                <div class="netflix-cast-info">
-                   <div class="meta-line"><span style="color:#777">Gênero:</span> ${movie.genre || 'Geral'}</div>
-                </div>
-            </div>
-        `;
-        
-        // --- LAZY FETCH DESCRIPTION IF MISSING ---
-        if (!movie.description || movie.description === 'Carregando sinopse...') {
-            // Async fetch without blocking UI
-            fetchMetadata(movie.title, 'movie').then(meta => {
-                const descEl = body.querySelector('.netflix-description');
-                if (meta && meta.description) {
-                    if (descEl) descEl.textContent = meta.description;
-                    
-                    // Also update rating/year if missing
-                    if (!movie.rating && meta.rating) {
-                        const rateEl = body.querySelector('.age-badge');
-                        if (rateEl) rateEl.textContent = meta.rating;
-                    }
-                    if (!movie.year && meta.year) {
-                         const yearEl = body.querySelectorAll('.meta-item')[0]; // Assuming first is year
-                         if (yearEl) yearEl.textContent = meta.year;
-                    }
-                } else {
-                    if (descEl) descEl.textContent = 'Sinopse indisponível.';
-                }
             });
         }
 
     } catch (e) {
-        console.error("Error showing movie modal:", e);
-        body.innerHTML = `<div style="padding:20px; text-align:center;">
-            <p>Erro ao carregar detalhes.</p>
-            <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${encodeURIComponent(id)}'">
-                Tentar Reproduzir Direto
-            </button>
-        </div>`;
+        console.error("Error loading series:", e);
+        container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
-};
+}
 
-window.showSeriesModal = async function(id) {
-    console.log("Opening Series Modal:", id);
-    injectModalHTML();
-    const modal = document.getElementById('detailsModal');
-    const body = document.getElementById('modalBody');
-    
-    modal.classList.add('active');
-    body.innerHTML = '<div class="loading-spinner" style="height:200px">Carregando...</div>';
+// --- SHARED UI COMPONENTS ---
 
-    try {
-        let series = null;
-        const res = await api.content.getSeries();
-        if (res.ok && res.data.series) {
-            series = res.data.series.find(s => s.id == id);
-        }
-
-        if (!series) throw new Error("Série não encontrada");
-
-        // Render Series Content
-        const proxiedPoster = getProxiedImage(series.poster);
-        
-        body.innerHTML = `
-            <div class="netflix-hero">
-                <img src="${proxiedPoster}" class="netflix-poster" data-original-src="${series.poster}" onerror="window.handleImageError(this)"/>
-            </div>
-            <div class="netflix-info-container">
-                <h2 style="font-size: 24px; margin-bottom: 10px;">${series.title}</h2>
-                <div class="netflix-meta-row">
-                    <span class="match-score">Série</span>
-                    <span class="age-badge">${series.rating || '14+'}</span>
-                    <span class="meta-item">${series.year || ''}</span>
-                </div>
-                
-                <div class="netflix-actions-stack">
-                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=series&id=${encodeURIComponent(id)}'">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg>
-                        Assistir
-                    </button>
-                </div>
-                
-                <p class="netflix-description">${series.description || 'Carregando sinopse...'}</p>
-                 <div class="netflix-cast-info">
-                   <div class="meta-line"><span style="color:#777">Gênero:</span> ${series.genre || 'Geral'}</div>
-                </div>
-            </div>
-        `;
-        
-        // --- LAZY FETCH DESCRIPTION IF MISSING (SERIES) ---
-        if (!series.description || series.description === 'Carregando sinopse...') {
-            fetchMetadata(series.title, 'tv').then(meta => {
-                 const descEl = body.querySelector('.netflix-description');
-                 if (meta && meta.description) {
-                     if (descEl) descEl.textContent = meta.description;
-                     
-                     if (!series.rating && meta.rating) {
-                        const rateEl = body.querySelector('.age-badge');
-                        if (rateEl) rateEl.textContent = meta.rating;
-                     }
-                 } else {
-                     if (descEl) descEl.textContent = 'Sinopse indisponível.';
-                 }
-            });
-        }
-        
-    } catch (e) {
-        console.error("Error showing series modal:", e);
-        body.innerHTML = `<div style="padding:20px; text-align:center;">
-            <p>Erro ao carregar detalhes.</p>
-            <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=series&id=${encodeURIComponent(id)}'">
-                Tentar Reproduzir Direto
-            </button>
-        </div>`;
-    }
-};
-
-// Also export initSearch just in case
-import { initSearch as initSearchOriginal } from "./search.js";
-export const initSearch = initSearchOriginal;
-
-
-export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick }) {
-    const card = document.createElement("div");
-    card.className = "card focusable"; // Reusing card class but might need specific thumb styling
+function createPosterCard({ title, posterUrl, metaLeft, metaRight, clickAction }) {
+    const card = document.createElement('div');
+    card.className = 'card focusable';
     card.tabIndex = 0;
-    card.onclick = onClick;
+    card.setAttribute('onclick', clickAction);
     
-    // Handle Enter key
+    card.innerHTML = `
+        <img class="poster" src="${getProxiedImage(posterUrl)}" alt="${title}" loading="lazy" draggable="false"
+             data-original-src="${posterUrl}"
+             onerror="window.handleImageError(this)">
+        <div class="card-body">
+            <h3 class="card-title">${title}</h3>
+        </div>
+    `;
+    
+    // Add Enter key support
     card.onkeydown = (e) => {
-        if (e.key === 'Enter') onClick();
+        if (e.key === 'Enter') {
+            eval(clickAction);
+        }
     };
-
-    const img = document.createElement("img");
-    img.className = "poster"; // Using poster class for now, maybe create .thumb
-    img.src = getProxiedImage(thumbUrl);
-    img.alt = title;
-    img.loading = "lazy";
-    img.draggable = false;
-    img.setAttribute('data-original-src', thumbUrl);
-    img.onerror = function() { window.handleImageError(this); };
-
-    const body = document.createElement("div");
-    body.className = "card-body";
-
-    const h3 = document.createElement("h3");
-    h3.className = "card-title";
-    h3.textContent = title;
-
-    const meta = document.createElement("div");
-    meta.className = "card-meta";
-    
-    if (metaLeft) {
-        const sp1 = document.createElement("span");
-        sp1.textContent = metaLeft;
-        meta.appendChild(sp1);
-    }
-    if (metaRight) {
-        const sp2 = document.createElement("span");
-        sp2.className = "badge";
-        sp2.textContent = metaRight;
-        meta.appendChild(sp2);
-    }
-
-    body.appendChild(h3);
-    body.appendChild(meta);
-    card.appendChild(img);
-    card.appendChild(body);
     
     return card;
 }
+
+// --- MODAL HELPERS ---
+
+// Create and show modal (generic)
+function createModal(contentHtml) {
+    const existing = document.getElementById('genericModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'genericModal';
+    modal.className = 'netflix-modal-backdrop active'; // Use netflix-ui.css class
+    modal.innerHTML = `
+        <div class="netflix-modal-content">
+            <div class="netflix-close-btn" onclick="document.getElementById('genericModal').remove()">×</div>
+            <div class="netflix-modal-body">
+                ${contentHtml}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Focus management
+    const closeBtn = modal.querySelector('.netflix-close-btn');
+    if (closeBtn) closeBtn.focus();
+    
+    // Close on escape
+    modal.onkeydown = (e) => {
+        if (e.key === 'Escape') modal.remove();
+    };
+    
+    // Close on backdrop click
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+    
+    return modal;
+}
+
+window.showMovieModal = async (id) => {
+    // 1. Show loading modal
+    const modal = createModal('<div class="loading-spinner">Carregando detalhes...</div>');
+    
+    try {
+        const res = await api.movies.list();
+        const movies = res.ok ? res.data : [];
+        const movie = movies.find(m => m.id === id);
+        
+        if (!movie) {
+            modal.querySelector('.netflix-modal-body').innerHTML = '<p>Filme não encontrado.</p>';
+            return;
+        }
+        
+        // Fetch extra metadata if description is missing
+        let description = movie.description || '';
+        let rating = movie.rating || '';
+        let year = movie.year || '';
+        let backdrop = movie.backdrop || '';
+
+        if (!description || description.length < 10) {
+             const meta = await fetchMetadata(movie.title, 'movie');
+             if (meta) {
+                 description = meta.description || description;
+                 rating = meta.rating || rating;
+                 year = meta.year || year;
+                 backdrop = meta.backdrop || backdrop;
+             } else {
+                 description = "Sinopse indisponível.";
+             }
+        }
+
+        // 2. Render Full Modal using netflix-ui.css structure
+        // We replace the inner content of netflix-modal-body
+        const bodyContent = `
+            <div class="netflix-hero">
+                <img class="netflix-poster" src="${getProxiedImage(movie.poster)}" alt="${movie.title}">
+                ${backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, transparent, #141414); z-index:0; pointer-events:none;"></div>` : ''}
+            </div>
+            
+            <div class="netflix-info-container">
+                <h1>${movie.title}</h1>
+                <div class="netflix-meta-row">
+                    <span class="match-score">${rating ? `${rating} Pontos` : 'Novo'}</span>
+                    <span class="year">${year}</span>
+                    <span class="age-badge">14</span>
+                </div>
+                
+                <div class="netflix-actions-stack">
+                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${movie.id}'">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Assistir
+                    </button>
+                </div>
+                
+                <p class="netflix-description">${description}</p>
+            </div>
+        `;
+        
+        // Update modal body
+        modal.querySelector('.netflix-modal-body').innerHTML = bodyContent;
+        
+        // Apply backdrop if available to the hero section specifically or modal background?
+        // netflix-ui.css doesn't seem to have a specific backdrop container for image, 
+        // but we can add inline style to hero if we want.
+        // For now, the poster is enough, or we can use the backdrop image as a background for the hero.
+        if (backdrop) {
+             const hero = modal.querySelector('.netflix-hero');
+             if (hero) {
+                 hero.style.backgroundImage = `url('${getProxiedImage(backdrop)}')`;
+                 hero.style.backgroundSize = 'cover';
+                 hero.style.backgroundPosition = 'center';
+             }
+        }
+        
+    } catch (e) {
+        console.error("Error showing movie modal:", e);
+        modal.remove();
+    }
+};
+
+window.showSeriesModal = async (id) => {
+    const modal = createModal('<div class="loading-spinner">Carregando episódios...</div>');
+    
+    try {
+        const res = await api.content.getSeriesEpisodes(id);
+        if (!res.ok) throw new Error("Erro ao carregar episódios");
+        
+        const seriesData = res.data;
+        // Try to fetch metadata for series if description is missing
+        if (!seriesData.description || seriesData.description.length < 10) {
+             const meta = await fetchMetadata(seriesData.title, 'tv'); // 'tv' for series
+             if (meta) {
+                 seriesData.description = meta.description || "Sinopse indisponível.";
+                 seriesData.rating = meta.rating || seriesData.rating;
+                 seriesData.year = meta.year || seriesData.year;
+                 if (meta.backdrop) seriesData.backdrop = meta.backdrop;
+             }
+        }
+        
+        const episodes = seriesData.episodes || [];
+        
+        // Group by season
+        const seasons = {};
+        episodes.forEach(ep => {
+            const s = ep.season_number || ep.season || 1; // Default to 1 if missing
+            if (!seasons[s]) seasons[s] = [];
+            seasons[s].push(ep);
+        });
+        
+        // Sort seasons
+        const sortedSeasons = Object.keys(seasons).sort((a,b) => a - b);
+        
+        // Render Seasons
+        let seasonsHtml = '';
+        sortedSeasons.forEach(s => {
+            seasonsHtml += `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color:#e5e5e5; margin-bottom:10px; padding-left:20px;">Temporada ${s}</h3>
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        ${seasons[s].map(ep => `
+                            <div class="focusable" tabindex="0" 
+                                 style="padding: 15px 20px; display:flex; align-items:center; gap:15px; cursor:pointer; transition:background 0.2s;"
+                                 onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                                 onmouseout="this.style.background='transparent'"
+                                 onclick="window.location.href='./player_v2.html?type=series&id=${id}&season=${s}&episode=${ep.episode_number || ep.episode}'">
+                                <span style="color:#d2d2d2; font-size:18px; width:30px;">${ep.episode_number || ep.episode}</span>
+                                <div style="flex:1;">
+                                    <div style="color:white; font-weight:500;">${ep.title}</div>
+                                </div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        const bodyContent = `
+            <div class="netflix-hero">
+                <img class="netflix-poster" src="${getProxiedImage(seriesData.poster)}" alt="${seriesData.title}">
+                ${seriesData.backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, transparent, #141414); z-index:0; pointer-events:none;"></div>` : ''}
+            </div>
+            
+            <div class="netflix-info-container">
+                <h1>${seriesData.title}</h1>
+                <div class="netflix-meta-row">
+                    <span class="match-score">${seriesData.rating ? `${seriesData.rating} Pontos` : 'Novo'}</span>
+                    <span class="year">${seriesData.year || ''}</span>
+                    <span class="age-badge">14</span>
+                </div>
+                 <p class="netflix-description">${seriesData.description || 'Sem descrição.'}</p>
+                 
+                 <div style="margin-top:20px;">
+                    ${seasonsHtml}
+                 </div>
+            </div>
+        `;
+        
+        modal.querySelector('.netflix-modal-body').innerHTML = bodyContent;
+
+        if (seriesData.backdrop) {
+             const hero = modal.querySelector('.netflix-hero');
+             if (hero) {
+                 hero.style.backgroundImage = `url('${getProxiedImage(seriesData.backdrop)}')`;
+                 hero.style.backgroundSize = 'cover';
+                 hero.style.backgroundPosition = 'center';
+             }
+        }
+
+    } catch (e) {
+        console.error("Error showing series modal:", e);
+        modal.remove();
+    }
+};

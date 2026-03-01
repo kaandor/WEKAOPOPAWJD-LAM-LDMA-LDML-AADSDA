@@ -46,7 +46,7 @@ async function getLocalData(file) {
 }
 
 function readSession() {
-  const raw = sessionStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -61,12 +61,12 @@ function writeSession(session) {
     console.error("Tentativa de salvar sessão inválida bloqueada.", session);
     return;
   }
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
 
 function clearSession() {
-  sessionStorage.removeItem(STORAGE_KEY);
-  sessionStorage.removeItem("klyx_profile_id");
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem("klyx_profile_id");
 }
 
 // Helper to normalize data structure (fix poster_url -> poster)
@@ -1639,7 +1639,7 @@ export const api = {
   series: {
     async get(id) {
         const data = await getLocalData("series.json");
-        let series = data?.series?.find(s => s.id === id);
+        let series = data?.series?.find(s => s.id == id);
         if (!series) return { ok: false, data: { error: "Series not found" } };
         series = normalize(series);
         return { ok: true, data: { item: series } };
@@ -1672,7 +1672,7 @@ export const api = {
             }
 
             // Filter from memory
-            const episodes = window.allEpisodesCache.filter(ep => ep.series_id === seriesId);
+            const episodes = window.allEpisodesCache.filter(ep => ep.series_id == seriesId);
             return { ok: true, data: { episodes } };
 
         } catch (error) {
@@ -1861,7 +1861,7 @@ export const api = {
                     "jogo",
                     "jogos",
                     "torneio",
-                    "competição",
+                    "competiÃ§Ã£o",
                     "competicao",
                     "futebol",
                     "basquete",
@@ -1896,15 +1896,15 @@ export const api = {
                 dailyGames,
                 recentMovies: getItems(allMovies, 100, m => true).reverse().slice(0, 100),
                 horrorMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("terror")),
-                comedyMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("comédia")),
-                actionMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("ação"))
+                comedyMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("comÃ©dia")),
+                actionMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("aÃ§Ã£o"))
             };
 
             return { ok: true, data: { rails } };
         } catch (e) {
             console.error("Dynamic Home Error", e);
             const data = await getLocalData("home.json");
-            return { ok: true, data };
+            return { ok: true, data }; 
         }
     },
     async getMovies() { 
@@ -1920,17 +1920,38 @@ export const api = {
             data.series = series.map(s => {
                 s = normalize(s);
                 // Enrich Category for Smart Categorization
-                const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+                const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "crianÃ§a", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
                 const combinedForCat = (s.title + " " + (s.category || "")).toLowerCase();
                 if (keywordsSafe.some(kw => combinedForCat.includes(kw))) {
-                     if (s.category && !s.category.includes("Criança")) {
-                         s.category += " | Criança";
+                     if (s.category && !s.category.includes("CrianÃ§a")) {
+                         s.category += " | CrianÃ§a";
                      }
                 }
                 return s;
             });
+            return { ok: true, data }; 
         }
-        return { ok: true, data }; 
+        return { ok: false, data: { error: "No series data" } };
+    },
+    async getSeriesEpisodes(id) {
+        console.log("Getting Series Episodes for ID:", id);
+        try {
+            const seriesRes = await api.series.get(id);
+            if (!seriesRes.ok) {
+                console.error("Series not found via api.series.get(id)", id);
+                return { ok: false, data: { error: "SÃ©rie nÃ£o encontrada" } };
+            }
+            
+            const episodesRes = await api.series.episodes(id);
+            const episodes = episodesRes.ok ? episodesRes.data.episodes : [];
+            console.log("Found episodes:", episodes.length);
+
+            const series = seriesRes.data.item;
+            return { ok: true, data: { ...series, episodes } };
+        } catch (e) {
+            console.error("Error getting series episodes:", e);
+            return { ok: false, data: { error: "Erro ao buscar episÃ³dios" } };
+        }
     }
   },
   search: {
