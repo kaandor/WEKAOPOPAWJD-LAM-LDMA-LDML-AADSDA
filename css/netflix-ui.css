@@ -16,7 +16,7 @@
     -webkit-backdrop-filter: blur(5px);
     z-index: 99999; /* Increased z-index just in case */
     display: flex;
-    align-items: flex-end; /* Bottom sheet on mobile */
+    align-items: center; /* Center on all devices */
     justify-content: center;
     opacity: 0;
     pointer-events: none;
@@ -30,15 +30,16 @@
 
 .netflix-modal-content {
     background: #141414;
-    width: 100%;
-    max-width: 500px; /* Constrain width on desktop */
-    height: 85vh; /* Max height */
-    border-radius: 16px 16px 0 0;
+    width: 90%; /* Responsive width */
+    max-width: 500px; /* Constrain width */
+    height: auto; /* Allow auto height */
+    max-height: 85vh; /* Max height */
+    border-radius: 16px; /* Rounded corners for all sides */
     position: relative;
     overflow: hidden;
-    transform: translateY(100%);
+    transform: translateY(20px); /* Slide up slightly */
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 -4px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
 }
@@ -48,13 +49,8 @@
 }
 
 @media (min-width: 768px) {
-    .netflix-modal-backdrop {
-        align-items: center; /* Center on desktop */
-    }
     .netflix-modal-content {
-        height: auto;
-        max-height: 85vh;
-        border-radius: 16px;
+        width: 100%; /* Keep max-width */
     }
 }
 
