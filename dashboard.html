@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Dashboard</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260226-v2" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260226-v2" />
-    <script src="./js/adsterra.js?v=20260226-v2"></script>
+    <link rel="stylesheet" href="./css/global.css?v=20260301-v1" />
+    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260301-v1" />
+    <script src="./js/adsterra.js?v=20260301-v1"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -37,8 +37,8 @@
         }
       } catch(_) {}
 
-      import { mountAppShell } from "./js/router.js?v=20260226-v2";
-      import { initDashboard } from "./js/ui.js?v=20260226-v2";
+      import { mountAppShell } from "./js/router.js?v=20260301-v1";
+      import { initDashboard } from "./js/ui.js?v=20260301-v1";
       (async () => {
         try {
           await mountAppShell({ currentPath: "/dashboard" });
