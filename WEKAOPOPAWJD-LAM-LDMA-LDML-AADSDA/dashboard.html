@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Dashboard</title>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header id="app-header"></header>
+      <main class="page">
+        <div class="container">
+          <h1>Navegar</h1>
+          <div class="subtext" style="margin-top: 8px">
+            Seu centro de filmes, séries e TV ao vivo.
+          </div>
+          <div id="dashboardContent"></div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      import { mountAppShell } from "./js/router.js";
+      import { initDashboard } from "./js/ui.js";
+      
+      try {
+        await mountAppShell({ currentPath: "/dashboard" });
+        await initDashboard();
+      } catch (e) {
+        console.error("Dashboard Init Error:", e);
+        // Optional: show visible error
+        const content = document.getElementById("dashboardContent");
+        if (content) content.innerHTML = `<div style="padding: 20px; color: #ff4444;">Erro ao carregar dashboard: ${e.message} <br> <button onclick="localStorage.clear(); window.location.reload();" style="margin-top:10px; padding: 5px 10px;">Limpar Cache e Recarregar</button></div>`;
+      }
+    </script>
+  </body>
+</html>
+
