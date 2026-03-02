@@ -286,7 +286,7 @@ export const api = {
   cloud: {
     // Vercel Serverless DB Configuration
     // ATENÃ‡ÃƒO: Substitua pela URL do seu projeto na Vercel se for diferente
-    API_URL: "https://klyx-web-app.vercel.app/api/db", 
+    API_URL: "https://klyx-db-server.vercel.app/api/db", 
     _syncTimer: null,
 
     _getToken() {
