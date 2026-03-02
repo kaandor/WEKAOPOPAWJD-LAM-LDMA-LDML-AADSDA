@@ -1,15 +1,15 @@
-﻿
+
 const STORAGE_KEY = "klyx.session";
 let repoAuthFailed = false;
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
 
-// --- CONFIGURAÇÃO DA LISTA (LIST SWITCHING SYSTEM) ---
+// --- CONFIGURA��O DA LISTA (LIST SWITCHING SYSTEM) ---
 // Para trocar a lista, apenas altere os nomes dos arquivos abaixo.
-// O sistema irá carregar automaticamente a nova lista sem quebrar a lógica.
+// O sistema ir� carregar automaticamente a nova lista sem quebrar a l�gica.
 export const LIST_CONFIG = {
     MOVIES_FILE: "movies.json",  // Ex: "canaisbr05_filmes.json"
     SERIES_FILE: "series.json",  // Ex: "canaisbr05_series.json"
-    EPISODES_PATH: "assets/data/episodes/", // Pasta dos episódios
+    EPISODES_PATH: "assets/data/episodes/", // Pasta dos epis�dios
     LIVE_FILE: "live.json"
 };
 // -----------------------------------------------------
@@ -23,7 +23,7 @@ try {
     const buggedMac = "32:b6:78:63:78:8d";
     const currentMac = localStorage.getItem("klyx_device_mac");
     if (currentMac === buggedMac) {
-        console.warn("⚠️ DETECTED BUGGED DEVICE IDENTITY. INITIATING EMERGENCY WIPE.");
+        console.warn("?? DETECTED BUGGED DEVICE IDENTITY. INITIATING EMERGENCY WIPE.");
         localStorage.clear(); // NUKE EVERYTHING
         sessionStorage.clear();
         window.location.reload(); // Reload to start fresh
@@ -58,7 +58,7 @@ function readSession() {
 function writeSession(session) {
   // Prevent ghost sessions
   if (!session || !session.user || !session.user.id || (!session.user.name && !session.user.email)) {
-    console.error("Tentativa de salvar sessão inválida bloqueada.", session);
+    console.error("Tentativa de salvar sess�o inv�lida bloqueada.", session);
     return;
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -108,7 +108,7 @@ function filterRestrictedContent(items) {
     }
 
     // KID MODE SAFE KEYWORDS
-    const kidKeywords = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+    const kidKeywords = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "crian�a", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
 
     return items.filter(item => {
         if (!item) return false;
@@ -149,13 +149,13 @@ function deduplicateMovies(items) {
         // Normalize title for checking
         const lowerTitle = title.toLowerCase();
         
-        // Enrich Category for Smart Categorization (Kids/Criança)
-        // This ensures "Criança" appears in the category dropdown if the movie matches safe keywords
-        const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+        // Enrich Category for Smart Categorization (Kids/Crian�a)
+        // This ensures "Crian�a" appears in the category dropdown if the movie matches safe keywords
+        const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "crian�a", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
         const combinedForCat = (title + " " + (movie.category || "")).toLowerCase();
         if (keywordsSafe.some(kw => combinedForCat.includes(kw))) {
-             if (movie.category && !movie.category.includes("Criança")) {
-                 movie.category += " | Criança";
+             if (movie.category && !movie.category.includes("Crian�a")) {
+                 movie.category += " | Crian�a";
              }
         }
         
@@ -285,7 +285,7 @@ export const api = {
   },
   cloud: {
     // Vercel Serverless DB Configuration
-    // ATENÃ‡ÃƒO: Substitua pela URL do seu projeto na Vercel se for diferente
+    // ATENÇÃO: Substitua pela URL do seu projeto na Vercel se for diferente
     API_URL: "https://klyx-db-server.vercel.app/api/db", 
     _syncTimer: null,
 
@@ -296,7 +296,7 @@ export const api = {
 
     // 1. Sync Down (Load from Vercel)
     async syncDown() {
-        console.log("â˜ï¸ [Vercel DB] Syncing DOWN...");
+        console.log("☁️ [Vercel DB] Syncing DOWN...");
         const session = readSession();
         if (!session || !session.user) return;
 
@@ -311,20 +311,20 @@ export const api = {
                 Object.keys(data).forEach(key => {
                     localStorage.setItem(key, data[key]);
                 });
-                console.log("âœ… [Vercel DB] Sync Down Complete.");
+                console.log("✅ [Vercel DB] Sync Down Complete.");
                 // Reload to apply changes if needed
                 // window.location.reload(); 
             } else {
-                console.log("â„¹ï¸ [Vercel DB] No remote data found.");
+                console.log("ℹ️ [Vercel DB] No remote data found.");
             }
         } catch (e) {
-            console.error("âŒ [Vercel DB] Sync Down Failed:", e);
+            console.error("❌ [Vercel DB] Sync Down Failed:", e);
         }
     },
 
     // 2. Sync Up (Save to Vercel)
     async syncUp() {
-        console.log("â˜ï¸ [Vercel DB] Syncing UP...");
+        console.log("☁️ [Vercel DB] Syncing UP...");
         const session = readSession();
         if (!session || !session.user) return;
 
@@ -348,12 +348,12 @@ export const api = {
             });
             
             if (res.ok) {
-                console.log("âœ… [Vercel DB] Sync Up Complete.");
+                console.log("✅ [Vercel DB] Sync Up Complete.");
             } else {
-                console.error("âŒ [Vercel DB] Sync Up Failed:", res.statusText);
+                console.error("❌ [Vercel DB] Sync Up Failed:", res.statusText);
             }
         } catch (e) {
-            console.error("âŒ [Vercel DB] Sync Up Error:", e);
+            console.error("❌ [Vercel DB] Sync Up Error:", e);
         }
     },
 
@@ -394,19 +394,19 @@ export const api = {
 
         // 2. Strict Login - No Demo Fallback
         
-        return { ok: false, data: { error: "Credenciais inválidas" } };
+        return { ok: false, data: { error: "Credenciais inv�lidas" } };
     },
     async register({ name, email, password }) {
         await delay(500);
         
         if (!validateEmail(email)) {
-             return { ok: false, data: { error: "E-mail inválido ou temporário não permitido." } };
+             return { ok: false, data: { error: "E-mail inv�lido ou tempor�rio n�o permitido." } };
         }
         
         const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
         
         if (users.find(u => u.email === email)) {
-            return { ok: false, data: { error: "E-mail já cadastrado" } };
+            return { ok: false, data: { error: "E-mail j� cadastrado" } };
         }
         
         const newUser = {
@@ -487,7 +487,7 @@ export const api = {
     async loginWithGithub() {
         const clientId = this.githubConfig.clientId;
         if (!clientId) {
-            return { ok: false, data: { error: "GitHub Client ID não configurado. Por favor configure as chaves." } };
+            return { ok: false, data: { error: "GitHub Client ID n�o configurado. Por favor configure as chaves." } };
         }
         
         const state = Math.random().toString(36).substring(7);
@@ -505,7 +505,7 @@ export const api = {
     async handleGithubCallback(code, state) {
         const savedState = localStorage.getItem("klyx_gh_state");
         if (!savedState || state !== savedState) {
-            console.warn("GitHub OAuth state inválido ou ausente. Prosseguindo mesmo assim (app pessoal).");
+            console.warn("GitHub OAuth state inv�lido ou ausente. Prosseguindo mesmo assim (app pessoal).");
         }
         
         const clientId = this.githubConfig.clientId;
@@ -637,7 +637,7 @@ export const api = {
             
             const accessToken = data.access_token;
             if (!accessToken) {
-                throw new Error("Token de acesso não encontrado na resposta do GitHub.");
+                throw new Error("Token de acesso n�o encontrado na resposta do GitHub.");
             }
             
             // Fetch User Data
@@ -646,22 +646,22 @@ export const api = {
             });
             
             if (!userRes.ok) {
-                 throw new Error(`Falha ao obter dados do usuário: ${userRes.statusText}`);
+                 throw new Error(`Falha ao obter dados do usu�rio: ${userRes.statusText}`);
             }
 
             const ghUser = await userRes.json();
             
             if (!ghUser || !ghUser.id) {
-                throw new Error("Dados de usuário inválidos retornados pelo GitHub.");
+                throw new Error("Dados de usu�rio inv�lidos retornados pelo GitHub.");
             }
             
             // Create/Link User
             const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
-            let user = users.find(u => u.github_id === ghUser.id || u.email === ghUser.email);
+            const stableId="gh_"+ghUser.id;let user=users.find(u=>u.github_id===ghUser.id||u.id===stableId);
             
             if (!user) {
                 user = {
-                    id: "u" + Date.now(),
+                    id: stableId,
                     name: ghUser.name || ghUser.login,
                     email: ghUser.email || `${ghUser.login}@github.com`, // Fallback
                     github_id: ghUser.id,
@@ -686,7 +686,7 @@ export const api = {
             
         } catch (e) {
             console.error(e);
-            return { ok: false, data: { error: `Falha na conexão com GitHub (${e.message}).` } };
+            return { ok: false, data: { error: `Falha na conex�o com GitHub (${e.message}).` } };
         }
     },
     async startGithubDeviceFlow() {
@@ -733,7 +733,7 @@ export const api = {
                     data = Object.fromEntries(p.entries());
                 }
                 if (data && data.device_code) break;
-                throw new Error("Resposta inválida do Device Flow");
+                throw new Error("Resposta inv�lida do Device Flow");
             } catch (e) {
                 lastErr = e;
             }
@@ -811,7 +811,7 @@ export const api = {
     async loginWithGoogle() {
         const clientId = this.googleConfig.clientId;
         if (!clientId || clientId === "YOUR_GOOGLE_CLIENT_ID") {
-            return { ok: false, data: { error: "Google Client ID não configurado." } };
+            return { ok: false, data: { error: "Google Client ID n�o configurado." } };
         }
         const state = Math.random().toString(36).slice(2);
         try {
@@ -833,7 +833,7 @@ export const api = {
     },
     async handleGoogleCallbackFromHash(hash) {
         if (!hash || hash.indexOf("access_token") === -1) {
-            return { ok: false, data: { error: "Callback Google inválido." } };
+            return { ok: false, data: { error: "Callback Google inv�lido." } };
         }
         const stripped = hash.startsWith("#") ? hash.substring(1) : hash;
         const params = new URLSearchParams(stripped);
@@ -845,26 +845,25 @@ export const api = {
         try {
             const expected = localStorage.getItem("klyx_google_state");
             if (expected && googleState && expected !== googleState) {
-                return { ok: false, data: { error: "State Google inválido." } };
+                return { ok: false, data: { error: "State Google inv�lido." } };
             }
         } catch (_) {}
         const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
         if (!res.ok) {
-            return { ok: false, data: { error: "Falha ao buscar usuário Google." } };
+            return { ok: false, data: { error: "Falha ao buscar usu�rio Google." } };
         }
         const gUser = await res.json();
         const finalUser = {
             id: gUser.sub || "g_" + Date.now(),
-            name: gUser.name || gUser.email || "Usuário Google",
+            name: gUser.name || gUser.email || "Usu�rio Google",
             email: gUser.email || null,
             avatar: gUser.picture || null,
             provider: "google"
         };
         const session = { user: finalUser, provider: "google", tokens: { accessToken: "google" } };
-        writeSession(session);
-        return { ok: true, data: { user: finalUser } };
+        writeSession(session); try { await api.cloud.syncDown(); } catch(e) {} return { ok: true, data: { user: finalUser } };
     },
     async me() {
         const session = readSession();
@@ -878,7 +877,7 @@ export const api = {
   playback: {
       async saveProgress(contentId, currentTime, duration, type) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usu�rio n�o logado" };
           
           const userId = session.user.id;
           const progressData = {
@@ -907,7 +906,7 @@ export const api = {
       
       async getProgress(contentId) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usu�rio n�o logado" };
           
           const userId = session.user.id;
           
@@ -928,7 +927,7 @@ export const api = {
       
       async getAllProgress() {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usu�rio n�o logado" };
           
           const userId = session.user.id;
           const localKey = `klyx_progress_${userId}`;
@@ -981,7 +980,7 @@ export const api = {
   favorites: {
       async add(item) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usu�rio n�o logado" };
           const userId = session.user.id;
           const key = `klyx_favorites_${userId}`;
           
@@ -1007,7 +1006,7 @@ export const api = {
       },
       async remove(id) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usu�rio n�o logado" };
           const userId = session.user.id;
           const key = `klyx_favorites_${userId}`;
           
@@ -1199,7 +1198,7 @@ export const api = {
           try {
               const data = await getLocalData(LIST_CONFIG.LIVE_FILE);
               if (!data) {
-                  return { ok: false, data: { error: "Lista de canais indisponível." } };
+                  return { ok: false, data: { error: "Lista de canais indispon�vel." } };
               }
               
               const channels = Array.isArray(data.channels) ? data.channels : (Array.isArray(data) ? data : []);
@@ -1209,7 +1208,7 @@ export const api = {
               
               const channel = channels.find(c => c && c.id === id);
               if (!channel) {
-                  return { ok: false, data: { error: "Canal não encontrado." } };
+                  return { ok: false, data: { error: "Canal n�o encontrado." } };
               }
               
               return {
@@ -1361,7 +1360,7 @@ export const api = {
                     "jogo",
                     "jogos",
                     "torneio",
-                    "competiÃ§Ã£o",
+                    "competição",
                     "competicao",
                     "futebol",
                     "basquete",
@@ -1396,8 +1395,8 @@ export const api = {
                 dailyGames,
                 recentMovies: getItems(allMovies, 100, m => true).reverse().slice(0, 100),
                 horrorMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("terror")),
-                comedyMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("comÃ©dia")),
-                actionMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("aÃ§Ã£o"))
+                comedyMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("comédia")),
+                actionMovies: getItems(allMovies, 100, m => (m.category || "").toLowerCase().includes("ação"))
             };
 
             return { ok: true, data: { rails } };
@@ -1420,11 +1419,11 @@ export const api = {
             data.series = series.map(s => {
                 s = normalize(s);
                 // Enrich Category for Smart Categorization
-                const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "crianÃ§a", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+                const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
                 const combinedForCat = (s.title + " " + (s.category || "")).toLowerCase();
                 if (keywordsSafe.some(kw => combinedForCat.includes(kw))) {
-                     if (s.category && !s.category.includes("CrianÃ§a")) {
-                         s.category += " | CrianÃ§a";
+                     if (s.category && !s.category.includes("Criança")) {
+                         s.category += " | Criança";
                      }
                 }
                 return s;
@@ -1439,7 +1438,7 @@ export const api = {
             const seriesRes = await api.series.get(id);
             if (!seriesRes.ok) {
                 console.error("Series not found via api.series.get(id)", id);
-                return { ok: false, data: { error: "SÃ©rie nÃ£o encontrada" } };
+                return { ok: false, data: { error: "Série não encontrada" } };
             }
             
             const episodesRes = await api.series.episodes(id);
@@ -1450,7 +1449,7 @@ export const api = {
             return { ok: true, data: { ...series, episodes } };
         } catch (e) {
             console.error("Error getting series episodes:", e);
-            return { ok: false, data: { error: "Erro ao buscar episÃ³dios" } };
+            return { ok: false, data: { error: "Erro ao buscar episódios" } };
         }
     }
   },
@@ -1533,7 +1532,7 @@ export const api = {
           const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           const index = profiles.findIndex(p => p.id === id);
           
-          if (index === -1) return { ok: false, data: { error: "Perfil não encontrado" } };
+          if (index === -1) return { ok: false, data: { error: "Perfil n�o encontrado" } };
           
           profiles[index] = { ...profiles[index], ...data };
           localStorage.setItem(key, JSON.stringify(profiles));
@@ -1548,7 +1547,7 @@ export const api = {
           let profiles = JSON.parse(localStorage.getItem(key) || "[]");
           // Prevent deleting the last profile
           if (profiles.length <= 1) {
-              return { ok: false, data: { error: "Você não pode excluir o último perfil." } };
+              return { ok: false, data: { error: "Voc� n�o pode excluir o �ltimo perfil." } };
           }
           
           profiles = profiles.filter(p => p.id !== id);
