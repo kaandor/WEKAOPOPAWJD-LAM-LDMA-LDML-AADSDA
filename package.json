@@ -1,15 +1,15 @@
 ﻿{
-  "name": "klyx-web-app",
-  "version": "1.0.0",
-  "description": "Klyx Web App with Serverless Backend",
-  "scripts": {
-    "start": "node api/index.js"
-  },
-  "dependencies": {
-    "@vercel/kv": "^1.0.1",
-    "@vercel/node": "^3.0.0"
-  },
-  "engines": {
-    "node": "18.x"
-  }
+    "name":  "klyx-web-app",
+    "version":  "1.0.0",
+    "description":  null,
+    "scripts":  {
+                    "start":  "node api/index.js"
+                },
+    "dependencies":  {
+                         "@vercel/kv":  "^1.0.1",
+                         "@vercel/node":  "^3.0.0"
+                     },
+    "engines":  {
+                    "node":  "18.x"
+                }
 }
