@@ -1,29 +1,15 @@
-{
-  "name": "klyx_web_export",
+﻿{
+  "name": "klyx-web-app",
   "version": "1.0.0",
-  "description": "Klyx is a modern web-based IPTV player with support for live TV, movies, and series.",
-  "main": "simple_server.js",
+  "description": "Klyx Web App with Serverless Backend",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "android": "npx cap open android",
-    "sync": "npx cap sync",
-    "serve": "node simple_server.js"
+    "start": "node api/index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kaandor/klyx-web-app.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/kaandor/klyx-web-app/issues"
-  },
-  "homepage": "https://github.com/kaandor/klyx-web-app#readme",
   "dependencies": {
-    "@capacitor/android": "^8.0.2",
-    "@capacitor/cli": "^8.0.2",
-    "@capacitor/core": "^8.0.2"
+    "@vercel/kv": "^1.0.1",
+    "@vercel/node": "^3.0.0"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }

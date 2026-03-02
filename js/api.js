@@ -1,4 +1,4 @@
-
+﻿
 const STORAGE_KEY = "klyx.session";
 let repoAuthFailed = false;
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
@@ -284,583 +284,83 @@ export const api = {
     }
   },
   cloud: {
-    // Configuration
-    GIST_FILENAME: "klyx_user_data_v1.json",
-    GIST_DESCRIPTION: "Klyx App User Data - Do not delete",
+    // Vercel Serverless DB Configuration
+    // ATENÃ‡ÃƒO: Substitua pela URL do seu projeto na Vercel se for diferente
+    API_URL: "https://klyx-web-app.vercel.app/api/db", 
     _syncTimer: null,
 
-    // Helper: Get GitHub Token
     _getToken() {
         const session = readSession();
         return session?.tokens?.accessToken;
     },
 
-    // 1. Find existing Gist
-    async _findGist(token) {
+    // 1. Sync Down (Load from Vercel)
+    async syncDown() {
+        console.log("â˜ï¸ [Vercel DB] Syncing DOWN...");
+        const session = readSession();
+        if (!session || !session.user) return;
+
         try {
-            const res = await fetch("https://api.github.com/gists", {
-                headers: { "Authorization": `token ${token}` }
-            });
-            if (!res.ok) return null;
-            const gists = await res.json();
-            return gists.find(g => g.files && g.files[this.GIST_FILENAME]);
-        } catch (e) {
-            console.error("Gist Find Error", e);
-            return null;
-        }
-    },
-
-    // 2. Create new Gist
-    async _createGist(token, data) {
-        try {
-            const res = await fetch("https://api.github.com/gists", {
-                method: "POST",
-                headers: { 
-                    "Authorization": `token ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    description: this.GIST_DESCRIPTION,
-                    public: false,
-                    files: {
-                        [this.GIST_FILENAME]: {
-                            content: JSON.stringify(data, null, 2)
-                        }
-                    }
-                })
-            });
-            return await res.json();
-        } catch (e) {
-            console.error("Gist Create Error", e);
-            return null;
-        }
-    },
-
-    // 3. Update existing Gist -> NOW REPLACED WITH REPO DB WRITE
-    async _updateGist(token, gistId, data) {
-        // Fallback or Migration
-        console.warn("Using Legacy Gist Sync");
-    },
-    
-    // --- CRYPTO HELPER (Web Crypto API) ---
-    async _deriveKey(userEmail) {
-        const enc = new TextEncoder();
-        const baseKey = await crypto.subtle.importKey(
-            "raw",
-            enc.encode("KLYX_HIVE_MIND_SECRET_SALT_v1_" + userEmail),
-            { name: "PBKDF2" },
-            false,
-            ["deriveKey"]
-        );
-        return await crypto.subtle.deriveKey(
-            {
-                name: "PBKDF2",
-                salt: enc.encode("KLYX_SALT"),
-                iterations: 100000,
-                hash: "SHA-256"
-            },
-            baseKey,
-            { name: "AES-GCM", length: 256 },
-            false,
-            ["encrypt", "decrypt"]
-        );
-    },
-
-    async _encryptData(data, userEmail) {
-        try {
-            const key = await this._deriveKey(userEmail);
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const enc = new TextEncoder();
-            const encodedData = enc.encode(JSON.stringify(data));
-            
-            const ciphertext = await crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: iv },
-                key,
-                encodedData
-            );
-            
-            // Return as base64 string: "iv_base64:ciphertext_base64"
-            const ivStr = btoa(String.fromCharCode(...iv));
-            const cipherStr = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
-            return `${ivStr}:${cipherStr}`;
-        } catch (e) {
-            console.error("Encryption Failed", e);
-            throw e;
-        }
-    },
-
-    async _decryptData(encryptedStr, userEmail) {
-        try {
-            if (!encryptedStr || !encryptedStr.includes(":")) return null;
-            
-            const [ivStr, cipherStr] = encryptedStr.split(":");
-            const iv = new Uint8Array(atob(ivStr).split("").map(c => c.charCodeAt(0)));
-            const ciphertext = new Uint8Array(atob(cipherStr).split("").map(c => c.charCodeAt(0)));
-            const key = await this._deriveKey(userEmail);
-            
-            const decrypted = await crypto.subtle.decrypt(
-                { name: "AES-GCM", iv: iv },
-                key,
-                ciphertext
-            );
-            
-            const dec = new TextDecoder();
-            return JSON.parse(dec.decode(decrypted));
-        } catch (e) {
-            console.error("Decryption Failed", e);
-            return null;
-        }
-    },
-
-    // --- REPO DB IMPLEMENTATION ---
-    async _getRepoFile(token, userEmail) {
-        if (!userEmail) return null;
-        const owner = api.auth.githubConfig.repoOwner;
-        const repo = api.auth.githubConfig.repoName;
-        // Sanitized filename from email or ID
-        const filename = `banco_de_dados/user_${userEmail.replace(/[@.]/g, '_')}.json`;
-        
-        try {
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
-            // Add timestamp to bypass cache
-            const res = await fetch(url + `?t=${Date.now()}`, {
-                 headers: { 
-                     "Authorization": `token ${token}`,
-                     "Accept": "application/vnd.github.v3+json"
-                 }
-            });
-            
-            if (res.status === 404) return null;
-            if (res.status === 401) {
-                repoAuthFailed = true;
-                console.warn("Repo Read Skipped: Unauthorized (401)");
-                return null;
-            }
-            if (!res.ok) throw new Error(`Repo Read Error ${res.status}`);
-            
-            const json = await res.json();
-            // Decode Base64 content wrapper (GitHub API format)
-            const contentRaw = decodeURIComponent(escape(atob(json.content)));
-            
-            // Try to parse as JSON first (Legacy support or new format container)
-            let parsed;
-            try {
-                parsed = JSON.parse(contentRaw);
-            } catch {
-                parsed = contentRaw;
-            }
-
-            // Check if it's our new encrypted format (has 'encryptedPayload')
-            let finalData = parsed;
-            if (parsed && parsed.encryptedPayload) {
-                console.log("🔐 Decrypting Cloud Data...");
-                const decrypted = await this._decryptData(parsed.encryptedPayload, userEmail);
-                if (decrypted) {
-                    finalData = decrypted;
-                } else {
-                    console.error("Failed to decrypt data!");
-                    // Fallback to empty or raw to avoid crash, but warn user
-                }
-            } else {
-                console.log("⚠️ Legacy Data Detected (Unencrypted). will migrate on next save.");
-            }
-
-            return {
-                sha: json.sha,
-                data: finalData
-            };
-        } catch (e) {
-            if (e && e.name === "AbortError") {
-                console.warn("Repo DB Read aborted (navigation/change of page)");
-                return null;
-            }
-            console.error("Repo DB Read Error", e);
-            return null;
-        }
-    },
-    
-    async _writeRepoFile(token, userEmail, data, sha = null) {
-        if (!userEmail) return;
-        const owner = api.auth.githubConfig.repoOwner;
-        const repo = api.auth.githubConfig.repoName;
-        const filename = `banco_de_dados/user_${userEmail.replace(/[@.]/g, '_')}.json`;
-        
-        try {
-            // ENCRYPT DATA BEFORE SENDING
-            console.log("🔒 Encrypting Data before Sync...");
-            const encryptedPayload = await this._encryptData(data, userEmail);
-            
-            // Wrap in a container
-            const container = {
-                version: "2.0-encrypted",
-                updatedAt: new Date().toISOString(),
-                userEmail: userEmail, // Public metadata
-                encryptedPayload: encryptedPayload // THE SECRET SAUCE
-            };
-
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
-            
-            // Encode content to Base64 (UTF-8 safe) for GitHub API
-            const contentStr = JSON.stringify(container, null, 2);
-            const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
-            
-            const body = {
-                message: `update: sync user data (encrypted) for ${userEmail}`,
-                content: contentBase64
-            };
-            
-            if (sha) {
-                body.sha = sha;
-            }
-            
-            const res = await fetch(url, {
-                method: "PUT",
-                headers: { 
-                    "Authorization": `token ${token}`,
-                    "Content-Type": "application/json",
-                    "Accept": "application/vnd.github.v3+json"
-                },
-                body: JSON.stringify(body)
-            });
-            
-            if (res.status === 401) {
-                repoAuthFailed = true;
-                console.warn("Repo Write Skipped: Unauthorized (401)");
-                return null;
-            }
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Repo Write Error ${res.status}: ${errText}`);
-            }
-            
-            return await res.json();
-        } catch (e) {
-            console.error("Repo DB Write Error", e);
-            throw e;
-        }
-    },
-
-    // --- FIREBASE DB IMPLEMENTATION (Google Users) ---
-    async _getFirebaseData(userId) {
-        try {
-            const url = `${FIREBASE_DB_URL}/users/${userId}/full_sync.json`;
-            const res = await fetch(url);
-            if (res.status === 404) return null;
-            if (!res.ok) throw new Error(`Firebase Read Error ${res.status}`);
+            // Fetch User Data
+            const res = await fetch(`${this.API_URL}?key=klyx:user:${session.user.id}`);
+            if (!res.ok) throw new Error("Failed to fetch user data");
             
             const data = await res.json();
-            return data;
+            if (data) {
+                // Restore LocalStorage
+                Object.keys(data).forEach(key => {
+                    localStorage.setItem(key, data[key]);
+                });
+                console.log("âœ… [Vercel DB] Sync Down Complete.");
+                // Reload to apply changes if needed
+                // window.location.reload(); 
+            } else {
+                console.log("â„¹ï¸ [Vercel DB] No remote data found.");
+            }
         } catch (e) {
-            console.warn("Firebase Read Error (suppressed)", e);
-            return null;
+            console.error("âŒ [Vercel DB] Sync Down Failed:", e);
         }
     },
 
-    async _writeFirebaseData(userId, data) {
-        try {
-            // Check if FIREBASE_DB_URL is valid/configured
-            if (!FIREBASE_DB_URL || FIREBASE_DB_URL.includes("klix-iptv-default-rtdb")) {
-                 // Suppress error for unconfigured firebase to avoid alerting user
-                 // Just log warning
-                 console.warn("Firebase not configured or default URL used. Skipping write.");
-                 return null;
-            }
-
-            const url = `${FIREBASE_DB_URL}/users/${userId}/full_sync.json`;
-            const res = await fetch(url, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            if (res.status === 404) {
-                 console.warn("Firebase 404 - Project not found or DB disabled.");
-                 return null;
-            }
-            if (!res.ok) throw new Error(`Firebase Write Error ${res.status}`);
-            return await res.json();
-        } catch (e) {
-            console.warn("Firebase Write Error (suppressed)", e);
-            // Do not throw to prevent app breakage
-            return null;
-        }
-    },
-
-    // SYNC DOWN: Cloud -> Local (Updated for Repo DB + Encryption + Firebase)
-    async syncDown() {
-        const token = this._getToken();
-        const session = readSession();
-        if (!token || token === "offline" || repoAuthFailed) return;
-        
-        // Dispatch Event: Sync Start
-        window.dispatchEvent(new CustomEvent('klyx-sync-start'));
-
-        let cloudData = null;
-        let sha = null;
-        let userId = session?.user?.id;
-
-        // STRATEGY SELECTION
-        if (session && session.provider === "google") {
-            // --- GOOGLE STRATEGY (Firebase) ---
-            if (!userId) { window.dispatchEvent(new CustomEvent('klyx-sync-end')); return; }
-            
-            console.log("☁️ Syncing Down from Google Database (Firebase)...");
-            cloudData = await this._getFirebaseData(userId);
-            
-            // Firebase doesn't use SHA, but we can check updatedAt
-            if (cloudData) {
-                const lastUpdate = localStorage.getItem(`klyx_firebase_last_update_${userId}`);
-                if (lastUpdate && cloudData.updatedAt === lastUpdate) {
-                    window.dispatchEvent(new CustomEvent('klyx-sync-end'));
-                    return;
-                }
-                localStorage.setItem(`klyx_firebase_last_update_${userId}`, cloudData.updatedAt);
-            }
-            
-        } else {
-            // --- GITHUB STRATEGY (Repo DB) ---
-            if (token.startsWith("klyx_")) return; // Legacy token check
-
-            // We need user email to find the file
-            let user = session?.user;
-            if (!user || !user.email) {
-                 try {
-                     const userRes = await fetch("https://api.github.com/user", {
-                        headers: { "Authorization": `token ${token}` }
-                     });
-                     if (userRes.ok) {
-                         const ghUser = await userRes.json();
-                         user = { email: ghUser.email || ghUser.login + "@github.com", id: "u" + ghUser.id };
-                         userId = user.id;
-                     }
-                 } catch(e) { console.warn("Failed to fetch user for sync", e); return; }
-            }
-            
-            if (!user) {
-                window.dispatchEvent(new CustomEvent('klyx-sync-end'));
-                return;
-            }
-
-            const repoFile = await this._getRepoFile(token, user.email);
-            if (repoFile) {
-                sha = repoFile.sha;
-                cloudData = repoFile.data;
-                
-                // Check SHA
-                const lastSha = localStorage.getItem(`klyx_repodb_sha_${userId}`);
-                if (lastSha === sha) {
-                    window.dispatchEvent(new CustomEvent('klyx-sync-end'));
-                    return;
-                }
-                localStorage.setItem(`klyx_repodb_sha_${userId}`, sha);
-            }
-        }
-        
-        // COMMON RESTORE LOGIC
-        if (cloudData) {
-            // Restore to LocalStorage (Expanded Data)
-            const profiles = cloudData.profiles || [];
-            const progress = cloudData.progress || {};
-            const activityLog = cloudData.activityLog || [];
-            const favorites = cloudData.favorites || [];
-            const supportStats = cloudData.supportStats || {tickets:0, lastContact:null};
-            const subscription = cloudData.subscription || {plan:"free", status:"active"};
-            const accountStatus = cloudData.accountStatus || "active";
-            const preferences = cloudData.preferences || {};
-            
-            if (userId) {
-                localStorage.setItem(`klyx.profiles.${userId}`, JSON.stringify(profiles));
-                localStorage.setItem(`klyx_progress_${userId}`, JSON.stringify(progress));
-                localStorage.setItem(`klyx_activity_log_${userId}`, JSON.stringify(activityLog));
-                localStorage.setItem(`klyx_favorites_${userId}`, JSON.stringify(favorites));
-                localStorage.setItem(`klyx_support_stats_${userId}`, JSON.stringify(supportStats));
-                localStorage.setItem(`klyx_subscription_${userId}`, JSON.stringify(subscription));
-                localStorage.setItem(`klyx_account_status_${userId}`, accountStatus);
-                localStorage.setItem(`klyx_preferences_${userId}`, JSON.stringify(preferences));
-            }
-            
-            // Sync Account-Bound Device Identity
-            if (cloudData.deviceIdentity && cloudData.deviceIdentity.mac) {
-                localStorage.setItem('klyx_device_mac', cloudData.deviceIdentity.mac);
-                localStorage.setItem('klyx_device_key', cloudData.deviceIdentity.key);
-            }
-            
-            console.log("☁️ Sync Down Complete (Data Restored)");
-            
-            // Dispatch Event: Data Updated (UI should reload if needed)
-            window.dispatchEvent(new CustomEvent('klyx-data-updated'));
-        } else {
-            console.log("☁️ No Cloud Data found. Creating INITIAL data...");
-            // Immediately trigger syncUp to create the file
-            await this.syncUp();
-        }
-        
-        window.dispatchEvent(new CustomEvent('klyx-sync-end'));
-    },
-
-    // Auto-Polling for Real-Time Sync
-    startPolling() {
-        if (this._syncTimer) clearInterval(this._syncTimer);
-        console.log("🔄 Starting Real-Time Sync Polling (2s)");
-        
-        // Initial Sync
-        this.syncDown();
-        
-        // Poll every 2 seconds
-        this._syncTimer = setInterval(() => {
-            this.syncDown();
-        }, 2000);
-    },
-    
-    stopPolling() {
-        if (this._syncTimer) clearInterval(this._syncTimer);
-        this._syncTimer = null;
-    },
-
-    // SYNC UP: Local -> Cloud (Updated for Repo DB + Encryption + Firebase)
+    // 2. Sync Up (Save to Vercel)
     async syncUp() {
-        const token = this._getToken();
+        console.log("â˜ï¸ [Vercel DB] Syncing UP...");
         const session = readSession();
-        
         if (!session || !session.user) return;
-        
-        // Validation: GitHub needs valid token, Google just needs session
-        if (session.provider !== "google") {
-            if (!token || token.startsWith("klyx_") || token === "offline" || repoAuthFailed) return;
-        }
 
-        window.dispatchEvent(new CustomEvent('klyx-sync-start'));
-        
-        const user = session.user;
-
-        // Gather Local Data (Expanded)
-        const profiles = JSON.parse(localStorage.getItem(`klyx.profiles.${user.id}`) || "[]");
-        const progress = JSON.parse(localStorage.getItem(`klyx_progress_${user.id}`) || "{}");
-        const activityLog = JSON.parse(localStorage.getItem(`klyx_activity_log_${user.id}`) || "[]");
-        const favorites = JSON.parse(localStorage.getItem(`klyx_favorites_${user.id}`) || "[]");
-        const supportStats = JSON.parse(localStorage.getItem(`klyx_support_stats_${user.id}`) || '{"tickets":0,"lastContact":null}');
-        const subscription = JSON.parse(localStorage.getItem(`klyx_subscription_${user.id}`) || '{"plan":"free","status":"active"}');
-        const accountStatus = localStorage.getItem(`klyx_account_status_${user.id}`) || "active";
-        const preferences = JSON.parse(localStorage.getItem(`klyx_preferences_${user.id}`) || "{}");
-        
-        const deviceIdentity = {
-            mac: localStorage.getItem('klyx_device_mac'),
-            key: localStorage.getItem('klyx_device_key')
-        };
-        
-        const data = {
-            updatedAt: new Date().toISOString(),
-            githubUser: user, // Include User Data snapshot
-            profiles,
-            progress,
-            activityLog,
-            favorites,
-            supportStats,
-            subscription,
-            accountStatus,
-            preferences,
-            deviceIdentity
-        };
-
-        // STRATEGY SELECTION
-        if (session.provider === "google") {
-            // --- GOOGLE STRATEGY (Firebase) ---
-            console.log("☁️ Syncing Up to Google Database (Firebase)...");
-            try {
-                await this._writeFirebaseData(user.id, data);
-                console.log("☁️ Sync Up Complete (Saved to Firebase)");
-                // Update local tracker to prevent immediate re-download
-                localStorage.setItem(`klyx_firebase_last_update_${user.id}`, data.updatedAt);
-            } catch (e) {
-                console.error("Firebase Sync Up Failed", e);
-            }
-        } else {
-            // --- GITHUB STRATEGY (Repo DB) ---
-            console.log("☁️ Syncing Up to Repo DB (Encrypted)...");
-            
-            // Try to get SHA first (optimistic locking)
-            let sha = localStorage.getItem(`klyx_repodb_sha_${user.id}`);
-            
-            // If no SHA, check if file exists to get it
-            if (!sha) {
-                const existing = await this._getRepoFile(token, user.email);
-                if (existing) sha = existing.sha;
-            }
-
-            try {
-                const res = await this._writeRepoFile(token, user.email, data, sha);
-                // Update SHA
-                if (res && res.content && res.content.sha) {
-                    localStorage.setItem(`klyx_repodb_sha_${user.id}`, res.content.sha);
-                }
-                console.log("☁️ Sync Up Complete (Saved Encrypted to Repo DB)");
-            } catch (e) {
-                console.error("Sync Up Failed", e);
-                if (e.message.includes("403") || e.message.includes("404")) {
-                    console.warn("Write permission denied or repo not found");
-                }
+        // Gather all Klyx data
+        const data = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith("klyx")) {
+                data[key] = localStorage.getItem(key);
             }
         }
-        
-        window.dispatchEvent(new CustomEvent('klyx-sync-end'));
-    },
 
-    // Debounced Sync Up
-    scheduleSyncUp() {
-        // Use a separate timer for debounce to avoid conflicting with polling
-        if (window._debounceTimer) clearTimeout(window._debounceTimer);
-        window._debounceTimer = setTimeout(() => {
-            this.syncUp();
-        }, 2000); // Wait 2 seconds
-    },
-
-    // 4. RESET / WIPE CLOUD DATA
-    async reset() {
-        console.log("🔥 INITIATING NUCLEAR RESET...");
-        
         try {
-            const token = this._getToken();
-            const session = readSession();
+            const res = await fetch(this.API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    key: `klyx:user:${session.user.id}`,
+                    value: data
+                })
+            });
             
-            // 1. Try to Wipe Cloud (Best Effort)
-            if (token) {
-                try {
-                    if (session && session.provider === "google") {
-                         const userId = session.user.id;
-                         await fetch(`${FIREBASE_DB_URL}/users/${userId}/full_sync.json`, {
-                             method: "DELETE"
-                         });
-                         console.log("☁️ Google Cloud Data Wiped");
-                    } else {
-                        // GitHub Wipe
-                        const gist = await this._findGist(token);
-                        if (gist) {
-                             // Overwrite with empty data and explicitly NULL identity
-                            await this._updateGist(token, gist.id, {
-                                updatedAt: new Date().toISOString(),
-                                profiles: [],
-                                progress: {},
-                                deviceIdentity: { mac: null, key: null }
-                            });
-                            console.log("☁️ Cloud Data Wiped");
-                        }
-                    }
-                } catch (cloudError) {
-                    console.warn("⚠️ Cloud wipe failed (network/auth issue?), proceeding with local wipe anyway.", cloudError);
-                }
+            if (res.ok) {
+                console.log("âœ… [Vercel DB] Sync Up Complete.");
+            } else {
+                console.error("âŒ [Vercel DB] Sync Up Failed:", res.statusText);
             }
         } catch (e) {
-            console.warn("Reset preparation error", e);
+            console.error("âŒ [Vercel DB] Sync Up Error:", e);
         }
+    },
 
-        // 2. NUCLEAR LOCAL WIPE (Unconditional)
-        console.log("🗑️ Wiping Local Storage...");
-        localStorage.clear(); // Delete EVERYTHING: users, settings, profiles, mac, key, tokens
-        sessionStorage.clear();
-        
-        // 3. Force reload to clear memory state
-        console.log("🔥 RESET COMPLETE. RELOADING.");
-        window.location.href = "./index.html";
-        return { ok: true };
+    // Schedule Sync
+    scheduleSyncUp() {
+        if (this._syncTimer) clearTimeout(this._syncTimer);
+        this._syncTimer = setTimeout(() => this.syncUp(), 2000); // Debounce 2s
     }
   },
   auth: {
