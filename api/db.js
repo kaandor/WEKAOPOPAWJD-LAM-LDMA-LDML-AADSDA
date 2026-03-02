@@ -1,7 +1,11 @@
-﻿import { kv } from '@vercel/kv';
+﻿import { createClient } from '@vercel/kv';
+
+const kv = createClient({
+    url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 export default async function handler(req, res) {
-    // CORS configuration
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
@@ -15,9 +19,7 @@ export default async function handler(req, res) {
             const { key } = req.query;
             if (!key) return res.status(400).json({ error: 'Key is required' });
             
-            // Check if KV is configured
-            if (!process.env.KV_REST_API_URL) {
-                console.warn("Vercel KV not configured.");
+            if (!process.env.KV_REST_API_URL && !process.env.UPSTASH_REDIS_REST_URL) {
                 return res.status(200).json(null);
             }
 
@@ -29,8 +31,7 @@ export default async function handler(req, res) {
             const { key, value, ttl } = req.body;
             if (!key || value === undefined) return res.status(400).json({ error: 'Key and value are required' });
 
-            if (!process.env.KV_REST_API_URL) {
-                 console.warn("Vercel KV not configured. Mocking success.");
+            if (!process.env.KV_REST_API_URL && !process.env.UPSTASH_REDIS_REST_URL) {
                  return res.status(200).json({ success: true, mocked: true });
             }
 
@@ -42,7 +43,6 @@ export default async function handler(req, res) {
         
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error('Database Error:', error);
         return res.status(500).json({ error: 'Internal Server Error', details: error.message });
     }
 }
