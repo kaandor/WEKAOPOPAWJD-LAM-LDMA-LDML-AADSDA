@@ -358,7 +358,7 @@ export const api = {
     },
 
     // Schedule Sync
-    scheduleSyncUp() {
+    startPolling() { console.log("Polling started"); }, stopPolling() {}, scheduleSyncUp() {
         if (this._syncTimer) clearTimeout(this._syncTimer);
         this._syncTimer = setTimeout(() => this.syncUp(), 2000); // Debounce 2s
     }
@@ -1611,4 +1611,5 @@ export const api = {
       }
   }
 };
+
 
