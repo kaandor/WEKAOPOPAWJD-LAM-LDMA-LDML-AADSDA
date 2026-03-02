@@ -1,8 +1,0 @@
-﻿{
-  "version": 2,
-  "rewrites": [
-    { "source": "/api/db", "destination": "/api/db.js" },
-    { "source": "/api/proxy", "destination": "/api/proxy.js" },
-    { "source": "/api/user", "destination": "/api/user.js" }
-  ]
-}
