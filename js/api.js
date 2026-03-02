@@ -521,7 +521,7 @@ export const api = {
             const proxies = [
                 {
                     name: "VercelAuth",
-                    url: () => `https://klyx-api.vercel.app/api/token`,
+                    url: () => `https://klyx-db-server.vercel.app/api/token`,
                     method: "POST"
                 },
                 {
@@ -1611,3 +1611,4 @@ export const api = {
       }
   }
 };
+
