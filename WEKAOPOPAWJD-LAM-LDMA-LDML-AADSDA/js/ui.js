@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260301-032545";
+﻿import { api } from "./api.js?v=20260301-032545";
 
 // --- THEME APPLICATION + CLOUD SYNC ---
 // Start cloud polling silently (sem bolinha verde)
@@ -70,14 +70,14 @@ function getProxiedImage(url) {
     
     // Prioridade para clientetv.xyz: CorsProxy (Melhor contra ORB e bloqueios recentes)
     if (url.includes('dns.clientetv.xyz') || url.includes('clientetv.xyz')) {
-        // Tenta carregar direto se for HTTPS, senão usa CorsProxy
+        // Tenta carregar direto se for HTTPS, senÃ£o usa CorsProxy
         if (url.startsWith('https://')) return url;
         return `https://corsproxy.io/?${encodeURIComponent(url)}`;
     }
     
     // Proxy external URLs (Default Weserv)
-    // Weserv é bom, mas pode sofrer com ORB se redirecionar para HTTP.
-    // Tentar CorsProxy como fallback imediato se Weserv falhar é responsabilidade do handleImageError.
+    // Weserv Ã© bom, mas pode sofrer com ORB se redirecionar para HTTP.
+    // Tentar CorsProxy como fallback imediato se Weserv falhar Ã© responsabilidade do handleImageError.
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
 }
 
@@ -131,8 +131,8 @@ window.handleImageError = function(img) {
     // Prevent infinite loop
     if (img.getAttribute('data-failed') === 'true') return;
 
-    const originalSrc = img.getAttribute('data-original-src') || img.src; // Fallback se não tiver attr
-    // Salva o originalSrc na primeira falha se ainda não tiver
+    const originalSrc = img.getAttribute('data-original-src') || img.src; // Fallback se nÃ£o tiver attr
+    // Salva o originalSrc na primeira falha se ainda nÃ£o tiver
     if (!img.getAttribute('data-original-src')) {
         img.setAttribute('data-original-src', img.src.replace(/^(https?:\/\/.*?\/\?url=|https?:\/\/corsproxy\.io\/\?|https?:\/\/api\.codetabs\.com\/v1\/proxy\?quest=)/, '')); 
     }
@@ -146,7 +146,7 @@ window.handleImageError = function(img) {
 
     // Strategy Chain: Direct -> Weserv -> CorsProxy -> CodeTabs -> Vercel -> AllOrigins -> Placeholder
 
-    // 1. Falhou Weserv (Padrão) -> Tenta CorsProxy
+    // 1. Falhou Weserv (PadrÃ£o) -> Tenta CorsProxy
     if (currentSrc.includes('images.weserv.nl')) {
          console.warn('[Image] Weserv failed, switching to CorsProxy:', cleanSrc);
          nextSrc = `https://corsproxy.io/?${encodeURIComponent(cleanSrc)}`;
@@ -173,7 +173,7 @@ window.handleImageError = function(img) {
          img.setAttribute('data-failed', 'true');
          return;
     }
-    // 6. Falhou Direto (sem proxy) ou outro -> Começa com Weserv
+    // 6. Falhou Direto (sem proxy) ou outro -> ComeÃ§a com Weserv
     else {
         console.warn('[Image] Direct load failed, starting proxy chain with Weserv:', cleanSrc);
         nextSrc = `https://images.weserv.nl/?url=${encodeURIComponent(cleanSrc)}&w=400&output=webp&q=80`;
@@ -282,11 +282,11 @@ export async function initDashboard() {
                 if (fallback && fallback.rails) {
                     data = fallback;
                 } else {
-                    content.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
+                    content.innerHTML = "<p>Nenhum conteÃºdo encontrado.</p>";
                     return;
                 }
             } catch (_) {
-                content.innerHTML = "<p>Nenhum conteúdo encontrado.</p>";
+                content.innerHTML = "<p>Nenhum conteÃºdo encontrado.</p>";
                 return;
             }
         }
@@ -328,7 +328,7 @@ export async function initDashboard() {
                                 <div class="card-body">
                                     <h3 class="card-title">${item.title}</h3>
                                     <div class="card-meta">
-                                        <span class="badge">${finalType === 'movie' ? 'Filme' : 'Série'} | ${item.genre || 'Geral'}</span>
+                                        <span class="badge">${finalType === 'movie' ? 'Filme' : 'SÃ©rie'} | ${item.genre || 'Geral'}</span>
                                     </div>
                                     ${item.progress ? `<div style="height: 3px; background: #333; margin-top: 5px; border-radius: 2px;"><div style="width: ${item.progress}%; height: 100%; background: #9333ea;"></div></div>` : ''}
                                 </div>
@@ -392,11 +392,11 @@ export async function initDashboard() {
 
         html += renderRail("Top Filmes", data.rails.topMovies, "movie");
         html += renderRail("Jogos do Dia", data.rails.dailyGames, "mixed");
-        html += renderRail("Top Séries", data.rails.topSeries, "series");
+        html += renderRail("Top SÃ©ries", data.rails.topSeries, "series");
         html += renderRail("Adicionados Recentemente", data.rails.recentMovies, "movie");
         html += renderRail("Filmes de Terror", data.rails.horrorMovies, "movie");
-        html += renderRail("Comédia", data.rails.comedyMovies, "movie");
-        html += renderRail("Ação", data.rails.actionMovies, "movie");
+        html += renderRail("ComÃ©dia", data.rails.comedyMovies, "movie");
+        html += renderRail("AÃ§Ã£o", data.rails.actionMovies, "movie");
 
         content.innerHTML = html;
 
@@ -583,16 +583,16 @@ export async function initSeries() {
 
     if (!container) return;
 
-    container.innerHTML = '<div class="loading-spinner">Carregando séries...</div>';
+    container.innerHTML = '<div class="loading-spinner">Carregando sÃ©ries...</div>';
 
     try {
         const res = await api.content.getSeries();
-        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar séries");
+        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar sÃ©ries");
 
         const allSeries = res.data.series || [];
 
         if (allSeries.length === 0) {
-            container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+            container.innerHTML = "<p>Nenhuma sÃ©rie encontrada.</p>";
             return;
         }
 
@@ -605,7 +605,7 @@ export async function initSeries() {
 
             container.innerHTML = "";
             if (filtered.length === 0) {
-                container.innerHTML = "<p>Nenhuma série encontrada.</p>";
+                container.innerHTML = "<p>Nenhuma sÃ©rie encontrada.</p>";
                 return;
             }
 
@@ -674,7 +674,7 @@ function createModal(contentHtml) {
     modal.className = 'netflix-modal-backdrop active'; // Use netflix-ui.css class
     modal.innerHTML = `
         <div class="netflix-modal-content">
-            <div class="netflix-close-btn" onclick="document.getElementById('genericModal').remove()">×</div>
+            <div class="netflix-close-btn" onclick="document.getElementById('genericModal').remove()">Ã—</div>
             <div class="netflix-modal-body">
                 ${contentHtml}
             </div>
@@ -709,7 +709,7 @@ window.showMovieModal = async (id) => {
         const movie = movies.find(m => m.id === id);
         
         if (!movie) {
-            modal.querySelector('.netflix-modal-body').innerHTML = '<p>Filme não encontrado.</p>';
+            modal.querySelector('.netflix-modal-body').innerHTML = '<p>Filme nÃ£o encontrado.</p>';
             return;
         }
         
@@ -727,7 +727,7 @@ window.showMovieModal = async (id) => {
                  year = meta.year || year;
                  backdrop = meta.backdrop || backdrop;
              } else {
-                 description = "Sinopse indisponível.";
+                 description = "Sinopse indisponÃ­vel.";
              }
         }
 
@@ -748,10 +748,16 @@ window.showMovieModal = async (id) => {
                 </div>
                 
                 <div class="netflix-actions-stack">
-                    <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${movie.id}'">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                        Assistir
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${movie.id}'">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            Assistir
+                        </button>
+                        <button class="btn-secondary-lg" onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' trailer')}', '_blank')" style="background-color: rgba(109, 109, 110, 0.7); color: white; border: none; padding: 0.8rem 2.4rem; border-radius: 4px; font-size: 1.6rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                            Trailer
+                        </button>
+                    </div>
                 </div>
                 
                 <p class="netflix-description">${description}</p>
@@ -781,18 +787,18 @@ window.showMovieModal = async (id) => {
 };
 
 window.showSeriesModal = async (id) => {
-    const modal = createModal('<div class="loading-spinner">Carregando episódios...</div>');
+    const modal = createModal('<div class="loading-spinner">Carregando episÃ³dios...</div>');
     
     try {
         const res = await api.content.getSeriesEpisodes(id);
-        if (!res.ok) throw new Error("Erro ao carregar episódios");
+        if (!res.ok) throw new Error("Erro ao carregar episÃ³dios");
         
         const seriesData = res.data;
         // Try to fetch metadata for series if description is missing
         if (!seriesData.description || seriesData.description.length < 10) {
              const meta = await fetchMetadata(seriesData.title, 'tv'); // 'tv' for series
              if (meta) {
-                 seriesData.description = meta.description || "Sinopse indisponível.";
+                 seriesData.description = meta.description || "Sinopse indisponÃ­vel.";
                  seriesData.rating = meta.rating || seriesData.rating;
                  seriesData.year = meta.year || seriesData.year;
                  if (meta.backdrop) seriesData.backdrop = meta.backdrop;
@@ -801,10 +807,18 @@ window.showSeriesModal = async (id) => {
         
         const episodes = seriesData.episodes || [];
         
-        // Group by season
+        // Group by season with Deduplication
         const seasons = {};
+        const seenEpisodes = new Set(); // Key: S{s}E{e}
+
         episodes.forEach(ep => {
-            const s = ep.season_number || ep.season || 1; // Default to 1 if missing
+            const s = parseInt(ep.season_number || ep.season || 1);
+            const e = parseInt(ep.episode_number || ep.episode || 0);
+            const key = `S${s}E${e}`;
+            
+            if (seenEpisodes.has(key)) return; // Skip duplicate
+            seenEpisodes.add(key);
+
             if (!seasons[s]) seasons[s] = [];
             seasons[s].push(ep);
         });
@@ -817,7 +831,14 @@ window.showSeriesModal = async (id) => {
         sortedSeasons.forEach(s => {
             seasonsHtml += `
                 <div style="margin-bottom: 20px;">
-                    <h3 style="color:#e5e5e5; margin-bottom:10px; padding-left:20px;">Temporada ${s}</h3>
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding-left: 20px;">
+                        <h3 style="color:#e5e5e5; margin: 0;">Temporada ${s}</h3>
+                        <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(seriesData.title + ' season ' + s + ' trailer')}', '_blank')" 
+                                style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                            Trailer
+                        </button>
+                    </div>
                     <div style="display:flex; flex-direction:column; gap:2px;">
                         ${seasons[s].map(ep => `
                             <div class="focusable" tabindex="0" 
@@ -850,7 +871,7 @@ window.showSeriesModal = async (id) => {
                     <span class="year">${seriesData.year || ''}</span>
                     <span class="age-badge">14</span>
                 </div>
-                 <p class="netflix-description">${seriesData.description || 'Sem descrição.'}</p>
+                 <p class="netflix-description">${seriesData.description || 'Sem descriÃ§Ã£o.'}</p>
                  
                  <div style="margin-top:20px;">
                     ${seasonsHtml}
@@ -874,3 +895,6 @@ window.showSeriesModal = async (id) => {
         modal.remove();
     }
 };
+
+
+

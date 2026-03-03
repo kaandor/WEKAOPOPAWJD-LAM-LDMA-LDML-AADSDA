@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260301-033430";
+﻿import { api } from "./api.js?v=20260301-033430";
 import { applyGlobalTheme } from "./ui.js?v=20260225-v1";
 
 // Apply theme immediately
@@ -13,11 +13,24 @@ let currentHls = null;
 // Simple Proxy Helper - Single Robust Proxy
 const PROXY_URL = "https://corsproxy.io/?";
 
+// Helper to determine best proxy
+function getBestProxyBase() {
+    // If running on Vercel, use local serverless function
+    if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('localhost')) {
+        return '/api/proxy?url=';
+    }
+    // Fallback for GitHub Pages or others
+    return PROXY_URL;
+}
+
 function getProxiedUrl(url) {
     if (!url) return '';
+    const proxyBase = getBestProxyBase();
+    
     // If already proxied, return as is
-    if (url.startsWith(PROXY_URL)) return url;
-    return `${PROXY_URL}${encodeURIComponent(url)}`;
+    if (url.startsWith(PROXY_URL) || url.startsWith('/api/proxy')) return url;
+    
+    return `${proxyBase}${encodeURIComponent(url)}`;
 }
 
 // --- UI Helpers ---
@@ -323,6 +336,90 @@ function renderEpisodesList(episodes, currentIndex, seriesId, container) {
     });
 }
 
+function handleAudioSubtitles(detail, video) {
+    const btnSettings = document.getElementById('btnSettings');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const audioOptions = document.getElementById('audioOptions');
+
+    if (btnSettings && settingsModal) {
+        btnSettings.onclick = () => {
+            settingsModal.style.display = settingsModal.style.display === 'block' ? 'none' : 'block';
+        };
+        if (closeSettings) closeSettings.onclick = () => settingsModal.style.display = 'none';
+    }
+
+    if (audioOptions) {
+        audioOptions.innerHTML = '';
+        
+        // Option 1: Main Stream (Dubbed usually, or whatever is default)
+        const opt1 = document.createElement('div');
+        opt1.style.cssText = 'padding: 8px; cursor: pointer; border-radius: 4px; background: rgba(255,255,255,0.1);';
+        opt1.textContent = "Ãudio Principal";
+        opt1.onclick = () => {
+            const time = video.currentTime;
+            attachSource(video, detail.streamUrl, false);
+            video.currentTime = time;
+            settingsModal.style.display = 'none';
+        };
+        audioOptions.appendChild(opt1);
+
+        // Option 2: Secondary Stream (Subtitled usually)
+        if (detail.streamUrlSub || detail.streamUrlAudio2) {
+            const url2 = detail.streamUrlSub || detail.streamUrlAudio2;
+            const opt2 = document.createElement('div');
+            opt2.style.cssText = 'padding: 8px; cursor: pointer; border-radius: 4px; margin-top: 5px;';
+            opt2.textContent = "Ãudio Alternativo / Legendado";
+            opt2.onclick = () => {
+                const time = video.currentTime;
+                attachSource(video, url2, false);
+                video.currentTime = time;
+                settingsModal.style.display = 'none';
+            };
+            audioOptions.appendChild(opt2);
+        }
+    }
+}
+
+function handleNextEpisode(detail) {
+    const overlay = document.getElementById('nextEpOverlay');
+    const nextTitle = document.getElementById('nextEpTitle');
+    const nextProgress = document.getElementById('nextEpProgress');
+    const btnPlayNext = document.getElementById('btnPlayNextNow');
+    const btnCancel = document.getElementById('btnCancelNext');
+
+    if (!overlay || !detail.episodes) return;
+
+    if (detail.currentEpIndex >= detail.episodes.length - 1) return; // No next ep
+
+    const nextEp = detail.episodes[detail.currentEpIndex + 1];
+    
+    if (nextTitle) nextTitle.textContent = PrÃ³ximo: x - ;
+    
+    overlay.style.display = 'block';
+    
+    // Auto play in 5 seconds
+    let timeLeft = 5000;
+    const interval = setInterval(() => {
+        timeLeft -= 100;
+        if (nextProgress) nextProgress.style.width = (timeLeft / 5000 * 100) + '%';
+        
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            window.location.href = './player_v2.html?type=episode&id=' + nextEp.id + '&seriesId=' + detail.seriesId;
+        }
+    }, 100);
+
+    btnPlayNext.onclick = () => {
+        clearInterval(interval);
+        window.location.href = './player_v2.html?type=episode&id=' + nextEp.id + '&seriesId=' + detail.seriesId;
+    };
+
+    btnCancel.onclick = () => {
+        clearInterval(interval);
+        overlay.style.display = 'none';
+    };
+}
 function setupUI(detail, video) {
     // Title & Meta
     const titleEl = document.getElementById('playerTitle');
@@ -398,7 +495,30 @@ export async function initPlayer() {
     // Setup UI
     setupUI(detail, video);
 
+        // Setup Progress Saving & Restore
+    const savedTime = api.playback.getProgress(id);
+    if (savedTime > 0) {
+        console.log('[Player] Restoring progress: ' + savedTime + 's');
+        video.currentTime = savedTime;
+    }
+
+    video.addEventListener('timeupdate', () => {
+        if (video.currentTime > 5 && !video.paused) {
+            api.playback.saveProgress(id, video.currentTime, video.duration, type);
+        }
+    });
+
+    video.addEventListener('ended', () => {
+        if (type === 'episode' || type === 'series') {
+            handleNextEpisode(detail);
+        }
+    });
+
     // Start Playback
     // Try direct first, HLS error handler will switch to proxy if needed
     attachSource(video, detail.streamUrl, false);
 }
+
+
+
+
