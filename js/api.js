@@ -1,15 +1,15 @@
-
+ï»¿
 const STORAGE_KEY = "klyx.session";
 let repoAuthFailed = false;
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
 
-// --- CONFIGURAÇÃO DA LISTA (LIST SWITCHING SYSTEM) ---
+// --- CONFIGURAï¿½ï¿½O DA LISTA (LIST SWITCHING SYSTEM) ---
 // Para trocar a lista, apenas altere os nomes dos arquivos abaixo.
-// O sistema irá carregar automaticamente a nova lista sem quebrar a lógica.
+// O sistema irï¿½ carregar automaticamente a nova lista sem quebrar a lï¿½gica.
 export const LIST_CONFIG = {
     MOVIES_FILE: "movies.json",  // Ex: "canaisbr05_filmes.json"
     SERIES_FILE: "series.json",  // Ex: "canaisbr05_series.json"
-    EPISODES_PATH: "assets/data/episodes/", // Pasta dos episódios
+    EPISODES_PATH: "assets/data/episodes/", // Pasta dos episï¿½dios
     LIVE_FILE: "live.json"
 };
 // -----------------------------------------------------
@@ -58,7 +58,7 @@ function readSession() {
 function writeSession(session) {
   // Prevent ghost sessions
   if (!session || !session.user || !session.user.id || (!session.user.name && !session.user.email)) {
-    console.error("Tentativa de salvar sessão inválida bloqueada.", session);
+    console.error("Tentativa de salvar sessï¿½o invï¿½lida bloqueada.", session);
     return;
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -108,7 +108,7 @@ function filterRestrictedContent(items) {
     }
 
     // KID MODE SAFE KEYWORDS
-    const kidKeywords = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+    const kidKeywords = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "crianï¿½a", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
 
     return items.filter(item => {
         if (!item) return false;
@@ -149,13 +149,13 @@ function deduplicateMovies(items) {
         // Normalize title for checking
         const lowerTitle = title.toLowerCase();
         
-        // Enrich Category for Smart Categorization (Kids/Criança)
-        // This ensures "Criança" appears in the category dropdown if the movie matches safe keywords
-        const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "criança", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
+        // Enrich Category for Smart Categorization (Kids/Crianï¿½a)
+        // This ensures "Crianï¿½a" appears in the category dropdown if the movie matches safe keywords
+        const keywordsSafe = ["animacao", "animation", "desenho", "infantil", "kids", "crianca", "crianï¿½a", "livre", "disney", "pixar", "fantasia", "fantasy", "familia", "family"];
         const combinedForCat = (title + " " + (movie.category || "")).toLowerCase();
         if (keywordsSafe.some(kw => combinedForCat.includes(kw))) {
-             if (movie.category && !movie.category.includes("Criança")) {
-                 movie.category += " | Criança";
+             if (movie.category && !movie.category.includes("Crianï¿½a")) {
+                 movie.category += " | Crianï¿½a";
              }
         }
         
@@ -244,6 +244,31 @@ function validateEmail(email) {
     return true;
 }
 
+// Encryption Helpers (Simple XOR + Base64)
+function encryptData(data) {
+    try {
+        const json = JSON.stringify(data);
+        const key = "klyx_secret_key";
+        let result = "";
+        for (let i = 0; i < json.length; i++) {
+            result += String.fromCharCode(json.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        return btoa(result);
+    } catch (e) { console.error("Encrypt error", e); return null; }
+}
+
+function decryptData(encrypted) {
+    try {
+        const json = atob(encrypted);
+        const key = "klyx_secret_key";
+        let result = "";
+        for (let i = 0; i < json.length; i++) {
+            result += String.fromCharCode(json.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        return JSON.parse(result);
+    } catch (e) { return null; }
+}
+
 export const api = {
   session: {
     read: readSession,
@@ -302,7 +327,7 @@ export const api = {
 
         try {
             // Fetch User Data
-            const res = await fetch(`${this.API_URL}?key=klyx:user:${session.user.id}`);
+            const res = await fetch(`${this.API_URL}?key=klyx:user:${session.user.id}`, { headers: { "Authorization": `Bearer ${session.tokens?.accessToken}` } });
             if (!res.ok) throw new Error("Failed to fetch user data");
             
             const data = await res.json();
@@ -340,7 +365,7 @@ export const api = {
         try {
             const res = await fetch(this.API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.tokens?.accessToken}` },
                 body: JSON.stringify({
                     key: `klyx:user:${session.user.id}`,
                     value: data
@@ -394,19 +419,19 @@ export const api = {
 
         // 2. Strict Login - No Demo Fallback
         
-        return { ok: false, data: { error: "Credenciais inválidas" } };
+        return { ok: false, data: { error: "Credenciais invï¿½lidas" } };
     },
     async register({ name, email, password }) {
         await delay(500);
         
         if (!validateEmail(email)) {
-             return { ok: false, data: { error: "E-mail inválido ou temporário não permitido." } };
+             return { ok: false, data: { error: "E-mail invï¿½lido ou temporï¿½rio nï¿½o permitido." } };
         }
         
         const users = JSON.parse(localStorage.getItem("klyx_users") || "[]");
         
         if (users.find(u => u.email === email)) {
-            return { ok: false, data: { error: "E-mail já cadastrado" } };
+            return { ok: false, data: { error: "E-mail jï¿½ cadastrado" } };
         }
         
         const newUser = {
@@ -487,7 +512,7 @@ export const api = {
     async loginWithGithub() {
         const clientId = this.githubConfig.clientId;
         if (!clientId) {
-            return { ok: false, data: { error: "GitHub Client ID não configurado. Por favor configure as chaves." } };
+            return { ok: false, data: { error: "GitHub Client ID nï¿½o configurado. Por favor configure as chaves." } };
         }
         
         const state = Math.random().toString(36).substring(7);
@@ -505,7 +530,7 @@ export const api = {
     async handleGithubCallback(code, state) {
         const savedState = localStorage.getItem("klyx_gh_state");
         if (!savedState || state !== savedState) {
-            console.warn("GitHub OAuth state inválido ou ausente. Prosseguindo mesmo assim (app pessoal).");
+            console.warn("GitHub OAuth state invï¿½lido ou ausente. Prosseguindo mesmo assim (app pessoal).");
         }
         
         const clientId = this.githubConfig.clientId;
@@ -637,7 +662,7 @@ export const api = {
             
             const accessToken = data.access_token;
             if (!accessToken) {
-                throw new Error("Token de acesso não encontrado na resposta do GitHub.");
+                throw new Error("Token de acesso nï¿½o encontrado na resposta do GitHub.");
             }
             
             // Fetch User Data
@@ -646,13 +671,13 @@ export const api = {
             });
             
             if (!userRes.ok) {
-                 throw new Error(`Falha ao obter dados do usuário: ${userRes.statusText}`);
+                 throw new Error(`Falha ao obter dados do usuï¿½rio: ${userRes.statusText}`);
             }
 
             const ghUser = await userRes.json();
             
             if (!ghUser || !ghUser.id) {
-                throw new Error("Dados de usuário inválidos retornados pelo GitHub.");
+                throw new Error("Dados de usuï¿½rio invï¿½lidos retornados pelo GitHub.");
             }
             
             // Create/Link User
@@ -686,7 +711,7 @@ export const api = {
             
         } catch (e) {
             console.error(e);
-            return { ok: false, data: { error: `Falha na conexão com GitHub (${e.message}).` } };
+            return { ok: false, data: { error: `Falha na conexï¿½o com GitHub (${e.message}).` } };
         }
     },
     async startGithubDeviceFlow() {
@@ -733,7 +758,7 @@ export const api = {
                     data = Object.fromEntries(p.entries());
                 }
                 if (data && data.device_code) break;
-                throw new Error("Resposta inválida do Device Flow");
+                throw new Error("Resposta invï¿½lida do Device Flow");
             } catch (e) {
                 lastErr = e;
             }
@@ -811,7 +836,7 @@ export const api = {
     async loginWithGoogle() {
         const clientId = this.googleConfig.clientId;
         if (!clientId || clientId === "YOUR_GOOGLE_CLIENT_ID") {
-            return { ok: false, data: { error: "Google Client ID não configurado." } };
+            return { ok: false, data: { error: "Google Client ID nï¿½o configurado." } };
         }
         const state = Math.random().toString(36).slice(2);
         try {
@@ -833,7 +858,7 @@ export const api = {
     },
     async handleGoogleCallbackFromHash(hash) {
         if (!hash || hash.indexOf("access_token") === -1) {
-            return { ok: false, data: { error: "Callback Google inválido." } };
+            return { ok: false, data: { error: "Callback Google invï¿½lido." } };
         }
         const stripped = hash.startsWith("#") ? hash.substring(1) : hash;
         const params = new URLSearchParams(stripped);
@@ -845,19 +870,19 @@ export const api = {
         try {
             const expected = localStorage.getItem("klyx_google_state");
             if (expected && googleState && expected !== googleState) {
-                return { ok: false, data: { error: "State Google inválido." } };
+                return { ok: false, data: { error: "State Google invï¿½lido." } };
             }
         } catch (_) {}
         const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
         if (!res.ok) {
-            return { ok: false, data: { error: "Falha ao buscar usuário Google." } };
+            return { ok: false, data: { error: "Falha ao buscar usuï¿½rio Google." } };
         }
         const gUser = await res.json();
         const finalUser = {
             id: gUser.sub || "g_" + Date.now(),
-            name: gUser.name || gUser.email || "Usuário Google",
+            name: gUser.name || gUser.email || "Usuï¿½rio Google",
             email: gUser.email || null,
             avatar: gUser.picture || null,
             provider: "google"
@@ -877,7 +902,7 @@ export const api = {
   playback: {
       async saveProgress(contentId, currentTime, duration, type) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usuï¿½rio nï¿½o logado" };
           
           const userId = session.user.id;
           const progressData = {
@@ -906,7 +931,7 @@ export const api = {
       
       async getProgress(contentId) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usuï¿½rio nï¿½o logado" };
           
           const userId = session.user.id;
           
@@ -927,7 +952,7 @@ export const api = {
       
       async getAllProgress() {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usuï¿½rio nï¿½o logado" };
           
           const userId = session.user.id;
           const localKey = `klyx_progress_${userId}`;
@@ -980,7 +1005,7 @@ export const api = {
   favorites: {
       async add(item) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usuï¿½rio nï¿½o logado" };
           const userId = session.user.id;
           const key = `klyx_favorites_${userId}`;
           
@@ -1006,7 +1031,7 @@ export const api = {
       },
       async remove(id) {
           const session = readSession();
-          if (!session || !session.user) return { ok: false, error: "Usuário não logado" };
+          if (!session || !session.user) return { ok: false, error: "Usuï¿½rio nï¿½o logado" };
           const userId = session.user.id;
           const key = `klyx_favorites_${userId}`;
           
@@ -1198,7 +1223,7 @@ export const api = {
           try {
               const data = await getLocalData(LIST_CONFIG.LIVE_FILE);
               if (!data) {
-                  return { ok: false, data: { error: "Lista de canais indisponível." } };
+                  return { ok: false, data: { error: "Lista de canais indisponï¿½vel." } };
               }
               
               const channels = Array.isArray(data.channels) ? data.channels : (Array.isArray(data) ? data : []);
@@ -1208,7 +1233,7 @@ export const api = {
               
               const channel = channels.find(c => c && c.id === id);
               if (!channel) {
-                  return { ok: false, data: { error: "Canal não encontrado." } };
+                  return { ok: false, data: { error: "Canal nï¿½o encontrado." } };
               }
               
               return {
@@ -1532,7 +1557,7 @@ export const api = {
           const profiles = JSON.parse(localStorage.getItem(key) || "[]");
           const index = profiles.findIndex(p => p.id === id);
           
-          if (index === -1) return { ok: false, data: { error: "Perfil não encontrado" } };
+          if (index === -1) return { ok: false, data: { error: "Perfil nï¿½o encontrado" } };
           
           profiles[index] = { ...profiles[index], ...data };
           localStorage.setItem(key, JSON.stringify(profiles));
@@ -1547,7 +1572,7 @@ export const api = {
           let profiles = JSON.parse(localStorage.getItem(key) || "[]");
           // Prevent deleting the last profile
           if (profiles.length <= 1) {
-              return { ok: false, data: { error: "Você não pode excluir o último perfil." } };
+              return { ok: false, data: { error: "Vocï¿½ nï¿½o pode excluir o ï¿½ltimo perfil." } };
           }
           
           profiles = profiles.filter(p => p.id !== id);
@@ -1610,5 +1635,9 @@ export const api = {
       }
   }
 };
+
+
+
+
 
 
