@@ -887,7 +887,7 @@ export const api = {
             avatar: gUser.picture || null,
             provider: "google"
         };
-        const session = { user: finalUser, provider: "google", tokens: { accessToken: "google" } };
+        const session = { user: finalUser, provider: "google", tokens: { accessToken: accessToken } };
         writeSession(session); try { await api.cloud.syncDown(); } catch(e) {} return { ok: true, data: { user: finalUser } };
     },
     async me() {
@@ -1291,6 +1291,11 @@ export const api = {
             if (continueWatching.length > 20) continueWatching.pop();
             localStorage.setItem(`klyx.continueWatching.${profileId}`, JSON.stringify(continueWatching));
             
+            // Trigger Sync
+            if (api.cloud && api.cloud.scheduleSyncUp) {
+                api.cloud.scheduleSyncUp();
+            }
+            
             return { ok: true };
         } catch (e) {
             return { ok: false };
@@ -1635,6 +1640,7 @@ export const api = {
       }
   }
 };
+
 
 
 

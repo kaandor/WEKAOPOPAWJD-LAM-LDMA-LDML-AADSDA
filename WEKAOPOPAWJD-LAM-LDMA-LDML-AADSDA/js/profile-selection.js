@@ -1,4 +1,4 @@
-import { api } from "./api.js?v=20260204-fix1";
+﻿import { api } from "./api.js?v=20260204-fix1";
 import { applyGlobalTheme } from "./ui.js?v=20260204-fix1";
 
 // Aplica tema imediatamente
@@ -165,6 +165,12 @@ async function loadProfiles() {
         // Always render, even if empty (will show Add Profile button)
         render();
         
+        // FORCE SYNC UP: Ensure local profiles are pushed to cloud if they exist
+        if (profiles.length > 0 && api.cloud && api.cloud.syncUp) {
+            console.log("âš¡ [Auto-Sync] Pushing local profiles to cloud...");
+            api.cloud.syncUp().catch(e => console.warn("Background sync failed:", e));
+        }
+        
     } catch (e) {
         console.error("Critical error loading profiles", e);
         profiles = [];
@@ -204,8 +210,8 @@ function render() {
     
     // Determine limit based on plan
     const user = session?.user || null;
-    const plan = user?.plan || "premium"; // Default to premium
-    const maxProfiles = plan === "individual" ? 1 : 4;
+    const plan = user?.plan || "free"; // Default to free
+    const maxProfiles = (plan === "pro" || plan === "premium") ? 5 : 1; // Free: 1, Pro: 5
     
     profiles.forEach(p => {
         if (!p) return; // Skip invalid profiles
@@ -259,6 +265,30 @@ function render() {
         });
         
         grid.append(addCard);
+    } else {
+        // Locked Profile Button (Upsell)
+        const lockedCard = document.createElement("div");
+        lockedCard.className = "profile-card locked";
+        lockedCard.style.opacity = "0.6";
+        lockedCard.style.cursor = "pointer";
+        
+        const lockedAvatar = document.createElement("div");
+        lockedAvatar.className = "avatar";
+        lockedAvatar.style.background = "#222";
+        lockedAvatar.style.display = "flex";
+        lockedAvatar.style.alignItems = "center";
+        lockedAvatar.style.justifyContent = "center";
+        lockedAvatar.innerHTML = '<span style="font-size: 30px;">ðŸ”’</span>';
+        
+        const lockedName = document.createElement("div");
+        lockedName.className = "name";
+        lockedName.textContent = "Liberar Perfis (Pro)";
+        lockedName.style.color = "#fbbf24"; // Gold color
+        
+        lockedCard.append(lockedAvatar, lockedName);
+        lockedCard.onclick = () => alert("Limite de perfis atingido (MÃ¡x: " + maxProfiles + ").\nFaÃ§a upgrade para o plano PRO para criar atÃ© 5 perfis.");
+        
+        grid.append(lockedCard);
     }
     
     // Update manage button state
@@ -541,3 +571,5 @@ function setupEventListeners() {
     }
 }
 // init() called by importing module
+
+
