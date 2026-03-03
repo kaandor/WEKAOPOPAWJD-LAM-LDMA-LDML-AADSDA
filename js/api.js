@@ -1291,6 +1291,11 @@ export const api = {
             if (continueWatching.length > 20) continueWatching.pop();
             localStorage.setItem(`klyx.continueWatching.${profileId}`, JSON.stringify(continueWatching));
             
+            // Trigger Sync
+            if (api.cloud && api.cloud.scheduleSyncUp) {
+                api.cloud.scheduleSyncUp();
+            }
+            
             return { ok: true };
         } catch (e) {
             return { ok: false };

@@ -355,7 +355,7 @@ function handleAudioSubtitles(detail, video) {
         // Option 1: Main Stream (Dubbed usually, or whatever is default)
         const opt1 = document.createElement('div');
         opt1.style.cssText = 'padding: 8px; cursor: pointer; border-radius: 4px; background: rgba(255,255,255,0.1);';
-        opt1.textContent = "Ãudio Principal";
+        opt1.textContent = "Áudio Principal";
         opt1.onclick = () => {
             const time = video.currentTime;
             attachSource(video, detail.streamUrl, false);
@@ -369,7 +369,7 @@ function handleAudioSubtitles(detail, video) {
             const url2 = detail.streamUrlSub || detail.streamUrlAudio2;
             const opt2 = document.createElement('div');
             opt2.style.cssText = 'padding: 8px; cursor: pointer; border-radius: 4px; margin-top: 5px;';
-            opt2.textContent = "Ãudio Alternativo / Legendado";
+            opt2.textContent = "Áudio Alternativo / Legendado";
             opt2.onclick = () => {
                 const time = video.currentTime;
                 attachSource(video, url2, false);
@@ -394,7 +394,7 @@ function handleNextEpisode(detail) {
 
     const nextEp = detail.episodes[detail.currentEpIndex + 1];
     
-    if (nextTitle) nextTitle.textContent = "PrÃ³ximo: " + nextEp.title;
+    if (nextTitle) nextTitle.textContent = "Próximo: " + nextEp.title;
     
     overlay.style.display = 'block';
     
@@ -494,9 +494,11 @@ export async function initPlayer() {
 
     // Setup UI
     setupUI(detail, video);
+    handleAudioSubtitles(detail, video);
 
         // Setup Progress Saving & Restore
-    const savedTime = api.playback.getProgress(id);
+    const savedRes = await api.playback.getProgress(id);
+    const savedTime = savedRes.ok ? savedRes.data.progress : 0;
     if (savedTime > 0) {
         console.log('[Player] Restoring progress: ' + savedTime + 's');
         video.currentTime = savedTime;
