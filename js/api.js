@@ -887,7 +887,7 @@ export const api = {
             avatar: gUser.picture || null,
             provider: "google"
         };
-        const session = { user: finalUser, provider: "google", tokens: { accessToken: "google" } };
+        const session = { user: finalUser, provider: "google", tokens: { accessToken: accessToken } };
         writeSession(session); try { await api.cloud.syncDown(); } catch(e) {} return { ok: true, data: { user: finalUser } };
     },
     async me() {
