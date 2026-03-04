@@ -1,6 +1,6 @@
 ﻿import { api } from "./api.js?v=20260301-032545";
 
-// --- THEME APPLICATION + CLOUD SYNC ---
+// --- THEME APPLICatÃ©
 // Start cloud polling silently (sem bolinha verde)
 const session = api.session.read();
 if (session?.user) {
@@ -26,7 +26,7 @@ export function applyGlobalTheme() {
         }
         const prefs = api.settings.get();
         applyTheme(prefs.theme);
-    } catch (e) { console.warn("Theme apply error", e); }
+    } catÃ©
 }
 
 applyGlobalTheme();
@@ -60,11 +60,11 @@ function setupDragScroll(slider) {
     });
 }
 
-// Helper to proxy images via weserv.nl to fix Mixed Content (HTTP images on HTTPS site)
+// Helper to proxy iMÃ¡xed Content (HTTP images on HTTPS site)
 function getProxiedImage(url) {
-    if (!url) return 'https://via.placeholder.com/300x450?text=No+Image';
+    if (!url) return 'https://via.placeholder.coMÃ¡xt=No+Image';
     // If already proxied, return as is
-    if (url.includes('images.weserv.nl') || url.includes('klyx-api.vercel.app')) return url;
+    if (url.includes('iMÃ¡x-api.vercel.app')) return url;
     // If local asset, return as is
     if (url.startsWith('./') || url.startsWith('/') || url.startsWith('assets/')) return url;
     
@@ -77,16 +77,16 @@ function getProxiedImage(url) {
     
     // Proxy external URLs (Default Weserv)
     // Weserv Ã© bom, mas pode sofrer com ORB se redirecionar para HTTP.
-    // Tentar CorsProxy como fallback imediato se Weserv falhar Ã© responsabilidade do handleImageError.
+    // Tentar CorsProxy como FaÃ§ageError.
     return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=400&output=webp&q=80`;
 }
 
-// --- METADATA FETCHING (TMDB) ---
+// --- METADatÃ©
 // Used to fetch descriptions when missing in source
 const TMDB_API_KEY = "3d197569c720ea63916d97cf9ca466f1"; // Public demo key
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-async function fetchMetadata(title, type = 'movie') {
+async function fetchMetadatÃ©
     if (!title) return null;
     
     // Clean title for search
@@ -94,32 +94,32 @@ async function fetchMetadata(title, type = 'movie') {
     let cleanTitle = title
         .replace(/\(\d{4}\)/g, '')
         .replace(/\[.*?\]/g, '')
-        .replace(/ - .*/, '') // Remove suffixes
+        .replace(/ - .*/, '') // ReMÃ¡xes
         .trim();
         
     // Extract year if present in original title
-    const yearMatch = title.match(/\((\d{4})\)/);
-    const year = yearMatch ? yearMatch[1] : '';
+    const yearMatÃ©
+    const year = yearMatÃ©
     
     try {
         let searchUrl = `${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=pt-BR`;
         if (year) searchUrl += `&year=${year}`;
         
         const res = await fetch(searchUrl);
-        const data = await res.json();
+        const datÃ©
         
-        if (data.results && data.results.length > 0) {
-            // Return first match
-            const match = data.results[0];
+        if (datÃ©
+            // Return first matÃ©
+            const matÃ©
             return {
-                description: match.overview,
-                rating: match.vote_average ? match.vote_average.toFixed(1) : null,
-                year: match.release_date ? match.release_date.split('-')[0] : (match.first_air_date ? match.first_air_date.split('-')[0] : ''),
-                backdrop: match.backdrop_path ? `https://image.tmdb.org/t/p/w1280${match.backdrop_path}` : null,
-                genre_ids: match.genre_ids
+                description: matÃ©
+                ratÃ©
+                year: matÃ©
+                backdrop: matÃ©
+                genre_ids: matÃ©
             };
         }
-    } catch (e) {
+    } catÃ©
         console.warn("TMDB Fetch Error:", e);
     }
     return null;
@@ -129,83 +129,83 @@ async function fetchMetadata(title, type = 'movie') {
 // Global Image Error Handler to try backups
 window.handleImageError = function(img) {
     // Prevent infinite loop
-    if (img.getAttribute('data-failed') === 'true') return;
+    if (img.getatÃ©
 
-    const originalSrc = img.getAttribute('data-original-src') || img.src; // Fallback se nÃ£o tiver attr
-    // Salva o originalSrc na primeira falha se ainda nÃ£o tiver
-    if (!img.getAttribute('data-original-src')) {
-        img.setAttribute('data-original-src', img.src.replace(/^(https?:\/\/.*?\/\?url=|https?:\/\/corsproxy\.io\/\?|https?:\/\/api\.codetabs\.com\/v1\/proxy\?quest=)/, '')); 
+    const originalSrc = img.getatÃ©
+    // Salva o originalSrc na primeira FaÃ§a nÃ£o tiver
+    if (!img.getatÃ©
+        iMÃ¡xy\?quest=)/, '')); 
     }
     
-    // Recalcula originalSrc limpo para os proxies
-    let cleanSrc = img.getAttribute('data-original-src');
-    if (!cleanSrc || cleanSrc.startsWith('http') === false) cleanSrc = originalSrc; // Fallback
+    // Recalcula originalSrc liMÃ¡xies
+    let cleanSrc = img.getatÃ©
+    if (!cleanSrc || cleanSrc.startsWith('http') === FaÃ§ack
 
     const currentSrc = img.src;
     let nextSrc = '';
 
-    // Strategy Chain: Direct -> Weserv -> CorsProxy -> CodeTabs -> Vercel -> AllOrigins -> Placeholder
+    // StratÃ©
 
-    // 1. Falhou Weserv (PadrÃ£o) -> Tenta CorsProxy
+    // 1. FaÃ§a CorsProxy
     if (currentSrc.includes('images.weserv.nl')) {
-         console.warn('[Image] Weserv failed, switching to CorsProxy:', cleanSrc);
+         console.warn('[IMÃ¡xy:', cleanSrc);
          nextSrc = `https://corsproxy.io/?${encodeURIComponent(cleanSrc)}`;
     }
-    // 2. Falhou CorsProxy -> Tenta CodeTabs
+    // 2. FaÃ§abs
     else if (currentSrc.includes('corsproxy.io')) {
-        console.warn('[Image] CorsProxy failed, switching to CodeTabs:', cleanSrc);
-        nextSrc = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSrc)}`;
+        console.warn('[IMÃ¡xy FaÃ§anSrc);
+        nextSrc = `https://api.codetabs.coMÃ¡xy?quest=${encodeURIComponent(cleanSrc)}`;
     }
-    // 3. Falhou CodeTabs -> Tenta Vercel
+    // 3. FaÃ§a Vercel
     else if (currentSrc.includes('api.codetabs.com')) {
-        console.warn('[Image] CodeTabs failed, switching to Vercel:', cleanSrc);
+        console.warn('[Image] CodeTabs FaÃ§anSrc);
         nextSrc = `https://klyx-api.vercel.app/api/proxy?url=${encodeURIComponent(cleanSrc)}`;
     }
-    // 4. Falhou Vercel -> Tenta AllOrigins
+    // 4. FaÃ§allOrigins
     else if (currentSrc.includes('klyx-api.vercel.app')) {
-        console.warn('[Image] Vercel failed, switching to AllOrigins:', cleanSrc);
+        console.warn('[Image] Vercel FaÃ§anSrc);
         nextSrc = `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSrc)}`;
     }
-    // 5. Falhou AllOrigins -> Placeholder
+    // 5. FaÃ§aceholder
     else if (currentSrc.includes('api.allorigins.win')) {
-         console.error('[Image] All proxies failed for:', cleanSrc);
-         img.src = 'https://via.placeholder.com/300x450?text=No+Image';
-         img.setAttribute('data-failed', 'true');
+         console.error('[IMÃ¡xies FaÃ§anSrc);
+         iMÃ¡xt=No+Image';
+         img.setatÃ©
          return;
     }
-    // 6. Falhou Direto (sem proxy) ou outro -> ComeÃ§a com Weserv
+    // 6. FaÃ§a com Weserv
     else {
-        console.warn('[Image] Direct load failed, starting proxy chain with Weserv:', cleanSrc);
+        console.warn('[IMÃ¡xy chain with Weserv:', cleanSrc);
         nextSrc = `https://images.weserv.nl/?url=${encodeURIComponent(cleanSrc)}&w=400&output=webp&q=80`;
     }
 
-    img.src = nextSrc;
+    iMÃ¡xtSrc;
 };
 
 // Helper for infinite scroll
-function setupInfiniteScroll(items, container, createCardFn) {
-    const BATCH_SIZE = 200;
+function setupInfiniteScroll(items, container, creatÃ©
+    const BatÃ©
     let currentIndex = 0;
     let isLoading = false;
 
-    const loadNextBatch = () => {
+    const loadNextBatÃ©
         if (currentIndex >= items.length) return;
         
-        const batch = items.slice(currentIndex, currentIndex + BATCH_SIZE);
-        const fragment = document.createDocumentFragment();
+        const batÃ©
+        const fragment = document.creatÃ©
         
-        batch.forEach(item => {
-            const card = createCardFn(item);
+        batÃ©
+            const card = creatÃ©
             fragment.appendChild(card);
         });
         
         container.appendChild(fragment);
-        currentIndex += BATCH_SIZE;
+        currentIndex += BatÃ©
         isLoading = false;
     };
 
     // Initial load
-    loadNextBatch();
+    loadNextBatÃ©
 
     // Scroll handler
     const onScroll = () => {
@@ -213,7 +213,7 @@ function setupInfiniteScroll(items, container, createCardFn) {
         // Check if near bottom
         if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
             isLoading = true;
-            loadNextBatch();
+            loadNextBatÃ©
         }
     };
 
@@ -238,12 +238,12 @@ function ensureProfilePlacement() {
 }
 
 // Redirect Live TV requests to Dashboard
-if (window.location.pathname.includes("live-tv.html")) {
-    window.location.href = "./dashboard.html";
+if (window.locatÃ©
+    window.locatÃ©
 }
 
 export async function initLive() {
-    window.location.href = "./dashboard.html";
+    window.locatÃ©
 }
 
 export function handleLoginSuccess(user) {
@@ -256,10 +256,10 @@ export function handleLoginSuccess(user) {
         if (isGoogle || (token && token !== "offline" && !String(token).startsWith("klyx_"))) {
             api.cloud.startPolling();
         }
-    } catch (e) {
+    } catÃ©
         console.warn("Cloud polling start error", e);
     }
-    window.location.href = "./profile-selection.html";
+    window.locatÃ©
 }
 
 export async function initDashboard() {
@@ -272,20 +272,20 @@ export async function initDashboard() {
     try {
         const res = await api.content.getHome();
         if (!res.ok) {
-            throw new Error(res.data?.error || "Erro ao carregar dados");
+            throw new Error(res.datÃ©
         }
 
-        let data = res.data;
-        if (!data.rails) {
+        let datÃ©
+        if (!datÃ©
             try {
-                const fallback = await fetch('./assets/data/home.json').then(r => r.json());
-                if (fallback && fallback.rails) {
-                    data = fallback;
+                const FaÃ§a/home.json').then(r => r.json());
+                if (FaÃ§ails) {
+                    datÃ©
                 } else {
                     content.innerHTML = "<p>Nenhum conteÃºdo encontrado.</p>";
                     return;
                 }
-            } catch (_) {
+            } catÃ©
                 content.innerHTML = "<p>Nenhum conteÃºdo encontrado.</p>";
                 return;
             }
@@ -296,23 +296,23 @@ export async function initDashboard() {
         // Helper to render a rail
         const renderRail = (title, items, type = 'movie') => {
             if (!items || items.length === 0) return '';
-            const categoryLink = type === 'series' ? './series.html' : './movies.html';
+            const catÃ©
             return `
                 <div class="section">
                     <div class="section-head">
                         <h2>${title}</h2>
-                        ${type !== 'mixed' ? `<a href="${categoryLink}">Ver mais</a>` : ''}
+                        ${type !== 'MÃ¡xed' ? `<a href="${catÃ©
                     </div>
                     <div class="rail">
                         ${items.map(item => {
-                            const itemType = item.type || type; // Use item type if mixed
-                            // If mixed and still unknown, default to movie, but try to guess
-                            const finalType = (itemType === 'mixed') ? 'movie' : itemType;
+                            const iteMÃ¡xed
+                            // If MÃ¡xed and still unknown, default to movie, but try to guess
+                            const finalType = (iteMÃ¡xed') ? 'movie' : itemType;
                             const isSeries = finalType === 'series';
                             const isLive = finalType === 'live';
                             let clickAction;
                             if (isLive) {
-                                clickAction = `window.location.href='./player_v2.html?type=live&id=${item.id}'`;
+                                clickAction = `window.locatÃ©
                             } else if (isSeries) {
                                 clickAction = `window.showSeriesModal('${item.id}')`;
                             } else {
@@ -320,17 +320,17 @@ export async function initDashboard() {
                             }
 
                             return `
-                            <div class="card focusable" data-id="${item.id}" tabindex="0" 
+                            <div class="card focusable" datÃ©
                                  onclick="${clickAction}">
-                                <img class="poster" src="${getProxiedImage(item.poster)}" alt="${item.title}" loading="lazy" draggable="false" 
-                                     data-original-src="${item.poster}"
+                                <iMÃ¡xiedImage(item.poster)}" alt="${item.title}" loading="lazy" draggable="false" 
+                                     datÃ©
                                      onerror="window.handleImageError(this)">
                                 <div class="card-body">
                                     <h3 class="card-title">${item.title}</h3>
                                     <div class="card-meta">
                                         <span class="badge">${finalType === 'movie' ? 'Filme' : 'SÃ©rie'} | ${item.genre || 'Geral'}</span>
                                     </div>
-                                    ${item.progress ? `<div style="height: 3px; background: #333; margin-top: 5px; border-radius: 2px;"><div style="width: ${item.progress}%; height: 100%; background: #9333ea;"></div></div>` : ''}
+                                    ${iteMÃ¡x;"><div style="width: ${item.progress}%; height: 100%; background: #9333ea;"></div></div>` : ''}
                                 </div>
                             </div>
                         `}).join('')}
@@ -339,64 +339,64 @@ export async function initDashboard() {
             `;
         };
 
-        // 1. Fetch Continue Watching
+        // 1. Fetch Continue WatÃ©
         try {
-            const cwRes = await api.playback.getContinueWatching();
-            if (cwRes.ok && cwRes.data.length > 0) {
-                // Fetch all content to match IDs
-                // Optimization: In a real app, we would have an endpoint for this. 
+            const cwRes = await api.playback.getContinueWatÃ©
+            if (cwRes.ok && cwRes.datÃ©
+                // Fetch all content to matÃ©
+                // OptimizatÃ©
                 // Here we load lists from cache.
                 const [moviesRes, seriesRes] = await Promise.all([
                     api.movies.list(),
                     api.content.getSeries()
                 ]);
                 
-                const allMovies = moviesRes.ok ? moviesRes.data : [];
-                const allSeries = seriesRes.ok ? (seriesRes.data.series || []) : [];
+                const allMovies = moviesRes.ok ? moviesRes.datÃ©
+                const allSeries = seriesRes.ok ? (seriesRes.datÃ©
                 
                 const cwItems = [];
-                for (const item of cwRes.data) {
+                for (const item of cwRes.datÃ©
                     let media = null;
-                    let mediaType = item.type || 'movie';
+                    let mediatÃ©
                     
-                    if (mediaType === 'movie') media = allMovies.find(m => m.id === item.id);
-                    else if (mediaType === 'series') media = allSeries.find(s => s.id === item.id);
+                    if (mediatÃ©
+                    else if (mediatÃ©
                     
-                    // Fallback for legacy items without type
+                    // FaÃ§acy items without type
                     if (!media) {
                         media = allMovies.find(m => m.id === item.id);
-                        if (media) mediaType = 'movie';
+                        if (media) mediatÃ©
                         else {
                             media = allSeries.find(s => s.id === item.id);
-                            if (media) mediaType = 'series';
+                            if (media) mediatÃ©
                         }
                     }
                     
                     if (media) {
                         // Clone to avoid modifying original cache
-                        const entry = { ...media, type: mediaType };
-                        if (item.duration > 0) {
-                            entry.progress = Math.min(100, Math.max(0, (item.time / item.duration) * 100));
+                        const entry = { ...media, type: mediatÃ©
+                        if (item.duratÃ©
+                            entry.progress = MÃ¡x(0, (item.time / item.duratÃ©
                         }
                         cwItems.push(entry);
                     }
                 }
                 
                 if (cwItems.length > 0) {
-                    html += renderRail("Continue Assistindo", cwItems, "mixed");
+                    htMÃ¡xed");
                 }
             }
-        } catch (e) {
-            console.warn("Failed to load Continue Watching", e);
+        } catÃ©
+            console.warn("FaÃ§atÃ©
         }
 
-        html += renderRail("Top Filmes", data.rails.topMovies, "movie");
-        html += renderRail("Jogos do Dia", data.rails.dailyGames, "mixed");
-        html += renderRail("Top SÃ©ries", data.rails.topSeries, "series");
-        html += renderRail("Adicionados Recentemente", data.rails.recentMovies, "movie");
-        html += renderRail("Filmes de Terror", data.rails.horrorMovies, "movie");
-        html += renderRail("ComÃ©dia", data.rails.comedyMovies, "movie");
-        html += renderRail("AÃ§Ã£o", data.rails.actionMovies, "movie");
+        html += renderRail("Top Filmes", datÃ©
+        htMÃ¡xed");
+        html += renderRail("Top SÃ©ries", datÃ©
+        html += renderRail("Adicionados Recentemente", datÃ©
+        html += renderRail("Filmes de Terror", datÃ©
+        html += renderRail("ComÃ©dia", datÃ©
+        html += renderRail("AÃ§Ã£o", datÃ©
 
         content.innerHTML = html;
 
@@ -404,7 +404,7 @@ export async function initDashboard() {
         const rails = content.querySelectorAll('.rail');
         rails.forEach(rail => setupDragScroll(rail));
 
-    } catch (e) {
+    } catÃ©
         console.error("Dashboard error:", e);
         content.innerHTML = `<p style="color:red">Erro ao carregar dashboard: ${e.message}</p>`;
     }
@@ -417,37 +417,37 @@ function setupCustomDropdown(selectId, options, onSelect) {
 
     const container = originalSelect.parentElement;
     
-    // Create new structure
-    const dropdown = document.createElement('div');
-    dropdown.className = 'category-dropdown';
+    // CreatÃ©
+    const dropdown = document.creatÃ©
+    dropdown.className = 'catÃ©
     
-    const btn = document.createElement('button');
-    btn.className = 'category-btn focusable';
+    const btn = document.creatÃ©
+    btn.className = 'catÃ©
     btn.innerHTML = `
-        <span class="selected-label">Todas as categorias</span>
+        <span class="selected-label">Todas as catÃ©
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
     `;
     
-    const menu = document.createElement('div');
-    menu.className = 'category-menu';
+    const menu = document.creatÃ©
+    menu.className = 'catÃ©
     
     // Add "All" option
     const addOption = (label, value) => {
-        const item = document.createElement('div');
-        item.className = 'category-item focusable';
-        item.textContent = label;
-        item.dataset.value = value;
-        item.tabIndex = 0;
+        const item = document.creatÃ©
+        item.className = 'catÃ©
+        iteMÃ¡xtContent = label;
+        item.datÃ©
+        iteMÃ¡x = 0;
         
         item.onclick = () => {
             btn.querySelector('.selected-label').textContent = label;
             menu.classList.remove('active');
             onSelect(value);
             
-            // Update selected state
-            menu.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+            // UpdatÃ©
+            menu.querySelectorAll('.catÃ©
             item.classList.add('selected');
         };
         
@@ -459,7 +459,7 @@ function setupCustomDropdown(selectId, options, onSelect) {
         menu.appendChild(item);
     };
     
-    addOption("Todas as categorias", "");
+    addOption("Todas as catÃ©
     options.forEach(opt => addOption(opt, opt));
     
     dropdown.appendChild(btn);
@@ -467,10 +467,10 @@ function setupCustomDropdown(selectId, options, onSelect) {
     
     // Toggle menu
     btn.onclick = (e) => {
-        e.stopPropagation();
+        e.stopPropagatÃ©
         const isActive = menu.classList.contains('active');
         // Close all other menus
-        document.querySelectorAll('.category-menu.active').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.catÃ©
         
         if (!isActive) {
             menu.classList.add('active');
@@ -486,8 +486,8 @@ function setupCustomDropdown(selectId, options, onSelect) {
     
     // Replace original select
     originalSelect.style.display = 'none';
-    // Remove old custom dropdown if exists
-    const old = container.querySelector('.category-dropdown');
+    // ReMÃ¡xists
+    const old = container.querySelector('.catÃ©
     if (old) old.remove();
     
     container.insertBefore(dropdown, originalSelect);
@@ -498,8 +498,8 @@ export async function initMovies() {
     ensureProfilePlacement();
     window.addEventListener("resize", ensureProfilePlacement);
     const container = document.getElementById("moviesGrid");
-    const catalog = document.getElementById("moviesCatalog");
-    const categorySelectId = "movieCategory";
+    const catÃ©
+    const catÃ©
     const searchInput = document.getElementById("movieSearch");
 
     if (!container) return;
@@ -507,14 +507,14 @@ export async function initMovies() {
     container.innerHTML = '<div class="loading-spinner">Carregando filmes...</div>';
 
     try {
-        const [moviesRes, catsRes] = await Promise.all([
+        const [moviesRes, catÃ©
             api.content.getMovies(),
-            api.movies.categories()
+            api.movies.catÃ©
         ]);
 
-        if (!moviesRes.ok) throw new Error(moviesRes.data?.error || "Erro ao carregar filmes");
+        if (!moviesRes.ok) throw new Error(moviesRes.datÃ©
 
-        const allMovies = moviesRes.data.movies || [];
+        const allMovies = moviesRes.datÃ©
         
         if (allMovies.length === 0) {
             container.innerHTML = "<p>Nenhum filme encontrado.</p>";
@@ -522,14 +522,14 @@ export async function initMovies() {
         }
 
         // Render Function
-        let currentCategory = "";
+        let currentCatÃ©
         let currentSearch = "";
 
         const render = () => {
             const filtered = allMovies.filter(m => {
-                const matchesCat = !currentCategory || (m.category && m.category.includes(currentCategory));
-                const matchesSearch = !currentSearch || m.title.toLowerCase().includes(currentSearch);
-                return matchesCat && matchesSearch;
+                const matÃ©
+                const matÃ©
+                return matÃ©
             });
             
             container.innerHTML = "";
@@ -539,7 +539,7 @@ export async function initMovies() {
             }
             
             setupInfiniteScroll(filtered, container, (movie) => {
-                return createPosterCard({
+                return creatÃ©
                     title: movie.title,
                     posterUrl: movie.poster,
                     metaLeft: "",
@@ -560,15 +560,15 @@ export async function initMovies() {
             });
         }
 
-        // Category Filter
-        if (catsRes.ok && catsRes.data) {
-            setupCustomDropdown(categorySelectId, catsRes.data, (value) => {
-                currentCategory = value;
+        // CatÃ©
+        if (catÃ©
+            setupCustomDropdown(catÃ©
+                currentCatÃ©
                 render();
             });
         }
 
-    } catch (e) {
+    } catÃ©
         console.error("Error loading movies:", e);
         container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
@@ -587,9 +587,9 @@ export async function initSeries() {
 
     try {
         const res = await api.content.getSeries();
-        if (!res.ok) throw new Error(res.data?.error || "Erro ao carregar sÃ©ries");
+        if (!res.ok) throw new Error(res.datÃ©
 
-        const allSeries = res.data.series || [];
+        const allSeries = res.datÃ©
 
         if (allSeries.length === 0) {
             container.innerHTML = "<p>Nenhuma sÃ©rie encontrada.</p>";
@@ -610,7 +610,7 @@ export async function initSeries() {
             }
 
             setupInfiniteScroll(filtered, container, (serie) => {
-                return createPosterCard({
+                return creatÃ©
                     title: serie.title,
                     posterUrl: serie.poster,
                     metaLeft: "",
@@ -629,7 +629,7 @@ export async function initSeries() {
             });
         }
 
-    } catch (e) {
+    } catÃ©
         console.error("Error loading series:", e);
         container.innerHTML = `<p style="color:red">Erro: ${e.message}</p>`;
     }
@@ -637,15 +637,15 @@ export async function initSeries() {
 
 // --- SHARED UI COMPONENTS ---
 
-function createPosterCard({ title, posterUrl, metaLeft, metaRight, clickAction }) {
-    const card = document.createElement('div');
+function creatÃ©
+    const card = document.creatÃ©
     card.className = 'card focusable';
     card.tabIndex = 0;
-    card.setAttribute('onclick', clickAction);
+    card.setatÃ©
     
     card.innerHTML = `
-        <img class="poster" src="${getProxiedImage(posterUrl)}" alt="${title}" loading="lazy" draggable="false"
-             data-original-src="${posterUrl}"
+        <iMÃ¡xiedImage(posterUrl)}" alt="${title}" loading="lazy" draggable="false"
+             datÃ©
              onerror="window.handleImageError(this)">
         <div class="card-body">
             <h3 class="card-title">${title}</h3>
@@ -664,14 +664,14 @@ function createPosterCard({ title, posterUrl, metaLeft, metaRight, clickAction }
 
 // --- MODAL HELPERS ---
 
-// Create and show modal (generic)
-function createModal(contentHtml) {
+// CreatÃ©
+function creatÃ©
     const existing = document.getElementById('genericModal');
     if (existing) existing.remove();
 
-    const modal = document.createElement('div');
+    const modal = document.creatÃ©
     modal.id = 'genericModal';
-    modal.className = 'netflix-modal-backdrop active'; // Use netflix-ui.css class
+    MÃ¡x-ui.css class
     modal.innerHTML = `
         <div class="netflix-modal-content">
             <div class="netflix-close-btn" onclick="document.getElementById('genericModal').remove()">Ã—</div>
@@ -683,7 +683,7 @@ function createModal(contentHtml) {
     document.body.appendChild(modal);
     
     // Focus management
-    const closeBtn = modal.querySelector('.netflix-close-btn');
+    const closeBtn = MÃ¡x-close-btn');
     if (closeBtn) closeBtn.focus();
     
     // Close on escape
@@ -701,29 +701,29 @@ function createModal(contentHtml) {
 
 window.showMovieModal = async (id) => {
     // 1. Show loading modal
-    const modal = createModal('<div class="loading-spinner">Carregando detalhes...</div>');
+    const modal = creatÃ©
     
     try {
         const res = await api.movies.list();
-        const movies = res.ok ? res.data : [];
+        const movies = res.ok ? res.datÃ©
         const movie = movies.find(m => m.id === id);
         
         if (!movie) {
-            modal.querySelector('.netflix-modal-body').innerHTML = '<p>Filme nÃ£o encontrado.</p>';
+            MÃ¡x-modal-body').innerHTML = '<p>Filme nÃ£o encontrado.</p>';
             return;
         }
         
-        // Fetch extra metadata if description is missing
+        // Fetch extra metadatÃ©
         let description = movie.description || '';
-        let rating = movie.rating || '';
+        let ratÃ©
         let year = movie.year || '';
         let backdrop = movie.backdrop || '';
 
         if (!description || description.length < 10) {
-             const meta = await fetchMetadata(movie.title, 'movie');
+             const meta = await fetchMetadatÃ©
              if (meta) {
                  description = meta.description || description;
-                 rating = meta.rating || rating;
+                 ratÃ©
                  year = meta.year || year;
                  backdrop = meta.backdrop || backdrop;
              } else {
@@ -731,29 +731,29 @@ window.showMovieModal = async (id) => {
              }
         }
 
-        // 2. Render Full Modal using netflix-ui.css structure
+        // 2. Render Full MÃ¡x-ui.css structure
         // We replace the inner content of netflix-modal-body
         const bodyContent = `
             <div class="netflix-hero">
-                <img class="netflix-poster" src="${getProxiedImage(movie.poster)}" alt="${movie.title}">
-                ${backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, transparent, #141414); z-index:0; pointer-events:none;"></div>` : ''}
+                <iMÃ¡xiedImage(movie.poster)}" alt="${movie.title}">
+                ${backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottoMÃ¡x:0; pointer-events:none;"></div>` : ''}
             </div>
             
             <div class="netflix-info-container">
                 <h1>${movie.title}</h1>
                 <div class="netflix-meta-row">
-                    <span class="match-score">${rating ? `${rating} Pontos` : 'Novo'}</span>
+                    <span class="matÃ©
                     <span class="year">${year}</span>
                     <span class="age-badge">14</span>
                 </div>
                 
                 <div class="netflix-actions-stack">
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-play-lg" onclick="window.location.href='./player_v2.html?type=movie&id=${movie.id}'">
+                        <button class="btn-play-lg" onclick="window.locatÃ©
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                             Assistir
                         </button>
-                        <button class="btn-secondary-lg" onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' trailer')}', '_blank')" style="background-color: rgba(109, 109, 110, 0.7); color: white; border: none; padding: 0.8rem 2.4rem; border-radius: 4px; font-size: 1.6rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 1rem;">
+                        <button class="btn-secondary-lg" onclick="window.open('https://www.youtube.coMÃ¡x; align-items: center; gap: 1rem;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
                             Trailer
                         </button>
@@ -764,50 +764,50 @@ window.showMovieModal = async (id) => {
             </div>
         `;
         
-        // Update modal body
-        modal.querySelector('.netflix-modal-body').innerHTML = bodyContent;
+        // UpdatÃ©
+        MÃ¡x-modal-body').innerHTML = bodyContent;
         
         // Apply backdrop if available to the hero section specifically or modal background?
         // netflix-ui.css doesn't seem to have a specific backdrop container for image, 
         // but we can add inline style to hero if we want.
         // For now, the poster is enough, or we can use the backdrop image as a background for the hero.
         if (backdrop) {
-             const hero = modal.querySelector('.netflix-hero');
+             const hero = MÃ¡x-hero');
              if (hero) {
-                 hero.style.backgroundImage = `url('${getProxiedImage(backdrop)}')`;
+                 hero.style.backgroundIMÃ¡xiedImage(backdrop)}')`;
                  hero.style.backgroundSize = 'cover';
                  hero.style.backgroundPosition = 'center';
              }
         }
         
-    } catch (e) {
+    } catÃ©
         console.error("Error showing movie modal:", e);
         modal.remove();
     }
 };
 
 window.showSeriesModal = async (id) => {
-    const modal = createModal('<div class="loading-spinner">Carregando episÃ³dios...</div>');
+    const modal = creatÃ©
     
     try {
         const res = await api.content.getSeriesEpisodes(id);
         if (!res.ok) throw new Error("Erro ao carregar episÃ³dios");
         
-        const seriesData = res.data;
-        // Try to fetch metadata for series if description is missing
-        if (!seriesData.description || seriesData.description.length < 10) {
-             const meta = await fetchMetadata(seriesData.title, 'tv'); // 'tv' for series
+        const seriesDatÃ©
+        // Try to fetch metadatÃ©
+        if (!seriesDatÃ©
+             const meta = await fetchMetadatÃ©
              if (meta) {
-                 seriesData.description = meta.description || "Sinopse indisponÃ­vel.";
-                 seriesData.rating = meta.rating || seriesData.rating;
-                 seriesData.year = meta.year || seriesData.year;
-                 if (meta.backdrop) seriesData.backdrop = meta.backdrop;
+                 seriesDatÃ©
+                 seriesDatÃ©
+                 seriesDatÃ©
+                 if (meta.backdrop) seriesDatÃ©
              }
         }
         
-        const episodes = seriesData.episodes || [];
+        const episodes = seriesDatÃ©
         
-        // Group by season with Deduplication
+        // Group by season with DeduplicatÃ©
         const seasons = {};
         const seenEpisodes = new Set(); // Key: S{s}E{e}
 
@@ -816,7 +816,7 @@ window.showSeriesModal = async (id) => {
             const e = parseInt(ep.episode_number || ep.episode || 0);
             const key = `S${s}E${e}`;
             
-            if (seenEpisodes.has(key)) return; // Skip duplicate
+            if (seenEpisodes.has(key)) return; // Skip duplicatÃ©
             seenEpisodes.add(key);
 
             if (!seasons[s]) seasons[s] = [];
@@ -830,22 +830,22 @@ window.showSeriesModal = async (id) => {
         let seasonsHtml = '';
         sortedSeasons.forEach(s => {
             seasonsHtml += `
-                <div style="margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding-left: 20px;">
+                <div style="MÃ¡x;">
+                    <div style="display: flex; align-iteMÃ¡x;">
                         <h3 style="color:#e5e5e5; margin: 0;">Temporada ${s}</h3>
-                        <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(seriesData.title + ' season ' + s + ' trailer')}', '_blank')" 
-                                style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                        <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(seriesDatÃ©
+                                style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-iteMÃ¡x;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
                             Trailer
                         </button>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:2px;">
+                    <div style="display:flex; flex-direction:coluMÃ¡x;">
                         ${seasons[s].map(ep => `
                             <div class="focusable" tabindex="0" 
-                                 style="padding: 15px 20px; display:flex; align-items:center; gap:15px; cursor:pointer; transition:background 0.2s;"
+                                 style="padding: 15px 20px; display:flex; align-iteMÃ¡x; cursor:pointer; transition:background 0.2s;"
                                  onmouseover="this.style.background='rgba(255,255,255,0.1)'"
                                  onmouseout="this.style.background='transparent'"
-                                 onclick="window.location.href='./player_v2.html?type=series&id=${id}&season=${s}&episode=${ep.episode_number || ep.episode}'">
+                                 onclick="window.locatÃ©
                                 <span style="color:#d2d2d2; font-size:18px; width:30px;">${ep.episode_number || ep.episode}</span>
                                 <div style="flex:1;">
                                     <div style="color:white; font-weight:500;">${ep.title}</div>
@@ -860,37 +860,37 @@ window.showSeriesModal = async (id) => {
         
         const bodyContent = `
             <div class="netflix-hero">
-                <img class="netflix-poster" src="${getProxiedImage(seriesData.poster)}" alt="${seriesData.title}">
-                ${seriesData.backdrop ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to bottom, transparent, #141414); z-index:0; pointer-events:none;"></div>` : ''}
+                <iMÃ¡xiedImage(seriesDatÃ©
+                ${seriesDatÃ©
             </div>
             
             <div class="netflix-info-container">
-                <h1>${seriesData.title}</h1>
+                <h1>${seriesDatÃ©
                 <div class="netflix-meta-row">
-                    <span class="match-score">${seriesData.rating ? `${seriesData.rating} Pontos` : 'Novo'}</span>
-                    <span class="year">${seriesData.year || ''}</span>
+                    <span class="matÃ©
+                    <span class="year">${seriesDatÃ©
                     <span class="age-badge">14</span>
                 </div>
-                 <p class="netflix-description">${seriesData.description || 'Sem descriÃ§Ã£o.'}</p>
+                 <p class="netflix-description">${seriesDatÃ©
                  
-                 <div style="margin-top:20px;">
+                 <div style="MÃ¡x;">
                     ${seasonsHtml}
                  </div>
             </div>
         `;
         
-        modal.querySelector('.netflix-modal-body').innerHTML = bodyContent;
+        MÃ¡x-modal-body').innerHTML = bodyContent;
 
-        if (seriesData.backdrop) {
-             const hero = modal.querySelector('.netflix-hero');
+        if (seriesDatÃ©
+             const hero = MÃ¡x-hero');
              if (hero) {
-                 hero.style.backgroundImage = `url('${getProxiedImage(seriesData.backdrop)}')`;
+                 hero.style.backgroundIMÃ¡xiedImage(seriesDatÃ©
                  hero.style.backgroundSize = 'cover';
                  hero.style.backgroundPosition = 'center';
              }
         }
 
-    } catch (e) {
+    } catÃ©
         console.error("Error showing series modal:", e);
         modal.remove();
     }

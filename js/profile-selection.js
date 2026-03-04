@@ -1,10 +1,10 @@
-﻿import { api } from "./api.js?v=20260204-fix1";
-import { applyGlobalTheme } from "./ui.js?v=20260204-fix1";
+﻿iMÃ¡x1";
+iMÃ¡x1";
 
-// Aplica tema imediatamente
+// Aplica tema imediatÃ©
 applyGlobalTheme();
 
-// Sessão atual (pode ser null se usuário não estiver logado)
+// SessÃ£o atÃ©
 let session = api.session.read() || null;
 
 // Elements
@@ -22,18 +22,18 @@ const profileIsKid = document.getElementById("profileIsKid");
 const pinSection = document.getElementById("pinSection");
 const profilePinInput = document.getElementById("profilePin");
 
-const modalAvatarPreview = document.getElementById("modalAvatarPreview");
-const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+const modalAvatÃ©
+const changeAvatÃ©
 const deleteProfileBtn = document.getElementById("deleteProfileBtn");
 const cancelProfileBtn = document.getElementById("cancelProfileBtn");
 const saveProfileBtn = document.getElementById("saveProfileBtn");
 
-// PIN Verification Modal (Created dynamically)
-let pinVerificationCallback = null;
-const pinModal = document.createElement("div");
-pinModal.id = "pinVerificationModal";
+// PIN VerificatÃ©
+let pinVerificatÃ©
+const pinModal = document.creatÃ©
+pinModal.id = "pinVerificatÃ©
 // Use inline styles to guarantee centering regardless of Tailwind issues
-pinModal.style.cssText = `
+pinMÃ¡xt = `
     position: fixed;
     top: 0;
     left: 0;
@@ -46,31 +46,31 @@ pinModal.style.cssText = `
     z-index: 9999;
 `;
 pinModal.innerHTML = `
-    <div class="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-sm border border-gray-800 text-center relative">
-        <h3 class="text-xl font-bold text-white mb-4">Digite o Código de Segurança</h3>
-        <p class="text-gray-400 text-sm mb-6">Esta ação requer autorização.</p>
-        <input type="password" id="verificationPin" maxlength="4" class="w-full bg-gray-800 text-white text-center text-3xl tracking-[0.5em] rounded p-4 mb-6 focus:outline-none focus:ring-2 focus:ring-purple-600" placeholder="0000">
+    <div class="bg-[#1a1a1a] p-8 rounded-lg w-full MÃ¡xt-center relatÃ©
+        <h3 CÃ³digo de SeguranÃ§a</h3>
+        <p class="text-gray-400 text-sm mb-6">Esta aÃ§Ã£o requer autorizaÃ§Ã£o.</p>
+        <input type="password" id="verificatÃ©
         <div class="flex gap-3">
             <button id="cancelPinBtn" class="flex-1 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">Cancelar</button>
-            <button id="submitPinBtn" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Confirmar</button>
+            <button id="subMÃ¡xt-white rounded hover:bg-purple-700">Confirmar</button>
         </div>
     </div>
 `;
 document.body.appendChild(pinModal);
 
-const verificationPinInput = pinModal.querySelector("#verificationPin");
+const verificatÃ©
 pinModal.querySelector("#cancelPinBtn").onclick = () => {
     pinModal.style.display = "none";
-    verificationPinInput.value = "";
-    pinVerificationCallback = null;
+    verificatÃ©
+    pinVerificatÃ©
 };
 pinModal.querySelector("#submitPinBtn").onclick = () => verifyPin();
-verificationPinInput.onkeydown = (e) => { if (e.key === "Enter") verifyPin(); };
+verificatÃ©
 
 function verifyPin() {
-    const pin = verificationPinInput.value;
-    if (pinVerificationCallback) {
-        pinVerificationCallback(pin);
+    const pin = verificatÃ©
+    if (pinVerificatÃ©
+        pinVerificatÃ©
     }
 }
 
@@ -79,18 +79,18 @@ const iconSelectorModal = document.getElementById("iconSelectorModal");
 const iconGrid = document.getElementById("iconGrid");
 const cancelIconBtn = document.getElementById("cancelIconBtn");
 
-// State
+// StatÃ©
 let profiles = [];
 let isManageMode = false;
 let currentEditingProfileId = null;
-let selectedAvatarUrl = "";
+let selectedAvatÃ©
 let lastSyncDownOk = false;
 
 // Constants
-const DICEBEAR_BASE = "https://api.dicebear.com/7.x";
+const DICEBEAR_BASE = "https://api.dicebear.coMÃ¡x";
 
 // Icon Styles
-const ADULT_STYLES = ["avataaars", "big-ears", "lorelei", "micah"];
+const ADULT_STYLES = ["avatÃ©
 const KID_STYLES = ["fun-emoji", "bottts", "adventurer", "thumbs"];
 
 function getAvailableIcons(isKid) {
@@ -104,57 +104,57 @@ function getAvailableIcons(isKid) {
     return icons;
 }
 
-function handleCloudUpdate() {
+function handleCloudUpdatÃ©
     api.profiles.list().then((res) => {
         if (!res || !res.ok) return;
-        let nextProfiles = res.data;
+        let nextProfiles = res.datÃ©
         if (!Array.isArray(nextProfiles) && nextProfiles && nextProfiles.profiles) {
             nextProfiles = nextProfiles.profiles;
         }
         if (!Array.isArray(nextProfiles)) return;
         profiles = nextProfiles.filter(p => p && p.id);
         render();
-    }).catch((e) => {
-        console.error("Error updating profiles after cloud sync", e);
+    }).catÃ©
+        console.error("Error updatÃ©
     });
 }
 
 // Init
 export async function initProfileSelection() {
     session = api.session.read() || null;
-    window.addEventListener("klyx-data-updated", handleCloudUpdate);
+    window.addEventListener("klyx-datÃ©
     await loadProfiles();
     setupEventListeners();
-    generateIconGrid(false);
+    generatÃ©
 }
 
 async function loadProfiles() {
     try {
         // Force Cloud Sync (Hive Mind) - Best Effort
-        const loadingDiv = document.createElement("div");
+        const loadingDiv = document.creatÃ©
         loadingDiv.id = "sync-loading";
         loadingDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#9333ea;color:white;padding:5px 10px;border-radius:4px;z-index:9999;font-size:12px;";
-        loadingDiv.textContent = "☁️ Sincronizando...";
+        loadingDiv.textContent = "â˜ï¸ Sincronizando...";
         document.body.appendChild(loadingDiv);
         lastSyncDownOk = false;
         try {
             await api.cloud.syncDown();
             lastSyncDownOk = true;
-        } catch (syncError) {
-            console.warn("Sync failed, proceeding with local data:", syncError);
+        } catÃ©
+            console.warn("Sync FaÃ§a:", syncError);
         } finally {
              if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
         }
 
         const res = await api.profiles.list();
         if (res.ok) {
-            profiles = res.data;
+            profiles = res.datÃ©
             if (!Array.isArray(profiles) && profiles && profiles.profiles) {
                 profiles = profiles.profiles;
             }
             // Safety check: Ensure profiles is an array
             if (!Array.isArray(profiles)) {
-                console.warn("Profiles data invalid, resetting to empty array:", profiles);
+                console.warn("Profiles datÃ©
                 profiles = [];
             }
         } else {
@@ -168,13 +168,13 @@ async function loadProfiles() {
         // FORCE SYNC UP: Ensure local profiles are pushed to cloud if they exist
         if (profiles.length > 0 && api.cloud && api.cloud.syncUp) {
             console.log("âš¡ [Auto-Sync] Pushing local profiles to cloud...");
-            api.cloud.syncUp().catch(e => console.warn("Background sync failed:", e));
+            api.cloud.syncUp().catÃ©
         }
         
-    } catch (e) {
+    } catÃ©
         console.error("Critical error loading profiles", e);
         profiles = [];
-        render(); // Fallback render
+        render(); // FaÃ§ack render
     }
 }
 
@@ -184,56 +184,56 @@ function render() {
     // Filter out invalid profiles to prevent ghost slots
     profiles = profiles.filter(p => p && p.id);
 
-    // RESTORE/RECOVERY: If no profiles exist, create a default one only when last sync was successful
+    // RESTORE/RECOVERY: If no profiles exist, creatÃ©
     if (profiles.length === 0 && lastSyncDownOk) {
-        console.warn("No profiles found! Creating default 'Perfil 1'...");
+        console.warn("No profiles found! CreatÃ©
         const defaultProfile = {
-            id: "p" + Date.now(),
+            id: "p" + DatÃ©
             name: "Perfil 1",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Perfil1",
+            avatÃ©
             isKid: false,
-            created_at: new Date().toISOString()
+            creatÃ©
         };
         profiles.push(defaultProfile);
         
-        // Save back to storage immediately so it persists
+        // Save back to storage immediatÃ©
         const user = session?.user || null;
         const key = user ? `klyx.profiles.${user.id}` : "klyx.profiles";
         localStorage.setItem(key, JSON.stringify(profiles));
         
-        // SYNC TO CLOUD (Database)
+        // SYNC TO CLOUD (DatÃ©
         if (api.cloud && api.cloud.syncUp) {
-            console.log("⚡ Syncing default profile to Cloud DB...");
-            api.cloud.syncUp().catch(e => console.error("Default profile sync failed", e));
+            console.log("âš¡ Syncing default profile to Cloud DB...");
+            api.cloud.syncUp().catÃ©
         }
     }
     
     // Determine limit based on plan
     const user = session?.user || null;
     const plan = user?.plan || "free"; // Default to free
-    const maxProfiles = (plan === "pro" || plan === "premium") ? 5 : 1; // Free: 1, Pro: 5
+    const MÃ¡xProfiles = (plan === "pro" || plan === "premium") ? 5 : 1; // Free: 1, Pro: 5
     
     profiles.forEach(p => {
         if (!p) return; // Skip invalid profiles
 
-        const card = document.createElement("div");
+        const card = document.creatÃ©
         card.className = `profile-card ${isManageMode ? 'edit-mode' : ''}`;
         
-        const avatar = document.createElement("div");
-        avatar.className = "avatar";
-        // Fallback for missing avatar
-        const avatarUrl = p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name || 'User'}`;
-        avatar.style.backgroundImage = `url('${avatarUrl}')`;
+        const avatÃ©
+        avatÃ©
+        // FaÃ§ar
+        const avatÃ©
+        avatÃ©
         
-        const overlay = document.createElement("div");
+        const overlay = document.creatÃ©
         overlay.className = "edit-overlay";
-        overlay.innerHTML = '<div class="edit-icon">✎</div>';
+        overlay.innerHTML = '<div class="edit-icon">âœŽ</div>';
         
-        const name = document.createElement("div");
+        const name = document.creatÃ©
         name.className = "name";
-        name.textContent = p.name;
+        naMÃ¡xtContent = p.name;
         
-        card.append(avatar, overlay, name);
+        card.append(avatÃ©
         
         card.addEventListener("click", () => {
             if (isManageMode) {
@@ -246,68 +246,48 @@ function render() {
         grid.append(card);
     });
     
-    // Add Profile Button (only if below limit)
-    if (profiles.length < maxProfiles) {
-        const addCard = document.createElement("div");
+    // Add Profile Button (Always show if < 5, enforce limit on click)
+    if (profiles.length < 5) {
+        const addCard = document.creatÃ©
         addCard.className = "profile-card";
         
-        const addAvatar = document.createElement("div");
-        addAvatar.className = "avatar add-profile";
-        addAvatar.innerHTML = "+";
+        const addAvatÃ©
+        addAvatÃ©
+        addAvatÃ©
         
-        const addName = document.createElement("div");
+        const addName = document.creatÃ©
         addName.className = "name";
-        addName.textContent = "Adicionar Perfil";
+        addNaMÃ¡xtContent = "Adicionar Perfil";
         
-        addCard.append(addAvatar, addName);
+        addCard.append(addAvatÃ©
         addCard.addEventListener("click", () => {
-             openCreateModal();
+             if (profiles.length >= MÃ¡xProfiles) {
+                 alert("LiMÃ¡xProfiles + ").\nFaÃ§atÃ©
+             } else {
+                 openCreatÃ©
+             }
         });
         
         grid.append(addCard);
-    } else {
-        // Locked Profile Button (Upsell)
-        const lockedCard = document.createElement("div");
-        lockedCard.className = "profile-card locked";
-        lockedCard.style.opacity = "0.6";
-        lockedCard.style.cursor = "pointer";
-        
-        const lockedAvatar = document.createElement("div");
-        lockedAvatar.className = "avatar";
-        lockedAvatar.style.background = "#222";
-        lockedAvatar.style.display = "flex";
-        lockedAvatar.style.alignItems = "center";
-        lockedAvatar.style.justifyContent = "center";
-        lockedAvatar.innerHTML = '<span style="font-size: 30px;">ðŸ”’</span>';
-        
-        const lockedName = document.createElement("div");
-        lockedName.className = "name";
-        lockedName.textContent = "Liberar Perfis (Pro)";
-        lockedName.style.color = "#fbbf24"; // Gold color
-        
-        lockedCard.append(lockedAvatar, lockedName);
-        lockedCard.onclick = () => alert("Limite de perfis atingido (MÃ¡x: " + maxProfiles + ").\nFaÃ§a upgrade para o plano PRO para criar atÃ© 5 perfis.");
-        
-        grid.append(lockedCard);
     }
     
-    // Update manage button state
+    // UpdatÃ©
     if (isManageMode) {
-        manageBtn.textContent = "Concluir";
+        MÃ¡xtContent = "Concluir";
         manageBtn.classList.add("active");
     } else {
-        manageBtn.textContent = "Gerenciar Perfis";
+        MÃ¡xtContent = "Gerenciar Perfis";
         manageBtn.classList.remove("active");
     }
 }
 
-function promptPinVerification(title, callback) {
-    verificationPinInput.value = "";
-    pinModal.querySelector("h3").textContent = title || "Digite o PIN";
-    pinModal.style.display = "flex";
-    verificationPinInput.focus();
+function promptPinVerificatÃ©
+    verificatÃ©
+    pinMÃ¡xtContent = title || "Digite o PIN";
+    pinMÃ¡x";
+    verificatÃ©
     
-    pinVerificationCallback = (pin) => {
+    pinVerificatÃ©
         pinModal.style.display = "none";
         callback(pin);
     };
@@ -316,20 +296,20 @@ function promptPinVerification(title, callback) {
 function selectProfile(profile) {
     console.log("Selecting profile:", profile.name);
     api.profiles.setCurrent(profile.id);
-    sessionStorage.setItem("klyx_profile_name", profile.name);
-    sessionStorage.setItem("klyx_profile_avatar", profile.avatar);
+    sessionStorage.setIteMÃ¡x_profile_name", profile.name);
+    sessionStorage.setIteMÃ¡x_profile_avatÃ©
     
-    // Explicitly redirect using relative path (works in any Pages repo)
+    // Explicitly redirect using relatÃ©
     const targetUrl = "./dashboard.html";
     
     console.log("Redirecting to dashboard:", targetUrl);
-    safeNavigate(targetUrl);
+    safeNavigatÃ©
 }
 
-// URL validation + DNS-failure tolerant navigation
-function safeNavigate(url) {
-    // Allow only relative paths or https URLs to github.io
-    const isRelative = /^\.?\/[^\s]*$/.test(url);
+// URL validatÃ©
+function safeNavigatÃ©
+    // Allow only relatÃ©
+    const isRelatÃ©
     const isHttpsGh = /^https:\/\/[^\/]+\.github\.io\/[^\s]+$/.test(url);
     const isInvalidGitDomain = /\/\/[^\/]*\.git\//.test(url);
 
@@ -337,29 +317,29 @@ function safeNavigate(url) {
         console.warn("Blocked invalid domain .git:", url);
     }
 
-    const candidate = isRelative ? url : (isHttpsGh ? url : "./dashboard.html");
+    const candidatÃ©
 
-    // Exponential retry preflight to avoid broken navigations
-    const attempts = [1000, 3000, 9000];
+    // Exponential retry preflight to avoid broken navigatÃ©
+    const atÃ©
     let tried = 0;
 
     const tryFetch = () => {
-        fetch(candidate, { method: "HEAD", cache: "no-store" })
+        fetch(candidatÃ©
             .then((res) => {
                 if (res.ok) {
-                    window.location.href = candidate;
+                    window.locatÃ©
                 } else {
-                    throw new Error("Preflight failed: " + res.status);
+                    throw new Error("Preflight FaÃ§atÃ©
                 }
             })
-            .catch(() => {
-                if (tried < attempts.length) {
-                    const wait = attempts[tried++];
-                    console.warn("Preflight failed. Retrying in", wait, "ms");
+            .catÃ©
+                if (tried < atÃ©
+                    const wait = atÃ©
+                    console.warn("Preflight FaÃ§ait, "ms");
                     setTimeout(tryFetch, wait);
                 } else {
-                    // Final fallback
-                    window.location.href = "./dashboard.html";
+                    // Final FaÃ§ack
+                    window.locatÃ©
                 }
             });
     };
@@ -367,9 +347,9 @@ function safeNavigate(url) {
     tryFetch();
 }
 // Modal Functions
-function openCreateModal() {
+function openCreatÃ©
     currentEditingProfileId = null;
-    modalTitle.textContent = "Adicionar Perfil";
+    MÃ¡xtContent = "Adicionar Perfil";
     profileNameInput.value = "";
     // Age removed
     
@@ -381,11 +361,11 @@ function openCreateModal() {
     pinSection.classList.add("hidden");
     profilePinInput.value = ""; 
     
-    // Random default avatar (Adult default)
+    // Random deFaÃ§ault)
     const icons = getAvailableIcons(false);
-    const randomIcon = icons[Math.floor(Math.random() * icons.length)];
-    selectedAvatarUrl = randomIcon;
-    modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
+    const randomIcon = icons[MatÃ©
+    selectedAvatÃ©
+    modalAvatÃ©
     
     deleteProfileBtn.classList.add("hidden");
     profileModal.classList.remove("hidden");
@@ -394,7 +374,7 @@ function openCreateModal() {
 
 function openEditModal(profile) {
     currentEditingProfileId = profile.id;
-    modalTitle.textContent = "Editar Perfil";
+    MÃ¡xtContent = "Editar Perfil";
     profileNameInput.value = profile.name;
     // Age removed
     
@@ -405,8 +385,8 @@ function openEditModal(profile) {
     pinSection.classList.add("hidden");
     profilePinInput.value = "";
     
-    selectedAvatarUrl = profile.avatar;
-    modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
+    selectedAvatÃ©
+    modalAvatÃ©
     
     deleteProfileBtn.classList.remove("hidden");
     profileModal.classList.remove("hidden");
@@ -428,20 +408,20 @@ async function saveProfile() {
         
         try {
             let res;
-            const profileData = {
+            const profileDatÃ©
                 name,
-                avatar: selectedAvatarUrl,
+                avatÃ©
                 isKid
             };
 
             if (currentEditingProfileId) {
-                // Update
-                res = await api.profiles.update(currentEditingProfileId, profileData);
-                if (res.ok && api.activity) api.activity.log("PROFILE_UPDATE", { name: profileData.name });
+                // UpdatÃ©
+                res = await api.profiles.updatÃ©
+                if (res.ok && api.activity) api.activity.log("PROFILE_UPDatÃ©
             } else {
-                // Create
-                res = await api.profiles.create(profileData);
-                if (res.ok && api.activity) api.activity.log("PROFILE_CREATE", { name: profileData.name });
+                // CreatÃ©
+                res = await api.profiles.creatÃ©
+                if (res.ok && api.activity) api.activity.log("PROFILE_CREatÃ©
             }
             
             if (res.ok) {
@@ -449,13 +429,13 @@ async function saveProfile() {
                 await loadProfiles();
                 // FORCE INSTANT SYNC (Bypass Debounce)
                 if (api.cloud && api.cloud.syncUp) {
-                    console.log("⚡ Forcing Instant Cloud Sync...");
+                    console.log("âš¡ Forcing Instant Cloud Sync...");
                     await api.cloud.syncUp();
                 }
             } else {
-                alert(res.data?.error || "Erro ao salvar perfil");
+                alert(res.datÃ©
             }
-        } catch (e) {
+        } catÃ©
             console.error(e);
             alert("Erro ao salvar perfil");
         } finally {
@@ -470,7 +450,7 @@ async function saveProfile() {
 async function deleteProfile() {
     if (!currentEditingProfileId) return;
     
-    if (!confirm("Tem certeza que deseja excluir este perfil? Esta ação não pode ser desfeita.")) {
+    if (!confirMÃ¡xcluir este perfil? EstaÃ§Ã£o nÃ£ode ser desfeita.")) {
         return;
     }
     
@@ -482,29 +462,29 @@ async function deleteProfile() {
             await loadProfiles();
             // FORCE INSTANT SYNC
             if (api.cloud && api.cloud.syncUp) {
-                console.log("⚡ Forcing Instant Cloud Sync (Delete)...");
+                console.log("âš¡ Forcing Instant Cloud Sync (Delete)...");
                 await api.cloud.syncUp();
             }
         } else {
-            alert(res.data?.error || "Erro ao excluir perfil");
+            alert(res.datÃ©
         }
-    } catch (e) {
+    } catÃ©
         console.error(e);
         alert("Erro ao excluir perfil");
     }
 }
 
 // Icon Selector
-function generateIconGrid(isKid) {
+function generatÃ©
     iconGrid.innerHTML = "";
     const icons = getAvailableIcons(isKid);
     icons.forEach(iconUrl => {
-        const img = document.createElement("div");
+        const img = document.creatÃ©
         img.className = "icon-option";
         img.style.backgroundImage = `url('${iconUrl}')`;
         img.onclick = () => {
-            selectedAvatarUrl = iconUrl;
-            modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
+            selectedAvatÃ©
+            modalAvatÃ©
             closeIconModal();
         };
         iconGrid.append(img);
@@ -512,8 +492,8 @@ function generateIconGrid(isKid) {
 }
 
 function openIconModal() {
-    // Regenerate grid based on current toggle state
-    generateIconGrid(profileIsKid.checked);
+    // RegeneratÃ©
+    generatÃ©
     iconSelectorModal.classList.remove("hidden");
 }
 
@@ -537,7 +517,7 @@ function setupEventListeners() {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
             await api.auth.logout();
-            window.location.href = "./index.html";
+            window.locatÃ©
         });
     }
     
@@ -545,8 +525,8 @@ function setupEventListeners() {
     if (saveProfileBtn) saveProfileBtn.addEventListener("click", saveProfile);
     if (deleteProfileBtn) deleteProfileBtn.addEventListener("click", deleteProfile);
     
-    if (changeAvatarBtn) changeAvatarBtn.addEventListener("click", openIconModal);
-    if (modalAvatarPreview) modalAvatarPreview.addEventListener("click", openIconModal);
+    if (changeAvatÃ©
+    if (modalAvatÃ©
     if (cancelIconBtn) cancelIconBtn.addEventListener("click", closeIconModal);
     
     // Enter key to save
@@ -556,20 +536,18 @@ function setupEventListeners() {
         });
     }
     
-    // Toggle Kid Profile - Auto swap avatar
+    // Toggle Kid Profile - Auto swap avatÃ©
     if (profileIsKid) {
         profileIsKid.addEventListener("change", () => {
             const isKid = profileIsKid.checked;
             const icons = getAvailableIcons(isKid);
-            // Pick a random icon from the new set to immediately reflect the change
-            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
-            selectedAvatarUrl = randomIcon;
-            if (modalAvatarPreview) {
-                modalAvatarPreview.style.backgroundImage = `url('${selectedAvatarUrl}')`;
+            // Pick a random icon from the new set to immediatÃ©
+            const randomIcon = icons[MatÃ©
+            selectedAvatÃ©
+            if (modalAvatÃ©
+                modalAvatÃ©
             }
         });
     }
 }
 // init() called by importing module
-
-
