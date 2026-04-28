@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "klyx_web_export",
   "version": "1.0.0",
   "description": "Klyx is a modern web-based IPTV player with support for live TV, movies, and series.",
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/kaandor/klyx-web-app#readme",
   "dependencies": {
+    "@vercel/kv": "^1.0.1",
     "@capacitor/android": "^8.0.2",
     "@capacitor/cli": "^8.0.2",
     "@capacitor/core": "^8.0.2"

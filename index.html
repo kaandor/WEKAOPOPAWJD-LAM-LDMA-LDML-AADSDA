@@ -193,9 +193,26 @@
           });
       }
       
-      // Only redirect if already authenticated AND no OAuth code present
-      if (!code && !state) {
-        redirectIfAuthed();
+            // Auto-Guest Login Bypass (Sempre pula o login)
+      if (!localStorage.getItem('klyx.session')) {
+          const guestSession = {
+              user: {
+                  id: 'guest_' + Date.now(),
+                  name: 'Usuário VIP',
+                  email: 'vip@klyx.app',
+                  is_guest: true
+              },
+              token: 'guest_token',
+              expires_at: Date.now() + (30 * 24 * 60 * 60 * 1000)
+          };
+          localStorage.setItem('klyx.session', JSON.stringify(guestSession));
+          if (!localStorage.getItem('klyx_profile_id')) {
+              localStorage.setItem('klyx_profile_id', 'profile_1');
+              localStorage.setItem('klyx_profile_is_kid', 'false');
+          }
+          window.location.href = './dashboard.html';
+      } else {
+          window.location.href = './dashboard.html';
       }
       
       const errorDiv = document.getElementById("error");
@@ -230,3 +247,4 @@
     </script>
   </body>
 </html>
+
