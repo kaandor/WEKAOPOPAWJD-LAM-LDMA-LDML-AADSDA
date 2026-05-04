@@ -91,7 +91,18 @@ export async function mountAppShell({ currentPath }) {
           </svg>
           <span class="connection-dot" id="connectionStatusDot" title="Checking connection..."></span>
         </a>
-        <nav class="nav" aria-label="Primary">
+        <nav class="nav-desktop" aria-label="Primary">
+          <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home" translate="no">
+            <span class="nav-text">Início</span>
+          </a>
+          <a href="./movies.html" data-path="/movies" translate="no">
+            <span class="nav-text">Filmes</span>
+          </a>
+          <a href="./series.html" data-path="/series" translate="no">
+            <span class="nav-text">Séries</span>
+          </a>
+        </nav>
+        <nav class="nav" aria-label="Mobile">
           <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home" translate="no">
             <span class="nav-icon">${icons.home}</span>
             <span class="nav-text">Início</span>
@@ -104,15 +115,6 @@ export async function mountAppShell({ currentPath }) {
             <span class="nav-icon">${icons.series}</span>
             <span class="nav-text">Séries</span>
           </a>
-          <a href="./live-tv.html" data-path="/live-tv" translate="no">
-            <span class="nav-icon">${icons.live}</span>
-            <span class="nav-text">TV ao Vivo</span>
-          </a>
-          <!-- Search disabled by user request -->
-          <!-- <a href="/search" data-path="/search">
-            <span class="nav-icon">${icons.search}</span>
-            <span class="nav-text">Buscar</span>
-          </a> -->
         </nav>
         <div class="header-actions">
           <div class="profile-dropdown-container">
@@ -157,8 +159,8 @@ export async function mountAppShell({ currentPath }) {
     </div>
   `;
 
-  const links = header.querySelectorAll(".nav a");
-  links.forEach((a) => {
+  const navs = header.querySelectorAll("nav a");
+  navs.forEach((a) => {
     const path = a.getAttribute("data-path");
     if (path === currentPath) a.setAttribute("aria-current", "page");
   });

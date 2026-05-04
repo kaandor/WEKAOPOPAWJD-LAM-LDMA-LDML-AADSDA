@@ -211,20 +211,20 @@ async function request(method, path, body) {
 
           // Mapeamento de rotas da API antiga para estrutura do Firebase
           if (path.includes("/catalog/home")) {
-              firebasePath = "catalog/home";
-              localFallback = "./assets/data/home.json";
+              firebasePath = "catalog/home_official";
+              localFallback = "./assets/data/home_official.json";
           }
           else if (path.includes("/movies")) {
-               firebasePath = "catalog/movies";
-               localFallback = "./assets/data/movies.json";
+               firebasePath = "catalog/movies_official";
+               localFallback = "./assets/data/movies_official.json";
           }
           else if (path.includes("/series") && path.includes("/episodes")) {
-               firebasePath = "catalog/episodes";
-               localFallback = "./assets/data/episodes.json";
+               firebasePath = "catalog/episodes_official";
+               localFallback = "./assets/data/episodes_official.json";
           }
           else if (path.includes("/series")) {
-               firebasePath = "catalog/series";
-               localFallback = "./assets/data/series.json";
+               firebasePath = "catalog/series_official";
+               localFallback = "./assets/data/series_official.json";
           }
           else if (path.includes("/live")) {
                firebasePath = "catalog/live";
@@ -734,7 +734,7 @@ export const api = {
                 linked_mac: subMac
             },
             plan: 'individual', // individual, duo, family, premium
-            status: 'pending_activation', // active, expired, pending_activation
+            status: 'active', // All users are now active by default
             expires_at: null, 
             profiles: {
                 "p1": { id: "p1", name: displayName || "Perfil 1", avatar: "avatar1.png", is_kid: false }
@@ -813,7 +813,7 @@ export const api = {
                         name: user.display_name || user.name || "User",
                         email_key: emailKey, // Guardar key para uso posterior
                         plan: user.plan || 'individual',
-                        status: user.status || 'pending_activation',
+                        status: user.status || 'active',
                         expires_at: user.expires_at || null,
                         // Retorna dados de assinatura para o front atualizar localmente
                         subscription: sub
@@ -872,114 +872,8 @@ export const api = {
         });
     },
     async checkDevice(mac, key) {
-        if (isClientSideMode()) {
-             if (USE_LOCAL_ONLY) {
-                 return { ok: true, status: 200, data: { status: 'active', active: true, plan: 'premium' } };
-             }
-
-             try {
-                 // Sanitize MAC for Firebase Key (matches manage-subs.js logic)
-                 const macId = mac.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                 
-                 // Add timeout to prevent hanging
-                 const controller = new AbortController();
-                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-                 const res = await fetch(`${FIREBASE_DB_URL}/devices/${macId}.json`, { signal: controller.signal });
-                 clearTimeout(timeoutId);
-                 
-                 if (!res.ok) throw new Error("Firebase fetch failed");
-
-                 const device = await res.json();
-                 
-                 if (!device) {
-                     // TENTATIVA DE AUTO-ATIVAÇÃO VIA CHAVE MESTRA
-                     // Se não achou pelo MAC, verifique se a CHAVE existe e permite múltiplos dispositivos
-                     if (key) {
-                         try {
-                             const keyRes = await fetch(`${FIREBASE_DB_URL}/keys/${key}.json`, { signal: controller.signal });
-                             const keyData = await keyRes.json();
-                             
-                             if (keyData && keyData.mac) {
-                                 const masterMac = keyData.mac;
-                                 // Fetch master device
-                                 const masterRes = await fetch(`${FIREBASE_DB_URL}/devices/${masterMac}.json`, { signal: controller.signal });
-                                 const masterDevice = await masterRes.json();
-                                 
-                                 if (masterDevice && masterDevice.status === 'active') {
-                                     // Check limits
-                                     const max = parseInt(masterDevice.max_ips || 1);
-                                     const allowed = Array.isArray(masterDevice.allowed_ips) ? masterDevice.allowed_ips : [];
-                                     
-                                     // Se já está na lista (mas por algum motivo não tinha registro próprio), ok
-                                     // Se não está, verifica se tem vaga
-                                     if (allowed.includes(macId) || allowed.length < max) {
-                                          console.log(`[AutoActivate] Linking ${macId} to master ${masterMac} (Slots: ${allowed.length}/${max})`);
-                                          
-                                          // Add to allowed list if not present
-                                          if (!allowed.includes(macId)) {
-                                              allowed.push(macId);
-                                              // Update master allowed list
-                                              await fetch(`${FIREBASE_DB_URL}/devices/${masterMac}.json`, {
-                                                  method: 'PATCH',
-                                                  body: JSON.stringify({ allowed_ips: allowed })
-                                              });
-                                          }
-                                          
-                                          // Create Mirror Device Record
-                                          const newDevice = { ...masterDevice };
-                                          newDevice.mac_address = macId; // Override MAC
-                                          // Manter referência ao mestre? Talvez não precise, basta copiar os dados de acesso.
-                                          // Mas se o mestre renovar, esse aqui fica desatualizado.
-                                          // IDEAL: O cliente deveria sempre checar o mestre.
-                                          // MAS para compatibilidade, vamos criar um registro duplicado E manter sincronia futura (difícil sem backend).
-                                          // SOLUÇÃO: Criar registro independente mas com MESMOS dados.
-                                          
-                                          await fetch(`${FIREBASE_DB_URL}/devices/${macId}.json`, {
-                                              method: 'PUT',
-                                              body: JSON.stringify(newDevice)
-                                          });
-                                          
-                                          return { ok: true, status: 200, data: newDevice };
-                                     }
-                                 }
-                             }
-                         } catch(e) {
-                             console.error("Auto-activate failed", e);
-                         }
-                     }
-
-                    return { ok: true, status: 200, data: { status: 'inactive', active: false, plan: 'free' } };
-                 }
-
-                 // Check key if provided (optional)
-                 if (key && device.device_key !== key) {
-                      return { ok: false, status: 401, data: { error: "Invalid Key" } };
-                 }
-
-                 // Check expiry
-                 if (device.expires_at && new Date(device.expires_at) < new Date()) {
-                     device.status = 'expired';
-                     device.active = false;
-                 } else {
-                     const s = String(device.status || '').toLowerCase();
-                     device.active = (s === 'active' || s === 'true' || s === '1' || device.active === true);
-                 }
-
-                 return { ok: true, status: 200, data: device };
-             } catch(e) {
-                 console.error("Firebase Device Check Error:", e);
-                 // On network error, assume active/offline mode to not block user
-                 return { ok: true, status: 200, data: { status: 'active', active: true, offline: true } };
-             }
-        }
-        const res = await fetch("/api/auth/device/check", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mac, key }),
-        });
-        const data = await res.json().catch(() => ({}));
-        return { ok: res.ok, status: res.status, data };
+        // SUBSCRIPTION CHECK REMOVED - Always return active
+        return { ok: true, status: 200, data: { status: 'active', active: true, plan: 'premium' } };
     },
     async logout() {
       clearSession();
@@ -996,15 +890,16 @@ export const api = {
       }).catch(() => null);
     },
     async me() {
-      if (isClientSideMode()) {
-          const session = readSession();
-          console.log("[API] me() - Session found:", !!session);
-          if (session) {
-              return { ok: true, status: 200, data: { user: session.user, settings: { theme: "dark" } } };
+      // SUBSCRIPTION CHECK REMOVED - Always return active user
+      const session = readSession();
+      if (session) {
+          if (session.user) {
+              session.user.status = 'active';
+              session.user.plan = 'premium';
           }
-          return { ok: false, status: 401, data: null };
+          return { ok: true, status: 200, data: { user: session.user, settings: { theme: "dark" } } };
       }
-      return request("GET", "/api/auth/me");
+      return { ok: false, status: 401, data: null };
     },
   },
   movies: {

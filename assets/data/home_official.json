@@ -1,0 +1,810 @@
+{
+  "rails": {
+    "topMovies": [
+      {
+        "id": "83a2292e-512c-431d-96e4-0aec4f2ce1b1",
+        "title": "A Empregada (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Drama",
+        "poster_url": "http://kutx00.top:80/images/o8x6faHunxHcgDjVh09hJ0nPZ5o_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361515.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "28747034-fc81-4410-904c-420c07bfe754",
+        "title": "TRON: Ares (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Ficcao Cientifica",
+        "poster_url": "http://kutx00.top:80/images/4NO0mmJ7WEU3PcllcogmiQIUecq_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361514.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "168e510b-740d-418c-9712-61d743179c45",
+        "title": "Z Zone (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/nS1u84WTIAnn7KPYg5Nd1xVVQew_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361513.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "36812c61-c82d-45f1-9a65-09fedcf42b14",
+        "title": "Voce Vai Morrer em 6 horas (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/s7Vze1z7tAs4d4xfhu0OqNkFuDM_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361512.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "5cd5ae56-08fd-4bb6-8a33-fcd5bc1fff6a",
+        "title": "Carta ao Meu Jovem Eu (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/xNOOOaRmv3NvRnVx8L0FK1aIq6N_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361511.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "a95b8f89-99bf-4691-a788-b412ae148bc2",
+        "title": "Se Esse Amor Desaparecesse Hoje (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/rZpbBGwqGHkXhIOzhvHdrFqXgDX_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361508.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "050f80a5-5b3c-4a0e-a0dd-fd8ce1aef45b",
+        "title": "Springsteen: Deliver Me from Nowhere (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/ZbKU1buIabrW4b5seDoHY5HkeF_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361507.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "a962366e-3f78-49db-a1bc-059e5bca5bcf",
+        "title": "Palhaçassino (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/rgYk60Nj1hvffkQwEs0cMnd42ef_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361506.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "4adea087-136b-4240-8ce9-86fcc8d77364",
+        "title": "O Trote (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/whwnPtQrahHEjyTmaxUq7eNefOH_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361505.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1917f945-09c4-4a32-bbd4-76f302c571d3",
+        "title": "Meu Avô Stanislau (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/t6Y1I2AVkzZ8Nzkltkqi9FfdTzD_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361503.mp4",
+        "description": "Movie"
+      }
+    ],
+    "topSeries": [
+      {
+        "id": "1628d404-ae25-4033-a9ce-ebebd5e06926",
+        "title": "A Feiticeira",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/JYDus3O.png",
+        "description": "Series"
+      },
+      {
+        "id": "45ce5e8f-9f3f-4cdd-8bdc-6bf0c5f04cd9",
+        "title": "A Grande Familia",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/5O1S1I3.png",
+        "description": "Series"
+      },
+      {
+        "id": "64bf207f-0fdc-4e8d-a02f-4fcfef0c4428",
+        "title": "American Dad",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/cftiwF9.png",
+        "description": "Series"
+      },
+      {
+        "id": "106dfe9d-39c1-4a7d-b371-c50ce6d8a07e",
+        "title": "As Visões da Raven",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "",
+        "description": "Series"
+      },
+      {
+        "id": "c680dbd1-8e02-4933-91ce-14a1a08c2e34",
+        "title": "Auto da Comparecida",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/cVrlx8U.png",
+        "description": "Series"
+      },
+      {
+        "id": "6576e302-5286-409b-bcb6-4158558778e5",
+        "title": "Big Mouth",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/9dLwN27.png",
+        "description": "Series"
+      },
+      {
+        "id": "7f3ffb16-0e88-4f9b-a08a-6928dedc7b89",
+        "title": "Black Mirror",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/3YoGgrs.png",
+        "description": "Series"
+      },
+      {
+        "id": "1586e94f-3dac-4d0b-97d0-74fac8015cc6",
+        "title": "Bobs Burgers",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/FChNKJG.png",
+        "description": "Series"
+      },
+      {
+        "id": "6bb31520-0755-4fea-8958-2d9fb4148902",
+        "title": "Castlevania",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/FHc9TIs.png",
+        "description": "Series"
+      },
+      {
+        "id": "499f8908-4f3d-4797-b7c9-97b0c4db1c49",
+        "title": "Caçadores De Bugs",
+        "year": 2026,
+        "rating": 0,
+        "category": "24 Horas | Séries",
+        "poster_url": "https://i.imgur.com/Fw7OLFE.png",
+        "description": "Series"
+      }
+    ],
+    "recentMovies": [
+      {
+        "id": "69d9ecbe-aac8-4661-b3f3-d2b53bd202f9",
+        "title": "Freaky Tales (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/lo5mfglsGeMYmAkSRXs9DATNJxk_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361502.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ba7d55d2-1c52-4202-b255-463a6197aacc",
+        "title": "Cora (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/1mgkzclLgz9sDft8Wuf5cW6f7OX_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361498.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "78effba1-6124-4ad4-b74b-0e6178413d19",
+        "title": "Dúvida (2008) (L)",
+        "year": 2008,
+        "rating": 0,
+        "category": "Filmes : Legendados",
+        "poster_url": "http://kutx00.top:80/images/zrVTtvLBk0yp2wlinURhzPVbkxi_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361275.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "35466aff-c33f-4e30-9156-835e7b76bcfe",
+        "title": "A Extraordinária Vida de Timothy Green (2012)",
+        "year": 2012,
+        "rating": 0,
+        "category": "Filmes: Drama",
+        "poster_url": "http://kutx00.top:80/images/yDXXtI8ocUkQ8O95XLEdPE5qArp_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361274.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "cfe5bd72-a478-445b-b0b8-4225333539e5",
+        "title": "Zona De Caca (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/eFrZLDfyb0fef5IDk9CH4MV2aod_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361273.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "e1cd45e3-b8b7-48e5-ac8f-557d74f47e5e",
+        "title": "Verdade e Traicao (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/AoV1OxQpKhXxwmvcjUAwiaHWhkU_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361272.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1d6a37db-9486-494d-b360-f3bd16f9b39e",
+        "title": "Um Dia Extraordinário (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/AuRamBsUf8AqRzHmWMjb2jg5vVZ_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361271.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "0edca680-6ce5-4d13-bce5-1dec8b14858d",
+        "title": "Nossa Vizinhança (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/5ivxdAWTJf6YdQDBLmysTgJiqqh_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361270.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1d602cf7-5f9f-4cae-931a-490c466a21ea",
+        "title": "God Complex - O Complexo Industrial da Censura (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/kuTIIwXc436PTUFVj8F8gTsfsz0_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361269.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "5e53e656-eca3-4d95-bac8-c42aadcddb1f",
+        "title": "Zootopia 2 (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2025",
+        "poster_url": "http://kutx00.top:80/images/iI7JiXlKQ58bwi6k9wIYEGXMOPR_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361267.mp4",
+        "description": "Movie"
+      }
+    ],
+    "nightMovies": [
+      {
+        "id": "f1c3c23e-9e20-49f4-8c17-69e484374dc5",
+        "title": "Sinfonia De Guerra (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2025",
+        "poster_url": "http://kutx00.top:80/images/aZlsV0BB56sny4FnFYSCzr3is1B_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361266.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "580abff1-c42a-449e-a129-7d9f27509184",
+        "title": "Palavras De Guerra (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2025",
+        "poster_url": "http://kutx00.top:80/images/59JXT8JtyQ3CAWVf3wBa8yCCdIJ_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361265.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "b704f8b7-dd7e-414c-a3ca-b80ee46b52ca",
+        "title": "Natal Sangrento (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2025",
+        "poster_url": "http://kutx00.top:80/images/tGKI0beu1B7eLEkMAMT5nNToKFZ_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361264.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "8e89c78c-7337-416b-9705-63ea7c56c0e0",
+        "title": "Entre Nos Uma Dose Extra De Amor (2025)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2025",
+        "poster_url": "http://kutx00.top:80/images/xJHQOfICSHqTimOL0APTjbvF6YX_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361263.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "6577c061-f16a-4703-be70-eb986bc5b282",
+        "title": "Christy Um Novo Round (2026)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Lancamentos 2026",
+        "poster_url": "http://kutx00.top:80/images/2WJEpkeQ78HQlTtSP9Bll1xRFhs_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361262.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "39a35fbd-d728-415f-bc1b-c6a7f37ce729",
+        "title": "Zootopia 2 (2025) (L)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes : Legendados",
+        "poster_url": "http://kutx00.top:80/images/iI7JiXlKQ58bwi6k9wIYEGXMOPR_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361261.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "24724091-d460-4616-a85d-f2660fd6619e",
+        "title": "Verdade e Traicao (2026) (L)",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes : Legendados",
+        "poster_url": "http://kutx00.top:80/images/AoV1OxQpKhXxwmvcjUAwiaHWhkU_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361259.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9fe44ef0-6adb-4d38-8b58-56bd832f6036",
+        "title": "Vencendo Sem Parar (2025) (L)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes : Legendados",
+        "poster_url": "http://kutx00.top:80/images/k5DQB2rTUXTnuaBo73tagiU2bqj_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361258.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "6b132668-725a-48f5-be8b-de85848d7f07",
+        "title": "Sinfonia De Guerra (2025) (L)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes : Legendados",
+        "poster_url": "http://kutx00.top:80/images/aZlsV0BB56sny4FnFYSCzr3is1B_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361257.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "7c7bc5d7-46b2-482c-972a-10b5558471e1",
+        "title": "Shark Evil (2025) (L)",
+        "year": 2025,
+        "rating": 0,
+        "category": "Filmes : Legendados",
+        "poster_url": "http://kutx00.top:80/images/gStRXDh04JEoW7sBptNXc1tFsm8_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361256.mp4",
+        "description": "Movie"
+      }
+    ],
+    "horrorMovies": [
+      {
+        "id": "a1e953ed-d384-4e2b-ae93-88d19a793d4f",
+        "title": "ROMI (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/bhxhFZurJqMNfPiRhuBjxHMLFAG_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/360215.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "1daa17b6-7a44-43b0-b3f7-87ef85317dae",
+        "title": "A Voz Das Sombras (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/mELMhjvb3AdEex5Vjl0hBfjjdVb_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/360211.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "4833bedd-c162-4858-900d-87a6097c1c3b",
+        "title": "Malum (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/iuZ4rGnniWudvtRafwGJ2twrTqZ_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/360208.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "089bf960-c3ee-429b-be5c-9fa16eb87441",
+        "title": "Humane Ate Onde O Ser Humano Pode Chegar (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/sngVFA61zXSYo3jOjMdwbx66yoq_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356858.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "63a645f7-d167-4b6c-8351-ce04815d31b3",
+        "title": "Medo no Pacífico (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/knEPrIc7ZwUGiyb3oRvLOkj1qm6_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/354715.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "51b57701-37eb-409f-b0e0-dc9ef28c8a28",
+        "title": "Duvide do que Ouve (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/olg5txTmRJniuarxFTCGua6fs4Y_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/354712.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "d7223228-dd0d-4f70-a47b-12ed99dd1b33",
+        "title": "A Paranoia de Lulu (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/pZtTmf67sxOyYBSjX9TGIZXQpeD_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/354709.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "f64a7db2-d2e6-4383-ac22-524f1ce28c99",
+        "title": "A Ilha do Inverno (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/aa4sBublIJ0raT6v93Hbs5AOipG_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/354708.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ec746bfd-4c04-4e44-b228-af762edb4555",
+        "title": "Maldicao Eterna (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/sOy6G0a0wdSH6zfhbxhYlE43VyR_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/354702.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ad4be350-9bc6-4ad9-bad6-7ae1ae7bc925",
+        "title": "Observador (2022)",
+        "year": 2022,
+        "rating": 0,
+        "category": "Filmes: Terror",
+        "poster_url": "http://kutx00.top:80/images/grEpsXD8Mwj5CGn5iWzDCNqZm2D_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/352791.mp4",
+        "description": "Movie"
+      }
+    ],
+    "comedyMovies": [
+      {
+        "id": "f7bf11e7-bcce-4078-ae4f-68566b5360b9",
+        "title": "A Hora do Rango (2005)",
+        "year": 2005,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/x6vTdWJwa5Se5LnyB7EZ9B0MHp3_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361099.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "b0a290ec-3810-4924-9fe7-8f9ff076692d",
+        "title": "Solteira Quase Surtando (2020)",
+        "year": 2020,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/qSXDbGozN7XJXYx5gM6JyKcaYYG_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/361098.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "13155019-a956-4244-bf46-fd110fbed073",
+        "title": "Aprendiz de Gigolô (2010)",
+        "year": 2010,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/3SUrbFry1PjRr5QDzA7fk5FiO1V_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/359828.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "570464aa-420f-4fdf-84e4-a7663564a887",
+        "title": "Criando Verdades (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/q2xXZGR9kE2XmFReJS9BxW4h3DO_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/358686.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "b01b9f71-47b5-42f3-868c-dffdef6af0fc",
+        "title": "Role Play (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/d9O2dIxU1X8Qc8s8kf9RFiiDMMB_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/358655.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "97bff069-d69b-4f35-a203-8b175766d3de",
+        "title": "Transparecendo Em Latim (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/iEnvPpFPh6EL5mj7pDUmXvNJWnk_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356866.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "f0ce184e-a235-4166-8016-c9b98a28a63a",
+        "title": "A Escolha de Natal (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/r5JITKriiBoNm9Y9zYiqATWwSDE_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356440.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9ffcfa12-fb1f-4012-8825-a72375b0aebe",
+        "title": "Os Caça-Noivas (2016)",
+        "year": 2016,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/9DSX3jqwR3zMMcNowqz1Ge3Bju8_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/355449.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ab5b843f-9c98-4c2e-b224-32fe43239448",
+        "title": "Uma Vida em Sete Dias (2002)",
+        "year": 2002,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/g4T8KbMijAqQl1qZrXLwa3r2GOY_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/352179.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "9a0b93a8-f006-4261-a89f-e38e8fa34d5c",
+        "title": "Sem Tempo a Perder (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Comedia",
+        "poster_url": "http://kutx00.top:80/images/8AnPoD6FLO1eWAP3TP59bWEYKDD_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/351788.mp4",
+        "description": "Movie"
+      }
+    ],
+    "actionMovies": [
+      {
+        "id": "96b7287e-dcee-4031-9002-3c58d2b278d5",
+        "title": "A Estrela de Belem (2017)",
+        "year": 2017,
+        "rating": 0,
+        "category": "Filmes: Animacao / Infantil",
+        "poster_url": "http://kutx00.top:80/images/s9LD4vsEFV1o1vSt0LQf7v8IHma_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/359017.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ff1ffadc-abcb-4bb1-9086-a4e57fcb39aa",
+        "title": "O Tesouro de Natal (2021)",
+        "year": 2021,
+        "rating": 0,
+        "category": "Filmes: Animacao / Infantil",
+        "poster_url": "http://kutx00.top:80/images/eWq3BvXYERCbTo1aw6DRmKaCpVo_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/358690.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "e7e43e8c-26dc-46bb-8c85-ae12933530f4",
+        "title": "Farejando Vingança (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/dZ15pAnP1cp54S0HHcozjJKaH1D_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/358688.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "96b00330-0b67-4758-b1bb-d7feb2539498",
+        "title": "The Housekeeper",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/xFRNwqTl0WeWiTW10Wyixug1c9J_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/358676.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "915fd312-8a01-46cf-a87a-8c586c6e3386",
+        "title": "Infiltrado Na Mafia (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/oH7yZcpWf7MddYIhs1Xvdk7NUbz_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356859.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "c62be4dd-d72f-4391-9541-d5d78e86f914",
+        "title": "Artes Das Oito Armas (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/iFbaWOqD6f3wdNfSdHA22dru0kL_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356856.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "3e884e6e-5a52-4bb0-a905-890fb941809c",
+        "title": "WALL-E (2008)",
+        "year": 2008,
+        "rating": 0,
+        "category": "Filmes: Animacao / Infantil",
+        "poster_url": "http://kutx00.top:80/images/2TfYp0eMPrcKNjX6PTKGGQODjfF_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356154.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "ebb2f99b-3399-4348-8983-e52c83422cb1",
+        "title": "Looper - Assasino do Futuro (2012)",
+        "year": 2012,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/lA2Uq8QByIch9t8dYZHB6cg5TeC_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/356017.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "3e475340-bae9-4aa4-bccf-f2dfefc00452",
+        "title": "Força Bruta: Sem Saída (2022)",
+        "year": 2022,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/1GGqZZVFYzKn6WTQgR5bQFqMpIR_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/354825.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "7de2de37-0734-4fe8-bd78-6cf7d80ddad3",
+        "title": "O Último Lutador (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Acao",
+        "poster_url": "http://kutx00.top:80/images/emnk3rHlqcKc5gr7YOuBwt0aoIB_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/352365.mp4",
+        "description": "Movie"
+      }
+    ],
+    "adventureMovies": [
+      {
+        "id": "a8f1d784-252e-486a-91fa-957767fbc470",
+        "title": "A Única Sobrevivente (2022)",
+        "year": 2022,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/nreStPF08Bd5RYH4gjbXVh59XAu_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/349682.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "df335a48-4e34-4cf7-89cd-c9f108b6462f",
+        "title": "O Enigma do Portal (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/mWYgiONuFIF4G3gWoOgr7IPdBKO_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/348998.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "a2c2c7c8-9232-4832-8a46-15db74b41e3b",
+        "title": "Slime - Uma Aventura Pegajosa 4 (2023)",
+        "year": 2023,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/il1ydHw0SbPkNTiFeqaQAFC6Qi5_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/348979.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "fffbcb6b-62f0-4a50-9b5b-3965f72fbd5d",
+        "title": "Chama a Bebel (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/78wr1h86eNAOUi7m3qZkpYcaBaO_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/345169.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "46c9d975-7ea8-4063-bb9c-b9a97316688b",
+        "title": "Dália e o Livro Vermelho (2024)",
+        "year": 2024,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/4LCpqQxa95g9VniypAuGC6jbHaB_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/341652.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "cf57e1f7-5b1e-4002-8221-06170ad1339e",
+        "title": "Jurassic Park 3 (2001)",
+        "year": 2001,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/w6Jz1AgjscqBuS8qXBd0wUHz5zC_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/340083.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "afa27780-047a-40c2-a459-7f3e98ca6516",
+        "title": "Os Goonies",
+        "year": 2026,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/6YGlQxEzEqQ5VYj64NvzbItXKPX_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/334281.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "2d854d15-f2df-47d5-abd8-442af7c16c95",
+        "title": "Mentes Sombrias (2018)",
+        "year": 2018,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/qbh5F9mWPFbbNsdXkjHMYmjncqQ_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/331774.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "47513240-6cc5-414b-aa74-096835971fd0",
+        "title": "Alice no País das Maravilhas (2010)",
+        "year": 2010,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/fjaiHtykx4LcHJLzhKhn7tNPpAj_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/330652.mp4",
+        "description": "Movie"
+      },
+      {
+        "id": "aae64300-2f24-4f68-bee1-f8ae812639ec",
+        "title": "Guerra dos Mundos (2005)",
+        "year": 2005,
+        "rating": 0,
+        "category": "Filmes: Aventura",
+        "poster_url": "http://kutx00.top:80/images/aU42RNFpLgXsg0Tsgo8g8RPji0N_big.jpg",
+        "stream_url": "http://srv.cldplay.in:80/movie/lelezago/lelezago@2021/328631.mp4",
+        "description": "Movie"
+      }
+    ]
+  }
+}

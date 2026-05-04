@@ -1,75 +1,10 @@
 import { api } from "./api.js";
 
 // --- VERSION TRACKER ---
-console.log("%c KLYX APP v2026.01.28-Patch3-CanaisBR4 %c Updated Now ", "background: #e50914; color: white; font-weight: bold; padding: 4px;", "background: #333; color: white; padding: 4px;");
+console.log("%c KLYX APP v2026.05.04-Official %c Updated Now ", "background: #e50914; color: white; font-weight: bold; padding: 4px;", "background: #333; color: white; padding: 4px;");
 
-// --- SUBSCRIPTION CHECKER ---
-let subStatusCache = null;
-let subStatusTime = 0;
-
-async function checkSubscription() {
-    const now = Date.now();
-    if (subStatusCache !== null && (now - subStatusTime < 30000)) { 
-        return subStatusCache;
-    }
-
-    const mac = localStorage.getItem('klyx_device_mac');
-    const key = localStorage.getItem('klyx_device_key');
-    if (!mac || !key) return false;
-
-    try {
-        const res = await api.auth.checkDevice(mac, key);
-        if (res.ok && res.data) {
-             const d = res.data;
-             const isActive = (d.active === true || d.active === "true" || d.active === "1" || d.status === 'active');
-             console.log(`[SubCheck] MAC:${mac} Active:${isActive} Status:${d.status} Expires:${d.expires_at}`);
-             subStatusCache = Boolean(isActive);
-        } else {
-             subStatusCache = false;
-        }
-    } catch (e) {
-        console.warn("Sub check failed", e);
-        subStatusCache = false; 
-    }
-    
-    subStatusTime = now;
-    return subStatusCache;
-}
-
-function showSubscriptionBlocker() {
-    let modal = document.getElementById('sub-block-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'sub-block-modal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        `;
-        modal.innerHTML = `
-            <div style="background: #141414; padding: 40px; border-radius: 8px; text-align: center; max-width: 500px; border: 1px solid #333;">
-                <h2 style="color: #e50914; margin-bottom: 20px;">Assinatura Necessária</h2>
-                <p style="color: #fff; margin-bottom: 30px; line-height: 1.5;">
-                    Sua conta não possui uma assinatura ativa ou expirou. <br>
-                    Para continuar assistindo, por favor renove seu plano.
-                </p>
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button id="btn-sub-close" style="padding: 10px 20px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">Fechar</button>
-                    <button id="btn-sub-contact" style="padding: 10px 20px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Verificar Status</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        
-        document.getElementById('btn-sub-close').onclick = () => modal.style.display = 'none';
-        document.getElementById('btn-sub-contact').onclick = () => {
-             modal.style.display = 'none';
-             window.location.href = './settings.html';
-        };
-    }
-    modal.style.display = 'flex';
-}
-// ----------------------------
+// --- SUBSCRIPTION CHECKER REMOVED ---
+// All content is now free as requested.
 
 const PAGE_LIMIT = 200;
 let movieOffset = 0;
@@ -246,17 +181,7 @@ export function createPosterCard({ title, posterUrl, metaLeft, metaRight, onClic
   card.append(body);
 
   if (onClick) {
-        card.addEventListener("click", async (e) => {
-            // Intercept click to check subscription
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const hasSub = await checkSubscription();
-            if (!hasSub) {
-                showSubscriptionBlocker();
-                return;
-            }
-            
+        card.addEventListener("click", (e) => {
             onClick(e);
         });
     }
@@ -296,16 +221,7 @@ export function createThumbCard({ title, thumbUrl, metaLeft, metaRight, onClick 
   card.append(img, body);
 
   if (onClick) {
-        card.addEventListener("click", async (e) => {
-             // Intercept click to check subscription
-             e.preventDefault();
-             e.stopPropagation();
-             
-             const hasSub = await checkSubscription();
-             if (!hasSub) {
-                 showSubscriptionBlocker();
-                 return;
-             }
+        card.addEventListener("click", (e) => {
             onClick(e);
         });
     }
@@ -356,60 +272,19 @@ function filterGrid(gridId, query) {
 }
 
 export async function initDashboard() {
-  const hasSub = await checkSubscription().catch(() => true);
-  if (!hasSub) {
-      const session = api.session.read();
-      const root = document.getElementById("dashboardContent");
-      if (root) {
-          const status = session?.user?.status || "";
-          const isExpired = status === 'expired';
-          const isPending = status === 'pending_activation';
+  const root = document.getElementById("dashboardContent");
+  if (!root) return;
 
-          let msg = "Este conteúdo exige uma assinatura ativa.";
-          let title = "🔒 Conteúdo Bloqueado";
-
-          if (isExpired) {
-              msg = "Renove para continuar assistindo";
-              title = "Assinatura Expirada";
-          } else if (isPending) {
-              msg = "Ative pela primeira vez sua conta";
-              title = "Bem-vindo ao Klyx";
-          }
-
-          const exp = session?.user?.expires_at;
-
-          root.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; color: #fff;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 20px;">${title}</h1>
-                <p style="font-size: 1.2rem; margin-bottom: 30px; color: #ccc; text-transform: uppercase;">${msg}</p>
-                <button onclick="window.showSubscriptionModal()" style="background: #e50914; color: white; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase;">
-                    Assine Já
-                </button>
-                ${exp ? `<p style="margin-top: 20px; color: #777;">Vencimento: ${new Date(exp).toLocaleDateString()}</p>` : ''}
-            </div>
-          `;
-      }
-      return;
-  }
-
-  // Define global modal helper
-  if (!window.showSubscriptionModal) {
-      window.showSubscriptionModal = () => {
+  // Define global modal helper (for future use, but not for subscription)
+  if (!window.showInfoModal) {
+      window.showInfoModal = (title, msg) => {
         const modal = document.createElement('div');
         modal.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);";
         modal.innerHTML = `
             <div style="background:#1f1f1f;padding:40px;border-radius:12px;max-width:500px;width:90%;text-align:center;color:#fff;border:1px solid #333;box-shadow:0 10px 25px rgba(0,0,0,0.5);">
-                <h2 style="margin-bottom:20px;color:#e50914;font-size:2rem;">Assine o Klyx Premium</h2>
-                <p style="margin-bottom:30px;line-height:1.6;font-size:1.1rem;color:#ddd;">
-                    Tenha acesso ilimitado a todo o catálogo de filmes, séries e canais ao vivo em Full HD.
-                    <br><br>
-                    <strong>Planos a partir de R$ 19,90/mês</strong>
-                </p>
-                <div style="background:#2a2a2a;padding:20px;border-radius:8px;margin-bottom:30px;text-align:left;">
-                    <div style="margin-bottom:10px;">📱 <strong>WhatsApp:</strong> (11) 99999-9999</div>
-                    <div>📧 <strong>Email:</strong> suporte@klyx.com</div>
-                </div>
-                <button onclick="this.closest('div').parentElement.remove()" style="background:#e50914;color:white;border:none;padding:12px 30px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:1rem;transition:transform 0.2s;">Fechar</button>
+                <h2 style="margin-bottom:20px;color:#A855F7;font-size:2rem;">${title}</h2>
+                <p style="margin-bottom:30px;line-height:1.6;font-size:1.1rem;color:#ddd;">${msg}</p>
+                <button onclick="this.closest('div').parentElement.remove()" style="background:#A855F7;color:white;border:none;padding:12px 30px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:1rem;">Fechar</button>
             </div>
         `;
         document.body.appendChild(modal);
@@ -486,8 +361,7 @@ export async function initDashboard() {
       items: rails.topMovies,
       itemType: "movie",
       imageKey: "poster_url",
-      onSelect: async (item) => {
-          if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+      onSelect: (item) => {
           openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`);
       },
     }),
@@ -500,8 +374,7 @@ export async function initDashboard() {
         items: rails.recentMovies,
         itemType: "movie",
         imageKey: "poster_url",
-      onSelect: async (item) => {
-          if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+      onSelect: (item) => {
           openPlayer(`./player.html?type=movie&id=${encodeURIComponent(item.id)}`);
       },
     }),
@@ -835,8 +708,7 @@ async function loadMovies(isLoadMore = false) {
         posterUrl: m.poster_url,
         metaLeft: "", 
         metaRight: `★ ${formatRating(m.rating)}`,
-        onClick: async () => {
-             if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+        onClick: () => {
              const params = new URLSearchParams({
                  type: 'movie',
                  id: m.id,
@@ -1000,8 +872,7 @@ async function loadSeries(isLoadMore = false) {
         posterUrl: s.poster_url,
         metaLeft: formatReleaseDate(s.release_date, s.year),
         metaRight: `★ ${formatRating(s.rating)}`,
-        onClick: async () => {
-             if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+        onClick: () => {
              window.location.href = `./series.html?seriesId=${encodeURIComponent(s.id)}`;
         },
         progress: (s.position_seconds && s.duration_seconds) ? (s.position_seconds / s.duration_seconds) * 100 : 0,
@@ -1137,8 +1008,7 @@ async function loadLive(isLoadMore = false) {
           posterUrl: c.thumbnail_url || c.logo_url || c.poster_url,
           metaLeft: "",
           metaRight: "",
-          onClick: async () => {
-              if (!await checkSubscription()) { showSubscriptionBlocker(); return; }
+          onClick: () => {
               const params = new URLSearchParams({
                   type: 'live',
                   id: c.id,
@@ -1384,7 +1254,6 @@ export async function handleLoginSuccess(data) {
                 localStorage.setItem('klyx_device_mac', sub.linked_mac);
             }
             subStatusCache = null; 
-            await checkSubscription();
         }
     }
 }
