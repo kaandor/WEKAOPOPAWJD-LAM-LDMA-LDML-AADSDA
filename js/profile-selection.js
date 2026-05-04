@@ -110,6 +110,7 @@ function render() {
   // 2. Render existing profiles (if logged in)
   if (isAuthenticated) {
     profiles.forEach(p => {
+      console.log("Rendering profile:", p);
       const card = document.createElement("div");
       card.className = "profile-card";
       
@@ -153,24 +154,7 @@ function render() {
       grid.append(addCard);
     }
   } else {
-    // 4. Render "Login" button if NOT logged in
-    const loginCard = document.createElement("div");
-    loginCard.className = "profile-card";
-    
-    const loginAvatar = document.createElement("div");
-    loginAvatar.className = "avatar add-profile";
-    loginAvatar.style.borderColor = "#A855F7";
-    loginAvatar.style.color = "#A855F7";
-    loginAvatar.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>`;
-
-    const loginName = document.createElement("div");
-    loginName.className = "name";
-    loginName.style.color = "#A855F7";
-    loginName.textContent = "Fazer Login";
-
-    loginCard.append(loginAvatar, loginName);
-    loginCard.addEventListener("click", () => window.location.href = "./login.html");
-    grid.append(loginCard);
+    // 4. Render "Login" removed as requested - Login only inside dashboard menu
   }
 }
 
@@ -179,8 +163,7 @@ function selectGuestProfile() {
   localStorage.setItem("klyx_profile_id", "guest");
   localStorage.setItem("klyx_profile_name", "Convidado");
   localStorage.setItem("klyx_profile_avatar", "");
-  // Clear any existing user session to ensure guest mode
-  api.session.clear(); 
+  // Do NOT clear session here, as we might have one but just chose Guest
   window.location.href = "./dashboard.html";
 }
 
