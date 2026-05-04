@@ -8,19 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Quem está assistindo?</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260226-v1" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260226-v1" />
-    <script src="./js/adsterra.js?v=20260226-v1"></script>
+    <link rel="stylesheet" href="./css/global.css" />
     <style>
-      .profile-gate .logo {
-          display: block;
-          margin: 0 auto 2rem auto;
-          width: 120px;
-          height: auto;
-          opacity: 1 !important;
-          visibility: visible !important;
-      }
-
       body {
         background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
         margin: 0;
@@ -31,7 +20,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-height: 100vh;
+        min-height: 100%;
         width: 100%;
         padding: 20px 0;
         padding-top: max(20px, env(safe-area-inset-top) + 20px);
@@ -40,14 +29,12 @@
       .profile-gate {
         text-align: center;
         animation: fadeIn 0.5s ease-out;
-        width: 100%;
-        max-width: 1000px;
       }
 
       h1 {
         font-size: 3rem;
         font-weight: 500;
-        margin-bottom: 3rem;
+        margin-bottom: 2rem;
         color: #fff;
       }
 
@@ -56,8 +43,7 @@
         gap: 2rem;
         justify-content: center;
         flex-wrap: wrap;
-        margin-bottom: 4rem;
-        padding: 0 20px;
+        margin-bottom: 3rem;
       }
 
       .profile-card {
@@ -67,7 +53,6 @@
         gap: 1rem;
         cursor: pointer;
         transition: transform 0.2s;
-        position: relative;
       }
 
       .profile-card:hover {
@@ -81,44 +66,15 @@
       .profile-card:hover .name {
         color: #fff;
       }
-      
-      .profile-card.edit-mode .avatar {
-        opacity: 0.5;
-      }
-      
-      .profile-card.edit-mode:hover .avatar {
-        opacity: 1;
-        border-color: #fff;
-      }
-      
-      .edit-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 40px; /* Leave name visible */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-      
-      .profile-card.edit-mode .edit-overlay {
-        opacity: 1;
-      }
-      
-      .edit-icon {
-        color: #fff;
-        font-size: 3rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-      }
 
       .avatar {
-        width: 150px;
-        height: 150px;
-        border-radius: 8px;
+        width: 10vw;
+        height: 10vw;
+        min-width: 100px;
+        min-height: 100px;
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 4px;
         background-color: #333;
         background-size: cover;
         background-position: center;
@@ -145,40 +101,29 @@
       }
 
       .name {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         color: #888;
         transition: color 0.2s;
-        max-width: 150px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
       }
 
       .manage-btn {
         background: transparent;
         border: 1px solid #666;
         color: #666;
-        padding: 0.8rem 2rem;
+        padding: 0.5rem 1.5rem;
         font-size: 1.1rem;
         cursor: pointer;
         transition: all 0.2s;
         letter-spacing: 2px;
         text-transform: uppercase;
-        margin: 0 10px;
       }
 
       .manage-btn:hover {
         border-color: #fff;
         color: #fff;
       }
-      
-      .manage-btn.active {
-        background: #fff;
-        color: #000;
-        border-color: #fff;
-      }
 
-      /* Modal for creating/editing profile */
+      /* Modal for creating profile */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -190,7 +135,6 @@
         align-items: center;
         justify-content: center;
         z-index: 1000;
-        backdrop-filter: blur(5px);
       }
       
       .hidden {
@@ -200,62 +144,15 @@
       .modal {
         background: #111;
         padding: 2rem;
-        border-radius: 12px;
+        border-radius: 8px;
         width: 90%;
-        max-width: 600px;
+        max-width: 500px;
         border: 1px solid #333;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       }
 
       .modal h2 {
         margin-top: 0;
         margin-bottom: 1.5rem;
-        color: #fff;
-        font-size: 2rem;
-        text-align: center;
-      }
-
-      .modal-content {
-        display: flex;
-        gap: 2rem;
-        margin-bottom: 2rem;
-      }
-
-      .avatar-section {
-        flex: 0 0 150px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .current-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 8px;
-        background-color: #333;
-        background-size: cover;
-        background-position: center;
-        cursor: pointer;
-        border: 2px solid #444;
-        transition: border-color 0.2s;
-      }
-      
-      .current-avatar:hover {
-        border-color: #9333ea;
-      }
-      
-      .change-avatar-btn {
-        background: transparent;
-        border: none;
-        color: #9333ea;
-        font-size: 0.9rem;
-        cursor: pointer;
-        text-decoration: underline;
-      }
-
-      .form-section {
-        flex: 1;
       }
 
       .form-group {
@@ -266,216 +163,39 @@
         display: block;
         margin-bottom: 0.5rem;
         color: #aaa;
-        font-size: 0.9rem;
       }
 
-      .form-group input, .form-group select {
+      .form-group input {
         width: 100%;
         padding: 0.8rem;
-        background: #222;
+        background: #333;
         border: 1px solid #444;
         color: #fff;
         font-size: 1rem;
-        border-radius: 6px;
-        outline: none;
-        box-sizing: border-box;
-      }
-      
-      .form-group input:focus, .form-group select:focus {
-        border-color: #9333ea;
+        border-radius: 4px;
       }
 
       .modal-actions {
         display: flex;
         gap: 1rem;
         justify-content: flex-end;
-        border-top: 1px solid #222;
-        padding-top: 1.5rem;
-        align-items: center;
       }
 
       .btn-cancel {
         background: transparent;
-        border: 1px solid #444;
+        border: 1px solid #666;
         color: #fff;
-        padding: 0.6rem 1.5rem;
+        padding: 0.6rem 1.2rem;
         cursor: pointer;
-        border-radius: 4px;
-        font-weight: 500;
-        font-size: 1rem;
-      }
-      
-      .btn-cancel:hover {
-        background: #222;
       }
 
       .btn-save {
         background: #fff;
         color: #000;
         border: none;
-        padding: 0.6rem 2rem;
+        padding: 0.6rem 1.2rem;
         cursor: pointer;
         font-weight: bold;
-        border-radius: 4px;
-        font-size: 1rem;
-      }
-      
-      .btn-save:hover {
-        background: #ccc;
-      }
-      
-      .btn-delete {
-        margin-right: auto;
-        background: transparent;
-        border: 1px solid #ef4444;
-        color: #ef4444;
-        padding: 0.6rem 1.5rem;
-        cursor: pointer;
-        border-radius: 4px;
-        font-weight: 500;
-        font-size: 1rem;
-      }
-      
-      .btn-delete:hover {
-        background: rgba(239, 68, 68, 0.1);
-      }
-
-      /* Icon Selector Modal */
-      .icon-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 1rem;
-        max-height: 50vh;
-        overflow-y: auto;
-        padding: 1rem;
-        background: #1a1a1a;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-      }
-      
-      .icon-option {
-        width: 100px;
-        height: 100px;
-        border-radius: 8px;
-        background-size: cover;
-        background-position: center;
-        cursor: pointer;
-        border: 2px solid transparent;
-        transition: transform 0.2s;
-      }
-      
-      .icon-option:hover {
-        transform: scale(1.1);
-        border-color: #fff;
-      }
-      
-      .icon-option.selected {
-        border-color: #9333ea;
-        box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
-      }
-      
-      @media (max-width: 600px) {
-        .modal-content {
-            flex-direction: column;
-            align-items: center;
-        }
-        .modal-actions {
-            flex-direction: column-reverse;
-        }
-        .btn-delete {
-            margin-right: 0;
-            width: 100%;
-        }
-        .btn-cancel, .btn-save {
-            width: 100%;
-        }
-        .avatar {
-            width: 100px;
-            height: 100px;
-        }
-        h1 {
-            font-size: 2rem;
-        }
-      }
-
-      /* Toggle Switch & Adult Section */
-      .adult-section {
-        border: 1px solid rgba(220, 38, 38, 0.5);
-        background: rgba(220, 38, 38, 0.1);
-        padding: 1rem;
-        border-radius: 8px;
-        margin-top: 1.5rem;
-      }
-
-      .toggle-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-      }
-
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 50px;
-        height: 28px;
-        flex-shrink: 0;
-      }
-
-      .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-
-      .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #444;
-        transition: .4s;
-        border-radius: 34px;
-      }
-
-      .slider:before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-      }
-
-      input:checked + .slider {
-        background-color: #dc2626;
-      }
-
-      input:checked + .slider:before {
-        transform: translateX(22px);
-      }
-      
-      .pin-input {
-        width: 100%;
-        background: #000;
-        border: 1px solid #444;
-        color: #fff;
-        padding: 10px;
-        border-radius: 6px;
-        font-size: 1.5rem;
-        text-align: center;
-        letter-spacing: 0.5em;
-        margin-top: 5px;
-      }
-      
-      .pin-input:focus {
-        border-color: #dc2626;
-        outline: none;
       }
 
       @keyframes fadeIn {
@@ -485,89 +205,37 @@
     </style>
   </head>
   <body>
-    <div class="profile-container">
-      <div class="profile-gate">
+    <div class="profile-shell">
+      <div class="profile-container">
+        <div class="profile-gate">
+        <div class="logo-container" style="text-align: center; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+          <img src="./assets/logos/logo.svg" alt="KLYX" style="height: 40px;">
+          <span class="connection-dot" id="connectionStatusDot" title="Checking connection..."></span>
+        </div>
         <h1>Quem está assistindo?</h1>
-        
-        <div id="profilesGrid" class="profiles-grid">
-          <!-- Profiles injected here -->
+      <div id="profilesGrid" class="profiles-grid">
+        <!-- Profiles injected here -->
+      </div>
+      <!-- <button id="manageProfilesBtn" class="manage-btn">Gerenciar Perfis</button> -->
         </div>
-        
-        <div class="actions-container" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
-          <button id="manageProfilesBtn" class="manage-btn">Gerenciar Perfis</button>
-        </div>
-        
-        <button id="logoutBtn" style="margin-top: 3rem; background: transparent; border: none; color: #666; font-size: 0.9rem; cursor: pointer; text-decoration: underline;">Sair da Conta</button>
       </div>
     </div>
 
-    <!-- Create/Edit Profile Modal -->
-    <div id="profileModal" class="modal-overlay hidden">
+    <!-- Create Profile Modal -->
+    <div id="createProfileModal" class="modal-overlay hidden">
       <div class="modal">
-        <h2 id="modalTitle">Adicionar Perfil</h2>
-        
-        <div class="modal-content">
-          <div class="avatar-section">
-            <div id="modalAvatarPreview" class="current-avatar"></div>
-            <button id="changeAvatarBtn" class="change-avatar-btn">Alterar ícone</button>
-          </div>
-          
-          <div class="form-section">
-            <div class="form-group">
-              <label for="profileName">Nome</label>
-              <input type="text" id="profileName" placeholder="Nome do perfil" maxlength="20" />
-            </div>
-            
-            <!-- Kid Profile Toggle (Replaces Adult Content) -->
-            <div id="kidProfileSection" class="adult-section">
-                <div class="toggle-container">
-                    <div style="margin-right: 15px;">
-                        <label style="display: block; color: #a78bfa; font-weight: 500; margin-bottom: 2px;">Perfil Infantil?</label>
-                        <p style="margin: 0; font-size: 0.8rem; color: #9ca3af;">Exibe apenas conteúdo adequado para crianças.</p>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="profileIsKid">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- PIN Section (Hidden by default) -->
-            <div id="pinSection" class="hidden">
-                <label style="display: block; color: #ccc; font-size: 0.9rem; margin-top: 10px; margin-bottom: 5px;">Crie um PIN de 4 dígitos</label>
-                <input type="tel" id="profilePin" maxlength="4" placeholder="0000" class="pin-input">
-            </div>
-          </div>
+        <h2>Adicionar Perfil</h2>
+        <div class="form-group">
+          <label for="profileName">Nome</label>
+          <input type="text" id="profileName" placeholder="Nome do perfil" />
         </div>
-
         <div class="modal-actions">
-          <button id="deleteProfileBtn" class="btn-delete hidden">Excluir Perfil</button>
-          <div style="display: flex; gap: 1rem; width: 100%; justify-content: flex-end;">
-            <button id="cancelProfileBtn" class="btn-cancel">Cancelar</button>
-            <button id="saveProfileBtn" class="btn-save">Salvar</button>
-          </div>
+          <button id="cancelCreateBtn" class="btn-cancel">Cancelar</button>
+          <button id="saveProfileBtn" class="btn-save">Salvar</button>
         </div>
       </div>
     </div>
 
-    <!-- Icon Selector Modal -->
-    <div id="iconSelectorModal" class="modal-overlay hidden" style="z-index: 1100;">
-      <div class="modal" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
-        <h2>Escolha um ícone</h2>
-        <div id="iconGrid" class="icon-grid" style="flex: 1; max-height: none;">
-          <!-- Icons injected by JS -->
-        </div>
-        <div class="modal-actions">
-          <button id="cancelIconBtn" class="btn-cancel">Cancelar</button>
-        </div>
-      </div>
-    </div>
-
-    <script type="module">
-      import { initProfileSelection } from "./js/profile-selection.js?v=20260226-v2";
-      import "./js/ui.js?v=20260226-v2";
-      
-      initProfileSelection();
-    </script>
+    <script type="module" src="./js/profile-selection.js"></script>
   </body>
 </html>

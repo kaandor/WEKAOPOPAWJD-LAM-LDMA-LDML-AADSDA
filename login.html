@@ -2,20 +2,204 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Redirecionando...</title>
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>KLYX — Entrar</title>
+    <style>
+      body {
+        background-color: #0b0e14;
+        color: #fff;
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .brand-logo {
+        max-width: 320px;
+        width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto 20px;
+      }
+      .auth-card {
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+      }
+      .input {
+        background: #1f2937;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        box-sizing: border-box;
+      }
+      .btn-primary {
+        background: #A855F7;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/login.css" />
   </head>
   <body>
-    <p>Redirecionando para a tela de login...</p>
+    <div class="auth-shell">
+      <div id="loginCard" class="auth-card">
+        <div class="auth-top" style="justify-content: center;">
+          <div class="brand" style="text-align: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" fill="none" class="brand-logo" style="margin: 0 auto; display: block; width: 100%; max-width: 320px; height: auto;">
+              <path d="M20 15 L 20 65 L 60 40 Z" fill="none" stroke="#A855F7" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+              <text x="75" y="52" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="42" fill="currentColor">Klyx</text>
+              <text x="78" y="72" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="13" fill="currentColor" opacity="0.8" letter-spacing="4">IPTV</text>
+              <rect x="155" y="15" width="6" height="6" rx="1" fill="#A855F7" />
+              <rect x="163" y="8" width="6" height="6" rx="1" fill="#A855F7" />
+              <rect x="148" y="22" width="4" height="4" rx="1" fill="#A855F7" opacity="0.8" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="auth-title" style="text-align: center;">
+          <h1>Entrar</h1>
+          <p>Acesso seguro a Filmes, S&eacute;ries e TV ao vivo.</p>
+        </div>
+
+        <div id="loginForm">
+          <div class="auth-actions" style="margin-top: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <button id="githubLogin" type="button" class="btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: #24292e; color: #fff; cursor: pointer; font-weight: 600; font-size: 16px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    <svg height="24" viewBox="0 0 16 16" width="24" fill="currentColor" style="flex-shrink: 0;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                    <span>Entrar com GitHub</span>
+                </button>
+                <button id="googleLogin" type="button" class="btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 18px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.1); background: #fff; color: #3c4043; cursor: pointer; font-weight: 600; font-size: 16px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <svg width="24" height="24" viewBox="0 0 48 48" style="flex-shrink: 0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.91 24.46c0-1.55-.14-3.04-.39-4.46H24v9.03h12.91c-.58 3.07-2.32 5.67-4.93 7.42l7.73 5.99c4.51-4.18 7.2-10.33 7.2-17.98z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-5.99c-2.16 1.44-4.94 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+                    <span>Entrar com Google</span>
+                </button>
+            </div>
+
+            <div style="margin-top: 25px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <p style="color: #888; font-size: 14px; margin-bottom: 15px;">Ainda não tem acesso?</p>
+                <a class="btn" href="./register.html" style="display: block; width: 100%; padding: 14px; border-radius: 10px; border: 1px solid rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); color: #A855F7; text-decoration: none; font-weight: bold; box-sizing: border-box; transition: all 0.2s;">Solicitar Acesso</a>
+            </div>
+          </div>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+      </div>
+    </div>
+
     <script>
-      try {
-        const search = window.location.search || "";
-        const target = "./index.html" + search;
-        window.location.replace(target);
-      } catch (e) {
-        const search = window.location.search || "";
-        const target = "./index.html" + search;
-        window.location.href = target;
+      // Global error handler to help debug
+      window.onerror = function(msg, url, line, col, error) {
+        console.error("GLOBAL ERROR:", msg, "at", url, ":", line);
+        const errorDiv = document.getElementById("error");
+        if (errorDiv) {
+            errorDiv.textContent = "Erro de carregamento: " + msg;
+            errorDiv.classList.remove("hidden");
+        }
+        return false;
+      };
+    </script>
+
+    <script type="module">
+      import { api } from "./js/api.js";
+      import { redirectIfAuthed, applyTheme } from "./js/auth.js";
+
+      import { handleLoginSuccess } from "./js/ui.js";
+
+      redirectIfAuthed();
+
+      // Helper to get or generate MAC
+      function getOrGenerateMac() {
+         let mac = localStorage.getItem('klyx_device_mac');
+         if (!mac) {
+             const hex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+             mac = `${hex()}:${hex()}:${hex()}:${hex()}:${hex()}:${hex()}`;
+             localStorage.setItem('klyx_device_mac', mac);
+         }
+         return mac;
       }
+      
+      // Initialize MAC immediately
+      getOrGenerateMac();
+
+      // Connection Status Check
+      const connectionDot = document.getElementById("connectionStatusDot");
+      if (connectionDot) {
+          api.status.checkConnection().then(isConnected => {
+              if (isConnected) {
+                  connectionDot.classList.add("connected");
+                  connectionDot.title = "Connected to Database";
+                  connectionDot.style.cursor = "default";
+                  connectionDot.onclick = null;
+              } else {
+                  connectionDot.classList.remove("connected");
+                  const err = api.status.getLastError() || "Desconectado";
+                  connectionDot.title = "Erro de conexão: Clique para ver detalhes";
+                  connectionDot.style.cursor = "help";
+                  connectionDot.onclick = () => alert(`Erro de Conexão com Firebase:\n\n${err}\n\nVerifique se as 'Rules' (Regras) do Firebase estão públicas (.read: true, .write: true).`);
+              }
+          });
+      }
+
+      const error = document.getElementById("error");
+      const ghBtn = document.getElementById("githubLogin");
+      const gBtn = document.getElementById("googleLogin");
+
+      async function performSocialLogin(provider) {
+          console.log(`[Auth] Inciando login com ${provider}...`);
+          error.classList.add("hidden");
+          
+          try {
+              // Feedback visual imediato
+              const btn = provider === 'github' ? ghBtn : gBtn;
+              const originalText = btn.innerHTML;
+              btn.innerHTML = "Processando...";
+              btn.style.opacity = "0.7";
+              btn.disabled = true;
+
+              let res;
+              if (provider === 'github') res = await api.auth.loginWithGithub();
+              else res = await api.auth.loginWithGoogle();
+
+              console.log(`[Auth] Resposta ${provider}:`, res);
+
+              if (res.ok) {
+                  // Salva a sessão
+                  await handleLoginSuccess(res.data);
+                  console.log("[Auth] Login sucesso, redirecionando...");
+                  window.location.href = "./profile-selection.html";
+              } else {
+                  btn.innerHTML = originalText;
+                  btn.style.opacity = "1";
+                  btn.disabled = false;
+                  error.textContent = res.data?.message || `Erro no login com ${provider}`;
+                  error.classList.remove("hidden");
+              }
+          } catch (e) {
+              console.error(`[Auth] Erro fatal no login ${provider}:`, e);
+              error.textContent = `Erro técnico ao conectar com ${provider}`;
+              error.classList.remove("hidden");
+          }
+      }
+
+      if (ghBtn) ghBtn.onclick = () => performSocialLogin('github');
+      if (gBtn) gBtn.onclick = () => performSocialLogin('google');
+
+      // Remover listener antigo do formulário que não existe mais
     </script>
   </body>
 </html>

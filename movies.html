@@ -8,10 +8,9 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
-    <title>KLYX — Filmes</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260226-v2" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260226-v2" />
-    <script src="./js/adsterra.js?v=20260226-v2"></script>
+    <title>KLYX — Movies</title>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,41 +23,29 @@
               <div class="subtext" style="margin-top: 5px;">Navegue pelos filmes e comece a assistir instantaneamente.</div>
             </div>
             
-            <div class="toolbar toolbar-page">
+            <div class="toolbar" style="margin-top: 0;">
               <select id="movieCategory" class="select">
                 <option value="">Todas as categorias</option>
               </select>
               <input id="movieSearch" class="search-input" placeholder="Pesquisar filmes por nome" />
-              <div id="toolbarProfileAnchor" class="toolbar-profile-anchor"></div>
             </div>
           </div>
           
           <!-- Rows Container -->
-          <div id="moviesCatalog" style="margin-bottom: 24px; display: flex; flex-direction: column; gap: 24px;"></div>
+          <div id="moviesCatalog" style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 40px;"></div>
 
           <div class="section">
             <div id="moviesGrid" class="grid-cards"></div>
-          </div>
-
-          <!-- Loading Spinner -->
-          <div id="loading" style="text-align: center; padding: 40px; display: none;">
-            <div class="spinner"></div>
           </div>
         </div>
       </main>
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260226-v2";
-      import { initMovies } from "./js/ui.js?v=20260226-v2";
-      (async () => {
-        try {
-          await mountAppShell({ currentPath: "/movies" });
-          await initMovies();
-        } catch (e) {
-          console.error("Movies Init Error:", e);
-        }
-      })();
+      import { mountAppShell } from "./js/router.js";
+      import { initMovies } from "./js/ui.js";
+      await mountAppShell({ currentPath: "/movies" });
+      await initMovies();
     </script>
   </body>
 </html>

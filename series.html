@@ -9,9 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Series</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260226-v2" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260226-v2" />
-    <script src="./js/adsterra.js?v=20260226-v2"></script>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -21,36 +20,38 @@
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
             <div>
               <h1 style="margin: 0;">Séries</h1>
-              <div class="subtext" style="margin-top: 5px;">Maratonas completas para você.</div>
+              <div class="subtext" style="margin-top: 5px;">Escolha uma série, depois selecione temporadas e episódios.</div>
             </div>
-            
-            <div class="toolbar toolbar-page">
+            <div class="toolbar" style="margin-top: 0;">
               <select id="seriesCategory" class="select">
                 <option value="">Todas as categorias</option>
               </select>
               <input id="seriesSearch" class="search-input" placeholder="Pesquisar séries por nome" />
-              <div id="toolbarProfileAnchor" class="toolbar-profile-anchor"></div>
             </div>
           </div>
           
-          <div class="section">
+          <!-- Rows Container -->
+          <div id="seriesCatalog" style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 40px;"></div>
+
+          <div id="seriesListing" class="section">
             <div id="seriesGrid" class="grid-cards"></div>
+          </div>
+
+          <div id="seriesDetailView" class="section hidden">
+            <button id="backToSeriesBtn" class="btn" style="margin-bottom: 20px">
+              ← Back to Series
+            </button>
+            <div id="seriesDetailContent"></div>
           </div>
         </div>
       </main>
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260226-v2";
-      import { initSeries } from "./js/ui.js?v=20260226-v2";
-      (async () => {
-        try {
-          await mountAppShell({ currentPath: "/series" });
-          await initSeries();
-        } catch (e) {
-          console.error("Series Init Error:", e);
-        }
-      })();
+      import { mountAppShell } from "./js/router.js";
+      import { initSeries } from "./js/ui.js";
+      await mountAppShell({ currentPath: "/series" });
+      await initSeries();
     </script>
   </body>
 </html>

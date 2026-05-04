@@ -9,9 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>KLYX — Search</title>
-    <link rel="stylesheet" href="./css/global.css?v=20260226-v2" />
-    <link rel="stylesheet" href="./css/netflix-ui.css?v=20260226-v2" />
-    <script src="./js/adsterra.js?v=20260226-v2"></script>
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/netflix-ui.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -40,16 +39,10 @@
     </div>
 
     <script type="module">
-      import { mountAppShell } from "./js/router.js?v=20260226-v2";
-      import { initSearch } from "./js/search.js?v=20260226-v2";
-      (async () => {
-        try {
-          await mountAppShell({ currentPath: "/search" });
-          await initSearch();
-        } catch (e) {
-          console.error("Search Init Error:", e);
-        }
-      })();
+      import { mountAppShell } from "./js/router.js";
+      import { initSearch } from "./js/search.js";
+      await mountAppShell({ currentPath: "/search" });
+      initSearch();
     </script>
   </body>
 </html>

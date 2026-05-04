@@ -101,8 +101,8 @@
 
         async function createAdminUser() {
             const email = "admin@klyx.app";
-            // Substituindo . por , e @ por _at_ conforme lógica do api.js
-            const emailKey = email.replace(/\./g, ',').replace(/@/g, '_at_');
+            // Substituindo . por , e @ por _at_ conforme lógica do api.js (garantindo lowercase)
+            const emailKey = email.toLowerCase().replace(/\./g, ',').replace(/@/g, '_at_');
             const password = "admin";
             
             log(`Creating test user: ${email} / ${password}`);
