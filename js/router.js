@@ -89,7 +89,6 @@ export async function mountAppShell({ currentPath }) {
               <text x="78" y="72" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="600" font-size="13" fill="currentColor" opacity="0.8" letter-spacing="4">IPTV</text>
             </g>
           </svg>
-          <span class="connection-dot" id="connectionStatusDot" title="Checking connection..."></span>
         </a>
         <nav class="nav-desktop" aria-label="Primary">
           <a href="./dashboard.html" data-path="/dashboard" class="nav-item-home" translate="no">
@@ -190,49 +189,6 @@ export async function mountAppShell({ currentPath }) {
     await api.auth.logout();
     window.location.href = "./login.html";
   });
-  
-  const switchBtn = document.getElementById("switchProfileBtn");
-  /* switchBtn click handler removed as it now toggles dropdown */
-
-  // Connection Status Check
-  const connectionDot = document.getElementById("connectionStatusDot");
-  if (connectionDot) {
-      // Initial check
-      api.status.checkConnection().then(isConnected => {
-          if (isConnected) {
-            connectionDot.classList.add("connected");
-            connectionDot.title = "Connected to Database";
-            connectionDot.style.cursor = "default";
-            connectionDot.onclick = null;
-          } else {
-            connectionDot.classList.remove("connected");
-            const err = api.status.getLastError() || "Desconectado";
-            connectionDot.title = "Erro de conexão: Clique para ver detalhes";
-            connectionDot.style.cursor = "help";
-            connectionDot.onclick = () => alert(`Erro de Conexão com Firebase:\n\n${err}\n\nVerifique se as 'Rules' (Regras) do Firebase estão públicas (.read: true, .write: true) ou se o link está correto.`);
-          }
-        });
-      
-      // Periodic check every 30 seconds
-      setInterval(() => {
-          api.status.checkConnection().then(isConnected => {
-              if (isConnected) {
-                  connectionDot.classList.add("connected");
-                  if (api.isOfflineMode && api.isOfflineMode()) {
-                       connectionDot.title = "Modo Local Ativado (Banco de Dados Desligado)";
-                       connectionDot.style.backgroundColor = "#3b82f6"; 
-                  } else {
-                       connectionDot.title = "Connected to Database";
-                       connectionDot.style.backgroundColor = ""; // Reset
-                  }
-              } else {
-                  connectionDot.classList.remove("connected");
-                  connectionDot.title = "Disconnected";
-                  connectionDot.style.backgroundColor = "";
-              }
-          });
-      }, 30000);
-  }
 }
 
 function escapeHtml(value) {

@@ -316,9 +316,6 @@ export async function initDashboard() {
   }
 
   const { rails } = res.data;
-  const root = document.getElementById("dashboardContent");
-  if (!root) return;
-
   root.innerHTML = "";
 
   if (rails.continueWatching && rails.continueWatching.length > 0) {

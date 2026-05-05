@@ -1,6 +1,6 @@
 const STORAGE_KEY = "klyx.session";
 const FIREBASE_DB_URL = "https://klix-iptv-default-rtdb.firebaseio.com";
-const USE_LOCAL_ONLY = false; // Permitir o uso do Firebase por padrão na versão oficial
+const USE_LOCAL_ONLY = true; // Forçar uso dos arquivos locais para evitar dashboard invisível por erro no Firebase
 
 // Simple in-memory cache for catalog data to prevent redownloading huge JSONs
 const requestCache = {};
@@ -274,7 +274,7 @@ async function request(method, path, body) {
               
               // Se Firebase falhar (ou estiver desativado por USE_LOCAL_ONLY) e houver fallback local
               if ((!rawData || (Array.isArray(rawData) && rawData.length === 0) || (typeof rawData === 'object' && Object.keys(rawData).length === 0)) && localFallback) {
-                  console.log(`[API] Using local fallback: ${localFallback}`);
+                  console.log(`%c[API] Using local fallback: ${localFallback}`, "background: #3b82f6; color: white; padding: 2px 5px; border-radius: 3px;");
                   try {
                       const localRes = await fetch(localFallback);
                       if (localRes.ok) {
